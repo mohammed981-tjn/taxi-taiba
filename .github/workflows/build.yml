@@ -28,11 +28,23 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      # pubspec.yaml asks for Dart >=3.4.0; Flutter 3.24 ships 3.5.
+      # Latest stable rather than a pin, and that is the fix for a real failure
+      # rather than a preference.
+      #
+      # There is no pubspec.lock in this repository, so pub resolves the newest
+      # packages the constraints allow — geolocator 14, permission_handler 12.
+      # Those need compileSdk 35, and `compileSdk flutter.compileSdkVersion` is
+      # whatever the installed SDK says: 34 on Flutter 3.24. Gradle then failed
+      # configuring :geolocator_android with "compileSdkVersion is not
+      # specified", which names neither the plugin version nor the SDK that
+      # actually disagree.
+      #
+      # Pinning the SDK without a lockfile pins only half the pair and leaves
+      # the other half free to drift past it. Pin both or neither; until there
+      # is a lockfile, tracking stable keeps the two in step.
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: "3.24.0"
           channel: stable
           cache: true
 
