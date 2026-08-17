@@ -16,6 +16,26 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 40
 
+    # نكهة لكل تطبيق، ومصفوفة تبنيهما معاً.
+    #
+    # وهذا هو موضع الحجّة الأمنية عملياً: نقطة الدخول تحدّد ما يدخل الحزمة، لأن
+    # مترجم Dart يُبقي كل ما يمكن بلوغه من `main()`. فلوحة الإدارة لا تصل إلى
+    # هاتف راكب لأنها ليست في شجرة استيراده — لا لأن شرطاً يخفيها. راجع
+    # lib/app_flavor.dart.
+    #
+    # `fail-fast: false` كي لا يُلغي فشلُ نكهة بناءَ الأخرى: نكهتان تفشلان
+    # لسببين مختلفين، ورؤيتهما معاً أسرع من جولتين.
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - flavor: passenger
+            target: lib/main.dart
+            artifact: oago-passenger-release
+          - flavor: admin
+            target: lib/main_admin.dart
+            artifact: taiba-admin-release
+
     # `secrets` is not available inside an `if:` expression — only `env` is. So
     # the secret is lifted to the job environment here and the steps below test
     # `env.KEYSTORE_BASE64` instead. Without this the whole file fails to parse,
@@ -88,7 +108,7 @@ jobs:
           printf '%s' "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/upload.jks"
           echo "KEYSTORE_PATH=$RUNNER_TEMP/upload.jks" >> "$GITHUB_ENV"
 
-      - name: Build release APKs
+      - name: Build ${{ matrix.flavor }} APKs
         env:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
@@ -96,6 +116,7 @@ jobs:
           MAPS_API_KEY: ${{ secrets.MAPS_API_KEY }}
         run: |
           flutter build apk --release --split-per-abi \
+            -t "${{ matrix.target }}" \
             --dart-define=MAPS_API_KEY="$MAPS_API_KEY" \
             -Pmaps.api.key="$MAPS_API_KEY"
 
@@ -115,7 +136,7 @@ jobs:
       - name: Upload APKs
         uses: actions/upload-artifact@v4
         with:
-          name: oago-passenger-release
+          name: ${{ matrix.artifact }}
           path: build/app/outputs/flutter-apk/*.apk
           if-no-files-found: error
           retention-days: 30
