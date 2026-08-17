@@ -1,0 +1,80 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+
+    "users": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid",
+
+        "blockStatus": {
+          ".write": false
+        },
+
+        "name":  { ".validate": "newData.isString() && newData.val().length <= 80" },
+        "email": { ".validate": "newData.isString() && newData.val().length <= 120" },
+        "phone": { ".validate": "newData.isString() && newData.val().length <= 20" }
+      }
+    },
+
+    "drivers": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid",
+
+        "earnings": {
+          ".write": false
+        },
+        "ratings": {
+          ".read": "auth != null",
+          ".write": false
+        },
+        "blockStatus": {
+          ".write": false
+        },
+
+        "newTripStatus": {
+          ".write": "auth != null"
+        }
+      }
+    },
+
+    "onlineDrivers": {
+      ".read": "auth != null",
+      ".indexOn": ["g"],
+
+      "$uid": {
+        ".write": "auth != null && auth.uid === $uid",
+        "g": { ".validate": "newData.isString()" },
+        "l": { ".validate": "newData.hasChildren()" }
+      }
+    },
+
+    "tripRequests": {
+      ".indexOn": ["userID", "driverID", "status"],
+
+      "$tripId": {
+        ".read": "auth != null && (data.child('userID').val() === auth.uid || data.child('driverID').val() === auth.uid)",
+
+        ".write": "auth != null && (!data.exists() ? newData.child('userID').val() === auth.uid : (data.child('userID').val() === auth.uid || data.child('driverID').val() === auth.uid))",
+
+        "userID": {
+          ".validate": "newData.val() === auth.uid && (!data.exists() || data.val() === newData.val())"
+        },
+
+        "fareAmount": {
+          ".validate": "!data.parent().child('driverID').exists() || data.parent().child('driverID').val() === auth.uid"
+        },
+
+        "rating": {
+          ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 5 && data.parent().child('userID').val() === auth.uid"
+        },
+
+        "status": {
+          ".validate": "newData.isString() && newData.val().length <= 20"
+        }
+      }
+    }
+  }
+}
