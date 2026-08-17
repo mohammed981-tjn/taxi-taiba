@@ -14,18 +14,31 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   if (Platform.isAndroid || Platform.isIOS) {
+    // Reads android/app/google-services.json — which is the whole of the
+    // configuration on mobile. Nothing below applies here.
     await Firebase.initializeApp();
   } else {
+    // Desktop and web have no google-services.json, so the values are literal.
+    //
+    // They used to be rdidago's — the original developer's project — which made
+    // this branch point at a database nobody here owns. It is dead code on the
+    // platforms actually built, which is exactly why it went unnoticed.
+    //
+    // The web appId is not the Android one and cannot be guessed: take it from
+    // the web app registered in the Firebase console when web is first built.
     await Firebase.initializeApp(
       options: const FirebaseOptions(
-        apiKey: "AIzaSyCglOwiavIK2Qzr4PAP_WTC-GcmjASKcA8",
-        authDomain: "rdidago.firebaseapp.com",
-        databaseURL: "https://rdidago-default-rtdb.firebaseio.com",
-        projectId: "rdidago",
-        storageBucket: "rdidago.firebasestorage.app",
-        messagingSenderId: "433322846976",
-        appId: "1:433322846976:web:a32c8e4f2cee41976821e5",
-        measurementId: "G-0FHCN9T6LP",
+        apiKey: "AIzaSyDaFmqNkd7IrNUOwvTvY5AQk0nt-kaMJ0k",
+        authDomain: "taxi-taiba.firebaseapp.com",
+        // Empty until the Realtime Database instance exists. The region is part
+        // of the host outside us-central1, so it cannot be derived from the
+        // project id — pass it in rather than assume:
+        //   --dart-define=RTDB_URL=https://taxi-taiba-default-rtdb...
+        databaseURL: String.fromEnvironment('RTDB_URL'),
+        projectId: "taxi-taiba",
+        storageBucket: "taxi-taiba.firebasestorage.app",
+        messagingSenderId: "19401527632",
+        appId: String.fromEnvironment('FIREBASE_WEB_APP_ID'),
       ),
     );
   }
