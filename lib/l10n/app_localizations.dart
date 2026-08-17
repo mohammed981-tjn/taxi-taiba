@@ -505,6 +505,162 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Sign up and start enjoying OAGO Ride’s amazing services today!'**
   String get introDesc6;
+
+  /// No description provided for @rateTripTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Rate your trip'**
+  String get rateTripTitle;
+
+  /// No description provided for @rateTripSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'How was your ride?'**
+  String get rateTripSubtitle;
+
+  /// No description provided for @rateSkip.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip'**
+  String get rateSkip;
+
+  /// No description provided for @rateSubmit.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit rating'**
+  String get rateSubmit;
+
+  /// No description provided for @rateCommentHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a comment (optional)'**
+  String get rateCommentHint;
+
+  /// No description provided for @tagCleanCar.
+  ///
+  /// In en, this message translates to:
+  /// **'Clean car'**
+  String get tagCleanCar;
+
+  /// No description provided for @tagSafeDriving.
+  ///
+  /// In en, this message translates to:
+  /// **'Safe driving'**
+  String get tagSafeDriving;
+
+  /// No description provided for @tagPolite.
+  ///
+  /// In en, this message translates to:
+  /// **'Polite'**
+  String get tagPolite;
+
+  /// No description provided for @tagOnTime.
+  ///
+  /// In en, this message translates to:
+  /// **'On time'**
+  String get tagOnTime;
+
+  /// No description provided for @tagLate.
+  ///
+  /// In en, this message translates to:
+  /// **'Arrived late'**
+  String get tagLate;
+
+  /// No description provided for @tagRude.
+  ///
+  /// In en, this message translates to:
+  /// **'Rude behaviour'**
+  String get tagRude;
+
+  /// No description provided for @tagUnsafe.
+  ///
+  /// In en, this message translates to:
+  /// **'Unsafe driving'**
+  String get tagUnsafe;
+
+  /// No description provided for @tagDirtyCar.
+  ///
+  /// In en, this message translates to:
+  /// **'Dirty car'**
+  String get tagDirtyCar;
+
+  /// No description provided for @receiptTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Trip receipt'**
+  String get receiptTitle;
+
+  /// No description provided for @receiptRoute.
+  ///
+  /// In en, this message translates to:
+  /// **'Route'**
+  String get receiptRoute;
+
+  /// No description provided for @receiptFareDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Fare details'**
+  String get receiptFareDetails;
+
+  /// No description provided for @receiptBaseFare.
+  ///
+  /// In en, this message translates to:
+  /// **'Base fare'**
+  String get receiptBaseFare;
+
+  /// No description provided for @receiptDistance.
+  ///
+  /// In en, this message translates to:
+  /// **'Distance'**
+  String get receiptDistance;
+
+  /// No description provided for @receiptDuration.
+  ///
+  /// In en, this message translates to:
+  /// **'Time'**
+  String get receiptDuration;
+
+  /// No description provided for @receiptTotal.
+  ///
+  /// In en, this message translates to:
+  /// **'Total'**
+  String get receiptTotal;
+
+  /// No description provided for @receiptDriver.
+  ///
+  /// In en, this message translates to:
+  /// **'Driver'**
+  String get receiptDriver;
+
+  /// No description provided for @receiptCar.
+  ///
+  /// In en, this message translates to:
+  /// **'Vehicle'**
+  String get receiptCar;
+
+  /// No description provided for @receiptPayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment'**
+  String get receiptPayment;
+
+  /// No description provided for @receiptPaymentCash.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash'**
+  String get receiptPaymentCash;
+
+  /// No description provided for @receiptNoBreakdown.
+  ///
+  /// In en, this message translates to:
+  /// **'This trip was recorded before fare details were saved, so only the total is available.'**
+  String get receiptNoBreakdown;
+
+  /// No description provided for @viewReceipt.
+  ///
+  /// In en, this message translates to:
+  /// **'View receipt'**
+  String get viewReceipt;
 }
 
 class _AppLocalizationsDelegate

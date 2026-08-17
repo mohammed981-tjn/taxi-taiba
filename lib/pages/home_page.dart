@@ -16,6 +16,7 @@ import 'package:flutter_projects/model/online_nearby_drivers.dart';
 import 'package:flutter_projects/pages/about_page.dart';
 import 'package:flutter_projects/pages/choose_ride_page.dart';
 import 'package:flutter_projects/pages/profile_page.dart';
+import 'package:flutter_projects/pages/rating_screen.dart';
 import 'package:flutter_projects/pages/select_destination_page.dart';
 import 'package:flutter_projects/pages/trip_history_page.dart';
 import 'package:flutter_projects/pushNotificationSystem/push_notification_system.dart';
@@ -659,6 +660,13 @@ class _HomePageState extends State<HomePage> {
       // "driverPhoto": "",
       "fareAmount": "",
       "status": "new",
+      // Written now, from the directions this request was quoted against,
+      // because a receipt is read long after those directions are gone. The
+      // driver app still settles `fareAmount` at the end; these are the parts
+      // that explain it, not a second source for the total.
+      if (tripDirectionDetailsInfo != null)
+        "fareBreakdown":
+            associateMethods.fareBreakdown(tripDirectionDetailsInfo!).toMap(),
     };
 
     tripRequestRef!.set(dataMap);
@@ -730,6 +738,16 @@ class _HomePageState extends State<HomePage> {
             );
 
             if (responseFromPaymentDialog == "paid") {
+              // Read before the reference is dropped: the rating needs to know
+              // which trip and which driver it belongs to, and two lines below
+              // there is nothing left to ask.
+              final tripMap = eventSnapshot.snapshot.value as Map;
+              final String ratedTripId =
+                  tripMap['tripId']?.toString() ?? tripRequestRef!.key ?? '';
+              final String ratedDriverId = tripMap['driverID']?.toString() ?? '';
+              final String ratedDriverName =
+                  tripMap['driverName']?.toString() ?? '';
+
               tripRequestRef!.onDisconnect();
               tripRequestRef = null;
 
@@ -737,6 +755,24 @@ class _HomePageState extends State<HomePage> {
               tripStreamSubscription = null;
 
               resetAppNow();
+
+              if (!mounted) return;
+              // Asked here rather than on the next launch, because a rating
+              // given now is about a trip the passenger still remembers. It is
+              // awaited so the restart below does not tear the screen away
+              // mid-answer; skipping returns immediately.
+              if (ratedTripId.isNotEmpty) {
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => RatingScreen(
+                      tripId: ratedTripId,
+                      driverId: ratedDriverId,
+                      driverName: ratedDriverName,
+                    ),
+                  ),
+                );
+              }
 
               if (!mounted) return;
               Phoenix.rebirth(context);

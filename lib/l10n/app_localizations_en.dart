@@ -221,4 +221,82 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get introDesc6 =>
       'Sign up and start enjoying OAGO Ride’s amazing services today!';
+
+  @override
+  String get rateTripTitle => 'Rate your trip';
+
+  @override
+  String get rateTripSubtitle => 'How was your ride?';
+
+  @override
+  String get rateSkip => 'Skip';
+
+  @override
+  String get rateSubmit => 'Submit rating';
+
+  @override
+  String get rateCommentHint => 'Add a comment (optional)';
+
+  @override
+  String get tagCleanCar => 'Clean car';
+
+  @override
+  String get tagSafeDriving => 'Safe driving';
+
+  @override
+  String get tagPolite => 'Polite';
+
+  @override
+  String get tagOnTime => 'On time';
+
+  @override
+  String get tagLate => 'Arrived late';
+
+  @override
+  String get tagRude => 'Rude behaviour';
+
+  @override
+  String get tagUnsafe => 'Unsafe driving';
+
+  @override
+  String get tagDirtyCar => 'Dirty car';
+
+  @override
+  String get receiptTitle => 'Trip receipt';
+
+  @override
+  String get receiptRoute => 'Route';
+
+  @override
+  String get receiptFareDetails => 'Fare details';
+
+  @override
+  String get receiptBaseFare => 'Base fare';
+
+  @override
+  String get receiptDistance => 'Distance';
+
+  @override
+  String get receiptDuration => 'Time';
+
+  @override
+  String get receiptTotal => 'Total';
+
+  @override
+  String get receiptDriver => 'Driver';
+
+  @override
+  String get receiptCar => 'Vehicle';
+
+  @override
+  String get receiptPayment => 'Payment';
+
+  @override
+  String get receiptPaymentCash => 'Cash';
+
+  @override
+  String get receiptNoBreakdown => 'This trip was recorded before fare details were saved, so only the total is available.';
+
+  @override
+  String get viewReceipt => 'View receipt';
 }

@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import '../l10n/app_localizations.dart';
+import 'receipt_page.dart';
 
 class TripHistoryPage extends StatefulWidget {
   const TripHistoryPage({super.key});
@@ -86,7 +87,18 @@ class _TripHistoryPageState extends State<TripHistoryPage> {
                   child: Card(
                     color: Colors.white,
                     elevation: 4,
-                    child: Padding(
+                    // The history already holds everything a receipt shows, so
+                    // the row opens one instead of being a dead summary the
+                    // passenger cannot drill into.
+                    child: InkWell(
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              ReceiptPage(trip: filteredTrips[index]),
+                        ),
+                      ),
+                      child: Padding(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 16, vertical: 16),
                       child: Column(
@@ -150,6 +162,7 @@ class _TripHistoryPageState extends State<TripHistoryPage> {
                             ],
                           )
                         ],
+                      ),
                       ),
                     ),
                   ),

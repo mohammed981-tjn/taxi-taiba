@@ -220,4 +220,82 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get introDesc6 =>
       'سجل الآن وابدأ في الاستمتاع بخدمات OAGO Ride المذهلة اليوم!';
+
+  @override
+  String get rateTripTitle => 'قيّم رحلتك';
+
+  @override
+  String get rateTripSubtitle => 'كيف كانت رحلتك؟';
+
+  @override
+  String get rateSkip => 'تخطّي';
+
+  @override
+  String get rateSubmit => 'إرسال التقييم';
+
+  @override
+  String get rateCommentHint => 'أضف تعليقاً (اختياري)';
+
+  @override
+  String get tagCleanCar => 'سيارة نظيفة';
+
+  @override
+  String get tagSafeDriving => 'قيادة آمنة';
+
+  @override
+  String get tagPolite => 'سائق مهذّب';
+
+  @override
+  String get tagOnTime => 'وصل في الموعد';
+
+  @override
+  String get tagLate => 'تأخّر في الوصول';
+
+  @override
+  String get tagRude => 'تعامل غير لائق';
+
+  @override
+  String get tagUnsafe => 'قيادة غير آمنة';
+
+  @override
+  String get tagDirtyCar => 'سيارة غير نظيفة';
+
+  @override
+  String get receiptTitle => 'إيصال الرحلة';
+
+  @override
+  String get receiptRoute => 'المسار';
+
+  @override
+  String get receiptFareDetails => 'تفصيل الأجرة';
+
+  @override
+  String get receiptBaseFare => 'الأجرة الأساسية';
+
+  @override
+  String get receiptDistance => 'المسافة';
+
+  @override
+  String get receiptDuration => 'الزمن';
+
+  @override
+  String get receiptTotal => 'الإجمالي';
+
+  @override
+  String get receiptDriver => 'السائق';
+
+  @override
+  String get receiptCar => 'المركبة';
+
+  @override
+  String get receiptPayment => 'طريقة الدفع';
+
+  @override
+  String get receiptPaymentCash => 'نقداً';
+
+  @override
+  String get receiptNoBreakdown => 'سُجّلت هذه الرحلة قبل حفظ تفصيل الأجرة، فالمتاح هو الإجمالي فقط.';
+
+  @override
+  String get viewReceipt => 'عرض الإيصال';
 }
