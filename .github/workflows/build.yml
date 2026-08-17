@@ -65,8 +65,35 @@ jobs:
       # it finds none, and keeps the existing gradle-wrapper.properties, so the
       # pinned Gradle 8.7 is still what runs. If this step ever fails on a
       # missing wrapper, commit the wrapper rather than changing the pin.
+      # يُكتب من السرّ إلى مسار مؤقّت خارج مساحة العمل، فلا يمكن أن يُلتقط في
+      # أثر أو يُدفع سهواً. غيابه ليس فشلاً: البناء يعود إلى توقيع التصحيح،
+      # وهو ما نريده لطلبات السحب.
+      - name: Restore the upload keystore
+        if: ${{ secrets.KEYSTORE_BASE64 != '' }}
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        run: |
+          printf '%s' "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/upload.jks"
+          echo "KEYSTORE_PATH=$RUNNER_TEMP/upload.jks" >> "$GITHUB_ENV"
+
       - name: Build release APKs
-        run: flutter build apk --release --split-per-abi
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          MAPS_API_KEY: ${{ secrets.MAPS_API_KEY }}
+        run: |
+          flutter build apk --release --split-per-abi \
+            --dart-define=MAPS_API_KEY="$MAPS_API_KEY" \
+            -Pmaps.api.key="$MAPS_API_KEY"
+
+      - name: Report how it was signed
+        run: |
+          if [ -n "$KEYSTORE_PATH" ]; then
+            echo "signed with the upload key"
+          else
+            echo "::warning::No KEYSTORE_BASE64 secret — signed with the debug key, not publishable."
+          fi
 
       - name: List what was produced
         run: ls -lh build/app/outputs/flutter-apk/

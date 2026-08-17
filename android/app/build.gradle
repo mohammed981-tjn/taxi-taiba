@@ -35,9 +35,29 @@ android {
         ]
     }
 
+    // التوقيع من متغيّرات البيئة لا من ملف في المستودع: مفتاح التوقيع أخطر ما
+    // في التطبيق — من يملكه ينشر تحديثاً باسمك. فالملف يصل عبر سرّ CI ويُكتب
+    // في مسار مؤقّت، ولا يدخل git أبداً.
+    signingConfigs {
+        release {
+            def ksPath = System.getenv("KEYSTORE_PATH")
+            if (ksPath) {
+                storeFile file(ksPath)
+                storePassword System.getenv("KEYSTORE_PASSWORD")
+                keyAlias System.getenv("KEY_ALIAS")
+                keyPassword System.getenv("KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
-            signingConfig signingConfigs.debug
+            // بلا مفتاح يعود إلى توقيع التصحيح، فيبقى البناء المحلي عاملاً
+            // للتجربة. والفرق مرئي: نسخة موقّعة بمفتاح التصحيح لا تُقبل في
+            // المتجر ولا تُحدّث نسخةً موقّعة بغيره.
+            signingConfig System.getenv("KEYSTORE_PATH")
+                ? signingConfigs.release
+                : signingConfigs.debug
             // minifyEnabled false // (اختياري)
         }
     }
