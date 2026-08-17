@@ -66,7 +66,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get call => 'اتصال';
 
   @override
-  String get blockedMsg => 'تم حظرك. تواصل مع المسؤول: james.tope01@gmail.com';
+  String get blockedMsg => 'تم حظرك. تواصل مع المسؤول: mohammed981@gmail.com';
 
   @override
   String get gettingDirection => 'جاري الحصول على الاتجاهات...';
@@ -102,7 +102,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get feedbackText =>
-      'نحن نقدر ملاحظاتك! لا تتردد في مراسلتنا عبر البريد الإلكتروني على james.tope01@gmail.com.';
+      'نحن نقدر ملاحظاتك! لا تتردد في مراسلتنا عبر البريد الإلكتروني على mohammed981@gmail.com.';
 
   @override
   String get copyright => '© 2025 OAGO Ride. جميع الحقوق محفوظة.';

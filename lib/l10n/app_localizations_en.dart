@@ -67,7 +67,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get blockedMsg =>
-      'You are blocked. Contact admin: james.tope01@gmail.com';
+      'You are blocked. Contact admin: mohammed981@gmail.com';
 
   @override
   String get gettingDirection => 'Getting direction...';
@@ -103,7 +103,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get feedbackText =>
-      'We appreciate your feedback! Feel free to email us at james.tope01@gmail.com.';
+      'We appreciate your feedback! Feel free to email us at mohammed981@gmail.com.';
 
   @override
   String get copyright => '© 2025 OAGO Ride. All rights reserved.';

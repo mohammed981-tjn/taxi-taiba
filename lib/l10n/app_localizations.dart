@@ -215,7 +215,7 @@ abstract class AppLocalizations {
   /// No description provided for @blockedMsg.
   ///
   /// In en, this message translates to:
-  /// **'You are blocked. Contact admin: james.tope01@gmail.com'**
+  /// **'You are blocked. Contact admin: mohammed981@gmail.com'**
   String get blockedMsg;
 
   /// No description provided for @gettingDirection.
@@ -281,7 +281,7 @@ abstract class AppLocalizations {
   /// No description provided for @feedbackText.
   ///
   /// In en, this message translates to:
-  /// **'We appreciate your feedback! Feel free to email us at james.tope01@gmail.com.'**
+  /// **'We appreciate your feedback! Feel free to email us at mohammed981@gmail.com.'**
   String get feedbackText;
 
   /// No description provided for @copyright.
