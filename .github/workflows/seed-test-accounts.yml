@@ -1,0 +1,71 @@
+name: Test accounts
+
+# حسابات تجربة تُنشأ بمفتاح الخادم لا من شاشة التسجيل، لأن التجربة تحتاج
+# طرفين: راكباً يطلب وسائقاً متصلاً قريباً منه. والسائق لا شاشة تسجيل له بعد.
+#
+# لا جدولة ولا دفع: يدويّ فقط. سكربتٌ يكتب في قاعدة حيّة لا يُترك يعمل بنفسه.
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: "seed = إنشاء · list = عرض · cleanup = حذف"
+        type: choice
+        required: true
+        default: seed
+        options: [seed, list, cleanup]
+      center_lat:
+        description: "خط عرض مركز نثر السائقين"
+        required: false
+        default: "15.5007"
+      center_lng:
+        description: "خط طول مركز نثر السائقين"
+        required: false
+        default: "32.5599"
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install the Admin SDK
+        run: npm install firebase-admin@12 --no-save
+
+      - name: Check the secret is set
+        env:
+          SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          if [ -z "$SA" ]; then
+            echo "::error::FIREBASE_SERVICE_ACCOUNT is not set."
+            exit 1
+          fi
+
+      - name: ${{ inputs.action }}
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          RTDB_URL: ${{ vars.RTDB_URL || 'https://taxi-taiba-default-rtdb.europe-west1.firebasedatabase.app' }}
+          TEST_PASSWORD: ${{ vars.TEST_PASSWORD || 'Taiba@2026test' }}
+          CENTER_LAT: ${{ inputs.center_lat }}
+          CENTER_LNG: ${{ inputs.center_lng }}
+        run: |
+          printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$RUNNER_TEMP/sa.json"
+          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
+
+          node tools/seed-test-accounts.js "${{ inputs.action }}" | tee "$RUNNER_TEMP/out.txt"
+
+          rm -f "$RUNNER_TEMP/sa.json"
+
+          {
+            echo '### حسابات التجربة'
+            echo
+            echo '```'
+            cat "$RUNNER_TEMP/out.txt"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
