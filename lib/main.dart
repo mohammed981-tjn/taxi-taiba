@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_phoenix/flutter_phoenix.dart';
 import 'package:flutter_projects/appinfo/app_info.dart';
@@ -9,6 +10,22 @@ import 'package:flutter_projects/locale_provider.dart';
 import 'package:flutter_projects/pages/splash_screen.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
+
+/// The Realtime Database instance, in full.
+///
+/// This has to be stated rather than discovered. `google-services.json` carries
+/// a `firebase_url` only for databases in us-central1; this one is in Belgium,
+/// so the downloaded file has no such field and the SDK has nothing to derive
+/// from — `FirebaseDatabase.instance` would resolve to a host that does not
+/// exist, and every read would simply never arrive.
+///
+/// Overridable so a staging database needs no code change:
+///   --dart-define=RTDB_URL=https://...
+const String _rtdbUrl = String.fromEnvironment(
+  'RTDB_URL',
+  defaultValue:
+      'https://taxi-taiba-default-rtdb.europe-west1.firebasedatabase.app',
+);
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -34,7 +51,7 @@ void main() async {
         // of the host outside us-central1, so it cannot be derived from the
         // project id — pass it in rather than assume:
         //   --dart-define=RTDB_URL=https://taxi-taiba-default-rtdb...
-        databaseURL: String.fromEnvironment('RTDB_URL'),
+        databaseURL: _rtdbUrl,
         projectId: "taxi-taiba",
         storageBucket: "taxi-taiba.firebasestorage.app",
         messagingSenderId: "19401527632",
@@ -42,6 +59,12 @@ void main() async {
       ),
     );
   }
+
+  // Set once here so every `FirebaseDatabase.instance` in the app resolves to
+  // the Belgian host. The alternative — passing the URL at each of the call
+  // sites — is the same value repeated in a dozen files, where one missed copy
+  // fails silently rather than loudly.
+  FirebaseDatabase.instance.databaseURL = _rtdbUrl;
 
   // صلاحية الموقع
   await Permission.locationWhenInUse.isDenied.then((value) {
