@@ -22,8 +22,15 @@ class _SelectDestinationPageState extends State<SelectDestinationPage> {
 
   searchPlace(String userInput) async {
     if (userInput.length > 1) {
+      // البلد من `placesComponents` لا مكتوباً هنا — راجع lib/global.dart.
+      // والمدخل يُرمَّز: اسم حيّ فيه مسافة أو `&` كان يقطع العنوان ويُفسد
+      // الطلب كلّه، وهو أمرٌ يقع مع أول اسم عربي مركّب.
       String placesAPIurl =
-          "https://maps.googleapis.com/maps/api/place/autocomplete/json?input=$userInput&key=$googleMapKey&components=country:NG";
+          "https://maps.googleapis.com/maps/api/place/autocomplete/json"
+          "?input=${Uri.encodeQueryComponent(userInput)}"
+          "&key=$googleMapKey"
+          "&components=$placesComponents"
+          "&language=ar";
       var responseFromPlacesAPI = await GoogleMapMethods.sendRequestToApi(placesAPIurl);
 
       if (responseFromPlacesAPI == "error") {

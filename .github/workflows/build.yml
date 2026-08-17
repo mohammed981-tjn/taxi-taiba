@@ -81,11 +81,14 @@ jobs:
       - name: Resolve dependencies
         run: flutter pub get
 
-      # Reported, not enforced. A first green build is worth more than a clean
-      # analyzer, and this project has never had either — failing here would
-      # hide the APK behind warnings that predate this workflow.
+      # كان يُختم بـ`|| true`، فلا يُفشل شيئاً — ولا حتى الأخطاء. كان ذلك
+      # صحيحاً يوم لم يكن في المستودع بناءٌ أخضر واحد: إخفاء الـAPK خلف تحذيرات
+      # سبقت هذا الملف لا يفيد أحداً.
+      #
+      # ذلك اليوم مضى. `|| true` يسقط الآن، وتبقى `--no-fatal-*`: التحذيرات
+      # والملاحظات تُعرَض ولا تُفشِل، والأخطاء تُفشِل — وهو ما يجب أن تفعله.
       - name: Analyze
-        run: flutter analyze --no-fatal-infos --no-fatal-warnings || true
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
 
       # يُنفَّذ ولا يُتسامح معه، بخلاف المحلّل أعلاه — وحساب نطاقات الجيوهاش هو
       # السبب. خطأٌ فيه لا يُسقط التطبيق بل يُخفي السائقين، فتقول الشاشة «لا
@@ -118,6 +121,7 @@ jobs:
           flutter build apk --release --split-per-abi \
             -t "${{ matrix.target }}" \
             --dart-define=MAPS_API_KEY="$MAPS_API_KEY" \
+            --dart-define=PLACES_COUNTRIES="${{ vars.PLACES_COUNTRIES || 'SD' }}" \
             -Pmaps.api.key="$MAPS_API_KEY"
 
       - name: Report how it was signed

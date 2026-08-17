@@ -21,10 +21,39 @@ import 'package:flutter_projects/methods/associate_methods.dart';
 /// Read at compile time — empty when the define is absent.
 const String googleMapKey = String.fromEnvironment('MAPS_API_KEY');
 
+/// البلدان التي يبحث فيها الإكمال التلقائي — رموز ISO مفصولة بـ`|`.
+///
+/// كانت `NG` مكتوبةً في عنوان الطلب مباشرةً: نيجيريا، بلد القالب الأصلي. وأثر
+/// ذلك أنّ الراكب يكتب اسم حيّه فلا تظهر نتيجة واحدة — لا رسالة خطأ ولا سبب،
+/// فيبدو عطلاً في الشبكة وهو قيدٌ في سطر. وهو أخطر شكل يتّخذه افتراض قالب:
+/// لا يفشل البناء، ولا يفشل الطلب — يعود فارغاً وينجح.
+///
+/// والافتراض هنا السودان، مأخوذاً من سياق المشروع لا من تصريح. غيّره عند
+/// البناء إن كان غير ذلك — وتقبل Places حتى خمسة بلدان:
+///
+///   --dart-define=PLACES_COUNTRIES=SD
+///   --dart-define=PLACES_COUNTRIES=SD|SA
+const String placesCountries = String.fromEnvironment(
+  'PLACES_COUNTRIES',
+  defaultValue: 'SD',
+);
+
+/// `SD|SA` ← ما يُكتب، `country:sd|country:sa` ← ما تفهمه Places.
+String get placesComponents => placesCountries
+    .split('|')
+    .map((String code) => code.trim().toLowerCase())
+    .where((String code) => code.isNotEmpty)
+    .map((String code) => 'country:$code')
+    .join('|');
+
 /// Where the map sits for the instant before the user's location arrives.
 /// Every path that shows the map immediately animates away from it.
+///
+/// كانت إحداثيات مقرّ Google في كاليفورنيا — قيمة `flutter create` الافتراضية
+/// التي لم يمسّها أحد. لا تُرى طويلاً، لكنها تُرى: ومضة خريطة لمدينة أمريكية
+/// قبل أن يصل الموقع.
 const CameraPosition kGooglePlex = CameraPosition(
-  target: LatLng(37.42796133580664, -122.085749655962),
+  target: LatLng(15.5007, 32.5599),
   zoom: 14.4746,
 );
 
