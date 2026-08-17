@@ -2,7 +2,6 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:googleapis_auth/auth_io.dart' as auth;
-import 'package:http/http.dart' as http;
 
 /// Tells a driver's device that a trip is waiting for them.
 ///
