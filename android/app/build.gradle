@@ -25,6 +25,14 @@ android {
         targetSdkVersion 34
         versionCode 1
         versionName '1.0.0'
+
+        // مفتاح الخرائط يُحقن عند البناء ولا يُخزَّن في المستودع:
+        //   flutter build apk --release -Pmaps.api.key=AIza...
+        // والافتراضي فارغ كي يبني المستودع بلا مفتاح — عندها تظهر الخريطة
+        // فارغة، وهو فشل مرئي أهون من فشل البناء كلّه.
+        manifestPlaceholders += [
+            MAPS_API_KEY: (project.findProperty('maps.api.key') ?: '')
+        ]
     }
 
     buildTypes {
