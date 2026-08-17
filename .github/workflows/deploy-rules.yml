@@ -36,7 +36,9 @@ jobs:
           fi
 
       - name: Validate the rules parse as JSON
-        run: python3 -c "import json; json.load(open('database.rules.json')); print('rules: valid JSON')"
+        run: |
+          python3 -c "import json; json.load(open('database.rules.json'))"
+          echo "rules parse cleanly"
 
       - uses: actions/setup-node@v4
         with:
