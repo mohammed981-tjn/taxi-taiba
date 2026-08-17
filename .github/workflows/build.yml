@@ -1,0 +1,70 @@
+name: Build APK
+
+# The APK is built here rather than on a machine, because that is the only
+# place this repository is guaranteed to build the same way twice: the SDK
+# version, the JDK and the Android toolchain are all pinned below instead of
+# being whatever the person pressing the button happens to have installed.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Gradle 8.7 (see android/gradle/wrapper/gradle-wrapper.properties) and
+      # the Android Gradle Plugin both require 17. On 21 the build fails late,
+      # inside Gradle, with an error that does not name the JDK.
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      # pubspec.yaml asks for Dart >=3.4.0; Flutter 3.24 ships 3.5.
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.24.0"
+          channel: stable
+          cache: true
+
+      - name: Versions
+        run: flutter --version
+
+      - name: Resolve dependencies
+        run: flutter pub get
+
+      # Reported, not enforced. A first green build is worth more than a clean
+      # analyzer, and this project has never had either — failing here would
+      # hide the APK behind warnings that predate this workflow.
+      - name: Analyze
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings || true
+
+      # android/gradlew and gradle-wrapper.jar are not in the repository — they
+      # are covered by .gitignore. The Flutter tool injects its own wrapper when
+      # it finds none, and keeps the existing gradle-wrapper.properties, so the
+      # pinned Gradle 8.7 is still what runs. If this step ever fails on a
+      # missing wrapper, commit the wrapper rather than changing the pin.
+      - name: Build release APKs
+        run: flutter build apk --release --split-per-abi
+
+      - name: List what was produced
+        run: ls -lh build/app/outputs/flutter-apk/
+
+      # Split per ABI, so arm64-v8a is the one for any phone sold in the last
+      # several years — the same variant the existing release APK was.
+      - name: Upload APKs
+        uses: actions/upload-artifact@v4
+        with:
+          name: oago-passenger-release
+          path: build/app/outputs/flutter-apk/*.apk
+          if-no-files-found: error
+          retention-days: 30

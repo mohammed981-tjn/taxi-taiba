@@ -5,7 +5,6 @@ import 'package:flutter_phoenix/flutter_phoenix.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_geofire/flutter_geofire.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:flutter_projects/auth/signin_page.dart';
 import 'package:flutter_projects/global.dart';
@@ -412,10 +411,23 @@ class _HomePageState extends State<HomePage> {
 
   final _driversRef = FirebaseDatabase.instance.ref().child('onlineDrivers');
 
+  /// Held so the stream can actually be stopped.
+  ///
+  /// The call meant to stop it — Geofire.stopListener() — belongs to a listener
+  /// this screen never starts: the Geofire query above is commented out and
+  /// replaced by the plain onValue listener below. So the stop was a no-op, and
+  /// every online driver kept streaming to the phone through the whole trip and
+  /// past its end.
+  StreamSubscription<DatabaseEvent>? _driversSubscription;
+
   void initializeCustomGeoListener() {
     debugPrint('initializeCustomGeoListener');
 
-    _driversRef.onValue.listen((event) {
+    // Cancel first rather than stacking a second stream on the same reference,
+    // which is what happened whenever this ran again after a trip ended.
+    _driversSubscription?.cancel();
+
+    _driversSubscription = _driversRef.onValue.listen((event) {
       final data = event.snapshot.value as Map<dynamic, dynamic>?;
 
       if (data == null) {
@@ -695,7 +707,10 @@ class _HomePageState extends State<HomePage> {
         if (status == "accepted") {
           displayTripDetailsContainer();
 
-          Geofire.stopListener();
+          // A driver is assigned, so the other cars are no longer of any use to
+          // this screen — and this is the stream that is actually running.
+          _driversSubscription?.cancel();
+          _driversSubscription = null;
 
           setState(() {
             markerSet.removeWhere(
@@ -787,6 +802,18 @@ class _HomePageState extends State<HomePage> {
 
       requestingDirectionDetailsInfo = false;
     }
+  }
+
+  @override
+  void dispose() {
+    // Neither stream was released when this screen went away, so leaving the
+    // map and coming back left the previous listeners running and added new
+    // ones beside them — the driver feed is every online driver in the system,
+    // so each abandoned copy keeps costing bandwidth for as long as the app is
+    // open.
+    _driversSubscription?.cancel();
+    tripStreamSubscription?.cancel();
+    super.dispose();
   }
 
   @override
