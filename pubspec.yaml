@@ -1,0 +1,51 @@
+name: flutter_projects
+description: "OAGO Mobile App"
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.4.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+  firebase_core:
+  firebase_auth:
+  firebase_database:
+  google_maps_flutter:
+  permission_handler:
+  geolocator:
+  http:
+  provider:
+  flutter_polyline_points:
+  flutter_geofire:
+  googleapis:
+  googleapis_auth:
+  loading_animation_widget:
+  url_launcher:
+  flutter_phoenix:
+  shared_preferences:
+
+  # localization
+  flutter_localizations:
+    sdk: flutter
+  intl: any
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
+
+  # REQUIRED! Generates localization classes from the ARB files
+  # (l10n configuration lives in l10n.yaml at the project root)
+  generate: true
+
+  assets:
+    - assets/
+    - assets/images/

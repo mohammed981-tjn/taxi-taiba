@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "433322846976",
+    "project_id": "rdidago",
+    "storage_bucket": "rdidago.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:433322846976:android:00f4d1ef6250c1116821e5",
+        "android_client_info": {
+          "package_name": "com.rididago.com"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDYS_scTzFeDNe2se2ilWyTYHrnmLlVAsY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
