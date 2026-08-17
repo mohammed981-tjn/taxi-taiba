@@ -16,6 +16,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 40
 
+    # `secrets` is not available inside an `if:` expression — only `env` is. So
+    # the secret is lifted to the job environment here and the steps below test
+    # `env.KEYSTORE_BASE64` instead. Without this the whole file fails to parse,
+    # which takes every build down, not just the signing step.
+    env:
+      KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+
     steps:
       - uses: actions/checkout@v4
 
@@ -69,9 +76,7 @@ jobs:
       # أثر أو يُدفع سهواً. غيابه ليس فشلاً: البناء يعود إلى توقيع التصحيح،
       # وهو ما نريده لطلبات السحب.
       - name: Restore the upload keystore
-        if: ${{ secrets.KEYSTORE_BASE64 != '' }}
-        env:
-          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        if: env.KEYSTORE_BASE64 != ''
         run: |
           printf '%s' "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/upload.jks"
           echo "KEYSTORE_PATH=$RUNNER_TEMP/upload.jks" >> "$GITHUB_ENV"
