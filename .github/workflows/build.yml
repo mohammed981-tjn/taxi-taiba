@@ -67,6 +67,13 @@ jobs:
       - name: Analyze
         run: flutter analyze --no-fatal-infos --no-fatal-warnings || true
 
+      # يُنفَّذ ولا يُتسامح معه، بخلاف المحلّل أعلاه — وحساب نطاقات الجيوهاش هو
+      # السبب. خطأٌ فيه لا يُسقط التطبيق بل يُخفي السائقين، فتقول الشاشة «لا
+      # يوجد سائقون» وهي صادقة في ما ترى. عطلٌ صامت كهذا لا تمسكه تجربة يدوية
+      # إلا بالمصادفة، فيُمسك هنا.
+      - name: Test
+        run: flutter test
+
       # android/gradlew and gradle-wrapper.jar are not in the repository — they
       # are covered by .gitignore. The Flutter tool injects its own wrapper when
       # it finds none, and keeps the existing gradle-wrapper.properties, so the
