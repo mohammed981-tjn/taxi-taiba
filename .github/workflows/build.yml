@@ -211,18 +211,32 @@ jobs:
       #
       #   1:19401527632:web:0a1b2c3d…      ✅
       #   1:19401527632:android:da0113…    ❌ بطاقة أندرويد لا ويب
-      - name: Check the web app id is a web app id
+      # المعرّف علني بحكم التصميم — يظهر في كل حزمة تُبنى — فهو متغيّر لا سرّ.
+      #
+      # وحالتان مختلفتان تُعامَلان مختلفتين:
+      #
+      #   غير مضبوط  → تخطٍّ. «الويب لم يُهيَّأ بعد» حالةٌ مشروعة، ولا يصحّ أن
+      #                توقف عملَ الأندرويد الذي لا يقرأ هذا المتغيّر أصلاً.
+      #   مضبوط وخطأ → فشل صريح. قيمةٌ خاطئة تُبنى بنجاح وتُنتج صفحة بيضاء في
+      #                المتصفّح، فالفشل هنا أرخص من اكتشافه بعد أسبوع.
+      - name: Validate the web app id
+        id: webid
         env:
-          WEB_APP_ID: ${{ vars.FIREBASE_WEB_APP_ID }}
+          RAW_WEB_APP_ID: ${{ vars.FIREBASE_WEB_APP_ID }}
         run: |
+          # تُنزع المسافات وفواصل الأسطر أولاً: لصقُ القيمة في حقل المتصفّح
+          # يحملها سطراً زائداً في الغالب، وهو ما وقع فعلاً — فخرجت رسالة الخطأ
+          # مقطوعة وأشارت إلى «مشروع مختلف» بدل السبب الحقيقي.
+          WEB_APP_ID=$(printf '%s' "$RAW_WEB_APP_ID" | tr -d '[:space:]')
+
           if [ -z "$WEB_APP_ID" ]; then
-            echo "::error::FIREBASE_WEB_APP_ID is not set."
-            echo "Settings > Secrets and variables > Actions > Variables."
-            exit 1
+            echo "::notice::FIREBASE_WEB_APP_ID is not set — skipping the web build."
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
 
           # الشكل: <version>:<project number>:web:<hash>
-          if ! printf '%s' "$WEB_APP_ID" | grep -Eq '^[0-9]+:[0-9]+:web:[0-9a-f]+$'; then
+          if ! printf '%s' "$WEB_APP_ID" | grep -Eq '^[0-9]+:[0-9]+:web:[0-9a-zA-Z]+$'; then
             platform=$(printf '%s' "$WEB_APP_ID" | cut -d: -f3)
             echo "::error::FIREBASE_WEB_APP_ID is not a web app id (platform segment: '${platform:-none}')."
             echo "A web app id looks like 1:19401527632:web:0a1b2c3d4e5f6a7b8c9d0e"
@@ -231,9 +245,9 @@ jobs:
             exit 1
           fi
 
-          # رقم المشروع جزءٌ من المعرّف، فمعرّفٌ من مشروع آخر يُبنى ويفشل عند
-          # الإقلاع كذلك. يُقارن بما في google-services.json — المصدر الوحيد
-          # للحقيقة في المستودع.
+          # رقم المشروع جزءٌ من المعرّف، فمعرّفٌ من مشروع آخر سليمُ الشكل
+          # ويفشل عند الإقلاع بالقدر نفسه. يُقارن بما في google-services.json —
+          # المصدر الوحيد للحقيقة في المستودع.
           expected=$(python3 -c "import json;print(json.load(open('android/app/google-services.json'))['project_info']['project_number'])")
           actual=$(printf '%s' "$WEB_APP_ID" | cut -d: -f2)
 
@@ -243,18 +257,25 @@ jobs:
           fi
 
           echo "web app id: $WEB_APP_ID (project $actual)"
+          echo "configured=true" >> "$GITHUB_OUTPUT"
+          echo "id=$WEB_APP_ID" >> "$GITHUB_OUTPUT"
 
+      # القيمة المنظَّفة من الخطوة أعلاه، لا الخام: سطرٌ زائد يدخل الحزمة
+      # ويُفسد المعرّف بصمت.
       - name: Build the admin panel for the web
+        if: steps.webid.outputs.configured == 'true'
         run: |
           flutter build web --release \
             -t lib/main_admin.dart \
-            --dart-define=FIREBASE_WEB_APP_ID="${{ vars.FIREBASE_WEB_APP_ID }}" \
+            --dart-define=FIREBASE_WEB_APP_ID="${{ steps.webid.outputs.id }}" \
             --dart-define=CURRENCY="${{ vars.CURRENCY || 'ج.س' }}"
 
       - name: List what was produced
+        if: steps.webid.outputs.configured == 'true'
         run: ls -lh build/web/
 
       - name: Upload the web build
+        if: steps.webid.outputs.configured == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: taiba-admin-web
