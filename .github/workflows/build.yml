@@ -143,8 +143,8 @@ jobs:
             -t "${{ matrix.target }}" \
             -Pflavor="${{ matrix.flavor }}" \
             --dart-define=MAPS_API_KEY="$MAPS_API_KEY" \
-            --dart-define=PLACES_COUNTRIES="${{ vars.PLACES_COUNTRIES || 'SD' }}" \
-            --dart-define=CURRENCY="${{ vars.CURRENCY || 'ج.س' }}" \
+            --dart-define=PLACES_COUNTRIES="${{ vars.PLACES_COUNTRIES || 'SA' }}" \
+            --dart-define=CURRENCY="${{ vars.CURRENCY || 'ر.س' }}" \
             -Pmaps.api.key="$MAPS_API_KEY"
 
       # الاسم يقول أيّ تطبيق هذا. `app-release.apk` ثلاث مرّات في مجلّد
@@ -268,7 +268,7 @@ jobs:
           flutter build web --release \
             -t lib/main_admin.dart \
             --dart-define=FIREBASE_WEB_APP_ID="${{ steps.webid.outputs.id }}" \
-            --dart-define=CURRENCY="${{ vars.CURRENCY || 'ج.س' }}"
+            --dart-define=CURRENCY="${{ vars.CURRENCY || 'ر.س' }}"
 
       - name: List what was produced
         if: steps.webid.outputs.configured == 'true'

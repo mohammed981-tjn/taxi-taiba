@@ -28,17 +28,20 @@ const String googleMapKey = String.fromEnvironment('MAPS_API_KEY');
 /// فيبدو عطلاً في الشبكة وهو قيدٌ في سطر. وهو أخطر شكل يتّخذه افتراض قالب:
 /// لا يفشل البناء، ولا يفشل الطلب — يعود فارغاً وينجح.
 ///
-/// والافتراض هنا السودان، مأخوذاً من سياق المشروع لا من تصريح. غيّره عند
-/// البناء إن كان غير ذلك — وتقبل Places حتى خمسة بلدان:
+/// والافتراض السعودية — **مصرَّحاً به هذه المرّة لا مستنتَجاً**. كان `SD`
+/// استنتاجاً من سياق مشروع آخر، وهو خطأٌ من الشكل نفسه الذي أصلحناه: لا
+/// يفشل بناءٌ ولا طلب، ويعود الإكمال التلقائي فارغاً لكل راكب في الرياض.
 ///
-///   --dart-define=PLACES_COUNTRIES=SD
-///   --dart-define=PLACES_COUNTRIES=SD|SA
+/// وتقبل Places حتى خمسة بلدان:
+///
+///   --dart-define=PLACES_COUNTRIES=SA
+///   --dart-define=PLACES_COUNTRIES=SA|SD
 const String placesCountries = String.fromEnvironment(
   'PLACES_COUNTRIES',
-  defaultValue: 'SD',
+  defaultValue: 'SA',
 );
 
-/// `SD|SA` ← ما يُكتب، `country:sd|country:sa` ← ما تفهمه Places.
+/// `SA|SD` ← ما يُكتب، `country:sa|country:sd` ← ما تفهمه Places.
 String get placesComponents => placesCountries
     .split('|')
     .map((String code) => code.trim().toLowerCase())
@@ -50,10 +53,14 @@ String get placesComponents => placesCountries
 /// Every path that shows the map immediately animates away from it.
 ///
 /// كانت إحداثيات مقرّ Google في كاليفورنيا — قيمة `flutter create` الافتراضية
-/// التي لم يمسّها أحد. لا تُرى طويلاً، لكنها تُرى: ومضة خريطة لمدينة أمريكية
+/// التي لم يمسّها أحد. لا تُرى طويلاً، لكنها تُرى: ومضة خريطة لمدينة بعيدة
 /// قبل أن يصل الموقع.
+///
+/// والمدينة المنوّرة هي الافتراض: السوق الأول السعودية، و«طيبة» اسمُها الذي
+/// عُرفت به. غيّرها إن كان الإطلاق في مدينة أخرى — ومضةٌ خاطئة لثانية أهون
+/// من غيرها، لكنها تبقى خطأً.
 const CameraPosition kGooglePlex = CameraPosition(
-  target: LatLng(15.5007, 32.5599),
+  target: LatLng(24.4686, 39.6142),
   zoom: 14.4746,
 );
 

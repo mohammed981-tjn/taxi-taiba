@@ -34,28 +34,28 @@ const admin = require('firebase-admin');
 const DOMAIN = 'taiba.test';
 
 const PASSENGERS = [
-  { key: 'rider1', name: 'راكب تجريبي ١', phone: '0900000001' },
-  { key: 'rider2', name: 'راكب تجريبي ٢', phone: '0900000002' },
+  { key: 'rider1', name: 'راكب تجريبي ١', phone: '0500000001' },
+  { key: 'rider2', name: 'راكب تجريبي ٢', phone: '0500000002' },
 ];
 
 const DRIVERS = [
   {
     key: 'driver1',
     name: 'سائق تجريبي ١',
-    phone: '0910000001',
-    car: { model: 'Toyota Corolla', number: 'KRT 1234', color: 'أبيض', type: 'اقتصادي' },
+    phone: '0530000001',
+    car: { model: 'Toyota Corolla', number: 'MDN 1234', color: 'أبيض', type: 'اقتصادي' },
   },
   {
     key: 'driver2',
     name: 'سائق تجريبي ٢',
-    phone: '0910000002',
-    car: { model: 'Hyundai Accent', number: 'KRT 5678', color: 'فضي', type: 'اقتصادي' },
+    phone: '0530000002',
+    car: { model: 'Hyundai Accent', number: 'MDN 5678', color: 'فضي', type: 'اقتصادي' },
   },
   {
     key: 'driver3',
     name: 'سائق تجريبي ٣',
-    phone: '0910000003',
-    car: { model: 'Kia Sportage', number: 'KRT 9012', color: 'أسود', type: 'عائلي' },
+    phone: '0530000003',
+    car: { model: 'Kia Sportage', number: 'MDN 9012', color: 'أسود', type: 'عائلي' },
   },
 ];
 
@@ -120,10 +120,11 @@ const RTDB_URL =
 
 const PASSWORD = process.env.TEST_PASSWORD || 'Taiba@2026test';
 
-// الخرطوم افتراضاً. غيّرها إلى حيث تجرّب فعلاً — سائق على بُعد ألف كيلومتر
-// موجودٌ في القاعدة ولا يظهر في التطبيق، لأن المرشّح يقصّ عند ٢٢ كم.
-const CENTER_LAT = Number(process.env.CENTER_LAT || 15.5007);
-const CENTER_LNG = Number(process.env.CENTER_LNG || 32.5599);
+// المدينة المنوّرة افتراضاً — السوق الأول. غيّرها إلى حيث تجرّب فعلاً:
+// سائقٌ على بُعد ألف كيلومتر موجودٌ في القاعدة ولا يظهر في التطبيق، لأن
+// المرشّح يقصّ عند ٢٢ كم — فتبدو المشكلةُ في التطبيق وهي في الإحداثيّات.
+const CENTER_LAT = Number(process.env.CENTER_LAT || 24.4686);
+const CENTER_LNG = Number(process.env.CENTER_LNG || 39.6142);
 
 // نثرٌ ثابت لا عشوائي: التشغيل مرتين يعطي المواقع نفسها، فما تراه على الخريطة
 // لا يتحرّك بين تشغيل وآخر إلا حين تريد أنت. ≈ ١٫١ كم لكل ٠٫٠١ درجة.
