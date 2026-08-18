@@ -2,7 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_projects/admin/admin_home.dart';
 import 'package:flutter_projects/app_flavor.dart';
-import 'package:flutter_projects/theme/tiba_logo.dart';
+import 'package:flutter_projects/theme/taibah_logo.dart';
 
 /// بوّابة اللوحة: دخول، ثم تحقّق من الراية.
 ///
@@ -84,7 +84,7 @@ class _AdminGateState extends State<AdminGate> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: <Widget>[
-                const TibaWordmark(role: AppRole.admin),
+                const TaibahWordmark(role: AppRole.admin),
                 const SizedBox(height: 30),
                 TextField(
                   controller: _email,

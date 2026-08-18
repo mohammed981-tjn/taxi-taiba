@@ -28,7 +28,7 @@ class RatingScreen extends StatefulWidget {
 }
 
 class _RatingScreenState extends State<RatingScreen> {
-  static final Color _navy = TibaPalette.passenger.primary;
+  static final Color _navy = TaibahPalette.passenger.primary;
 
   int _stars = 0;
   final Set<String> _tags = {};

@@ -136,7 +136,7 @@ class _IntroPageState extends State<IntroPage> {
                   width: selectedIndex == index ? 28 : 10,
                   decoration: BoxDecoration(
                     color: selectedIndex == index
-                        ? TibaPalette.passenger.primary
+                        ? TaibahPalette.passenger.primary
                         : Colors.grey.shade300,
                     borderRadius: BorderRadius.circular(20),
                   ),
@@ -163,7 +163,7 @@ class _IntroPageState extends State<IntroPage> {
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(30),
-                        border: Border.all(color: TibaPalette.passenger.primary, width: 1.5),
+                        border: Border.all(color: TaibahPalette.passenger.primary, width: 1.5),
                       ),
                       alignment: Alignment.center,
                       child: Text(
@@ -171,7 +171,7 @@ class _IntroPageState extends State<IntroPage> {
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
-                          color: TibaPalette.passenger.primary,
+                          color: TaibahPalette.passenger.primary,
                         ),
                       ),
                     ),
@@ -191,7 +191,7 @@ class _IntroPageState extends State<IntroPage> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       decoration: BoxDecoration(
-                        color: TibaPalette.passenger.primary,
+                        color: TaibahPalette.passenger.primary,
                         borderRadius: BorderRadius.circular(30),
                       ),
                       alignment: Alignment.center,

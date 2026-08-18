@@ -21,8 +21,10 @@ class ReceiptPage extends StatelessWidget {
 
   // `final` لا `const`: حقلُ كائنٍ ثابت ليس تعبيراً ثابتاً في Dart وإن
   // كان الكائن نفسه ثابتاً. وليست متغيّرة ساكنة قابلة للتبديل.
-  static final Color _navy = TibaPalette.passenger.primary;
-  static const String _currency = currencySymbol;
+  static final Color _navy = TaibahPalette.passenger.primary;
+  // `get` لا `const`: العملة تتبع السوق الفعّال، وهو يُحسم عند الإقلاع
+  // لا عند التصريف.
+  String get _currency => currencySymbol;
 
   String _s(String key) => trip[key]?.toString() ?? '';
 
@@ -188,7 +190,7 @@ class _Line extends StatelessWidget {
     final style = TextStyle(
       fontSize: bold ? 16 : 14.5,
       fontWeight: bold ? FontWeight.bold : FontWeight.normal,
-      color: bold ? TibaPalette.passenger.primary : Colors.black87,
+      color: bold ? TaibahPalette.passenger.primary : Colors.black87,
     );
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 3),

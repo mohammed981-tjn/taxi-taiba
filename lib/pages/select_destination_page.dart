@@ -59,7 +59,7 @@ class _SelectDestinationPageState extends State<SelectDestinationPage> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: TibaPalette.passenger.primary,
+        backgroundColor: TaibahPalette.passenger.primary,
         elevation: 0,
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
@@ -76,7 +76,7 @@ class _SelectDestinationPageState extends State<SelectDestinationPage> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: TibaPalette.passenger.primary,
+              color: TaibahPalette.passenger.primary,
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.1),

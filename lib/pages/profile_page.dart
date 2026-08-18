@@ -58,7 +58,7 @@ class _ProfilePageState extends State<ProfilePage> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: TibaPalette.passenger.primary,
+        backgroundColor: TaibahPalette.passenger.primary,
         title: Text(
           l10n.profileTitle,
           style: const TextStyle(color: Colors.white),
@@ -98,7 +98,7 @@ class _ProfilePageState extends State<ProfilePage> {
               ElevatedButton(
                 onPressed: updateProfile,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: TibaPalette.passenger.primary,
+                  backgroundColor: TaibahPalette.passenger.primary,
                   minimumSize: const Size(double.infinity, 50),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
@@ -120,7 +120,7 @@ class _ProfilePageState extends State<ProfilePage> {
       style: const TextStyle(color: Colors.black, fontSize: 16),
       decoration: InputDecoration(
         labelText: label,
-        prefixIcon: Icon(icon, color: TibaPalette.passenger.primary),
+        prefixIcon: Icon(icon, color: TaibahPalette.passenger.primary),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
         disabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),

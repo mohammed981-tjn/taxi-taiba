@@ -101,7 +101,7 @@ abstract class AppLocalizations {
   /// No description provided for @appTitle.
   ///
   /// In en, this message translates to:
-  /// **'Tiba'**
+  /// **'Taibah'**
   String get appTitle;
 
   /// No description provided for @welcomeText.
@@ -269,13 +269,13 @@ abstract class AppLocalizations {
   /// No description provided for @aboutTitle.
   ///
   /// In en, this message translates to:
-  /// **'Welcome to Tiba'**
+  /// **'Welcome to Taibah'**
   String get aboutTitle;
 
   /// No description provided for @oagoDescription.
   ///
   /// In en, this message translates to:
-  /// **'Tiba is a smart mobility platform that connects travelers with reliable drivers for daily rides, long-distance journeys, and corporate transportation. Beyond regular ride-hailing, Tiba also offers car rental services, allowing car owners to lend their vehicles to travelers. With seamless hotel booking and travel assistance, Tiba provides a one-stop solution for all your transportation needs. Whether you need a quick ride, a professional driver, or a rental car, Tiba makes travel effortless, safe, and convenient.'**
+  /// **'Taibah is a smart mobility platform that connects travelers with reliable drivers for daily rides, long-distance journeys, and corporate transportation. Beyond regular ride-hailing, Taibah also offers car rental services, allowing car owners to lend their vehicles to travelers. With seamless hotel booking and travel assistance, Taibah provides a one-stop solution for all your transportation needs. Whether you need a quick ride, a professional driver, or a rental car, Taibah makes travel effortless, safe, and convenient.'**
   String get oagoDescription;
 
   /// No description provided for @feedbackText.
@@ -287,7 +287,7 @@ abstract class AppLocalizations {
   /// No description provided for @copyright.
   ///
   /// In en, this message translates to:
-  /// **'© 2025 Tiba. All rights reserved.'**
+  /// **'© 2025 Taibah. All rights reserved.'**
   String get copyright;
 
   /// No description provided for @chooseRide.
@@ -305,19 +305,19 @@ abstract class AppLocalizations {
   /// No description provided for @oagoGo.
   ///
   /// In en, this message translates to:
-  /// **'Tiba Go'**
+  /// **'Taibah Go'**
   String get oagoGo;
 
   /// No description provided for @oagoExecutive.
   ///
   /// In en, this message translates to:
-  /// **'Tiba Executive'**
+  /// **'Taibah Executive'**
   String get oagoExecutive;
 
   /// No description provided for @oagoXL.
   ///
   /// In en, this message translates to:
-  /// **'Tiba XL'**
+  /// **'Taibah XL'**
   String get oagoXL;
 
   /// No description provided for @email.
@@ -479,7 +479,7 @@ abstract class AppLocalizations {
   /// No description provided for @introDesc4.
   ///
   /// In en, this message translates to:
-  /// **'List your car on Tiba and rent it out to travelers while earning extra income!'**
+  /// **'List your car on Taibah and rent it out to travelers while earning extra income!'**
   String get introDesc4;
 
   /// No description provided for @introHeadline5.
@@ -503,7 +503,7 @@ abstract class AppLocalizations {
   /// No description provided for @introDesc6.
   ///
   /// In en, this message translates to:
-  /// **'Sign up and start enjoying Tiba’s amazing services today!'**
+  /// **'Sign up and start enjoying Taibah’s amazing services today!'**
   String get introDesc6;
 
   /// No description provided for @rateTripTitle.

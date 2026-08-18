@@ -17,7 +17,7 @@ class ChooseRidePage extends StatefulWidget {
 }
 
 class _ChooseRidePageState extends State<ChooseRidePage> {
-  String selectedCarType = "Tiba Go";
+  String selectedCarType = "Taibah Go";
   AssociateMethods associateMethods = AssociateMethods();
 
   @override
@@ -25,7 +25,7 @@ class _ChooseRidePageState extends State<ChooseRidePage> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: TibaPalette.passenger.primary,
+        backgroundColor: TaibahPalette.passenger.primary,
         title: Text(
           AppLocalizations.of(context)!.chooseRide,
           style: const TextStyle(color: Colors.white),
@@ -112,7 +112,7 @@ class _ChooseRidePageState extends State<ChooseRidePage> {
                 Navigator.pop(context, selectedCarType);
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: TibaPalette.passenger.primary,
+                backgroundColor: TaibahPalette.passenger.primary,
                 minimumSize: const Size(double.infinity, 50),
               ),
               child: Text(

@@ -1,7 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_projects/theme/tiba_logo.dart';
+import 'package:flutter_projects/theme/taibah_logo.dart';
 import 'package:flutter_projects/theme/app_theme.dart';
 import 'package:flutter_projects/app_flavor.dart';
 import 'package:flutter_projects/auth/signup_page.dart';
@@ -104,15 +104,15 @@ class _SigninPageState extends State<SigninPage> {
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: <Color>[
-                      TibaPalette.passenger.primary,
-                      TibaPalette.passenger.primaryDeep,
+                      TaibahPalette.passenger.primary,
+                      TaibahPalette.passenger.primaryDeep,
                     ],
                   ),
                   borderRadius: const BorderRadius.vertical(
                     bottom: Radius.circular(28),
                   ),
                 ),
-                child: const TibaWordmark(
+                child: const TaibahWordmark(
                   role: AppRole.passenger,
                   onDark: true,
                   logoSize: 68,
@@ -126,7 +126,7 @@ class _SigninPageState extends State<SigninPage> {
                 style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
-                  color: TibaPalette.passenger.primary,
+                  color: TaibahPalette.passenger.primary,
                 ),
               ),
               Padding(

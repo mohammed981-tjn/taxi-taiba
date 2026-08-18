@@ -31,13 +31,13 @@ jobs:
         include:
           - flavor: passenger
             target: lib/main.dart
-            artifact: oago-passenger-release
+            artifact: taibah-passenger-release
           - flavor: driver
             target: lib/main_driver.dart
-            artifact: taiba-driver-release
+            artifact: taibah-driver-release
           - flavor: admin
             target: lib/main_admin.dart
-            artifact: taiba-admin-release
+            artifact: taibah-admin-release
 
     # `secrets` is not available inside an `if:` expression — only `env` is. So
     # the secret is lifted to the job environment here and the steps below test
@@ -129,6 +129,10 @@ jobs:
       # لا يحمله. أضفها عند الحاجة:
       #   Settings ← Variables ← ANDROID_ABIS = android-arm,android-arm64,android-x64
       #
+      # والسوق متغيّر واحد يحمل البلد والعملة ومركز الخريطة معاً — راجع
+      # lib/market.dart. السودان معرَّفٌ هناك وجاهز، ويُفعَّل بـ MARKET=SD
+      # بلا تعديل شيفرة.
+      #
       # ولمتجر Play لاحقاً: `flutter build appbundle` — يتولّى المتجر التقسيم
       # عندها، فيصل كل جهاز أصغر مما يصله من هذه الحزمة.
       - name: Build ${{ matrix.flavor }} APK
@@ -143,8 +147,7 @@ jobs:
             -t "${{ matrix.target }}" \
             -Pflavor="${{ matrix.flavor }}" \
             --dart-define=MAPS_API_KEY="$MAPS_API_KEY" \
-            --dart-define=PLACES_COUNTRIES="${{ vars.PLACES_COUNTRIES || 'SA' }}" \
-            --dart-define=CURRENCY="${{ vars.CURRENCY || 'ر.س' }}" \
+            --dart-define=MARKET="${{ vars.MARKET || 'SA' }}" \
             -Pmaps.api.key="$MAPS_API_KEY"
 
       # الاسم يقول أيّ تطبيق هذا. `app-release.apk` ثلاث مرّات في مجلّد
@@ -268,7 +271,7 @@ jobs:
           flutter build web --release \
             -t lib/main_admin.dart \
             --dart-define=FIREBASE_WEB_APP_ID="${{ steps.webid.outputs.id }}" \
-            --dart-define=CURRENCY="${{ vars.CURRENCY || 'ر.س' }}"
+            --dart-define=MARKET="${{ vars.MARKET || 'SA' }}"
 
       - name: List what was produced
         if: steps.webid.outputs.configured == 'true'
@@ -278,7 +281,7 @@ jobs:
         if: steps.webid.outputs.configured == 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: taiba-admin-web
+          name: taibah-admin-web
           path: build/web/
           if-no-files-found: error
           retention-days: 30

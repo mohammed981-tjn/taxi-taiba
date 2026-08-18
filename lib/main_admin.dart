@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_projects/admin/admin_gate.dart';
-import 'package:flutter_projects/theme/tiba_splash.dart';
+import 'package:flutter_projects/theme/taibah_splash.dart';
 import 'package:flutter_projects/app_bootstrap.dart';
 import 'package:flutter_projects/app_flavor.dart';
 import 'package:flutter_projects/theme/app_theme.dart';
@@ -27,7 +27,7 @@ class AdminApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: '${TibaBrand.nameLatin} إدارة',
+      title: '${TaibahBrand.nameLatin} إدارة',
       debugShowCheckedModeBanner: false,
 
       // اللوحة عربية ثابتة، بلا مبدّل لغة. أداة داخلية لمستخدم واحد لا تحتاج
@@ -41,12 +41,12 @@ class AdminApp extends StatelessWidget {
         GlobalCupertinoLocalizations.delegate,
       ],
 
-      theme: TibaTheme.of(AppRole.admin),
+      theme: TaibahTheme.of(AppRole.admin),
 
       // نفس شاشة البداية التي يراها الراكب، بلون هذه النكهة.
       // والثلاث ثوانٍ ليست انتظاراً فارغاً: Firebase يستعيد الجلسة
       // خلالها، فلولاها لظهرت شاشة الدخول ثم اختفت لمن هو داخلٌ أصلاً.
-      home: TibaSplash(next: () => const AdminGate()),
+      home: TaibahSplash(next: () => const AdminGate()),
     );
   }
 }

@@ -17,11 +17,11 @@ import 'package:flutter_projects/app_flavor.dart';
 ///
 /// والكهرماني مشترك: لون الأجرة والتقييم والنجوم في الثلاثة، فيقرأ المستخدم
 /// «هذا رقم يخصّ المال» قبل أن يقرأ الرقم.
-class TibaBrand {
-  const TibaBrand._();
+class TaibahBrand {
+  const TaibahBrand._();
 
   /// الاسم كما يُكتب — لاتينيّاً وعربيّاً.
-  static const String nameLatin = 'Tiba';
+  static const String nameLatin = 'Taibah';
   static const String nameArabic = 'طيبة';
 
   /// ما يُعرض تحت الاسم في شاشات الدخول.
@@ -49,8 +49,8 @@ class TibaBrand {
 }
 
 /// ألوان النكهة الواحدة.
-class TibaPalette {
-  const TibaPalette({
+class TaibahPalette {
+  const TaibahPalette({
     required this.primary,
     required this.primaryDeep,
     required this.accent,
@@ -64,25 +64,25 @@ class TibaPalette {
   /// الكهرماني المشترك.
   final Color accent;
 
-  static const TibaPalette passenger = TibaPalette(
+  static const TaibahPalette passenger = TaibahPalette(
     primary: Color(0xFF0D1B4C),
     primaryDeep: Color(0xFF060E2C),
     accent: Color(0xFFF5A524),
   );
 
-  static const TibaPalette driver = TibaPalette(
+  static const TaibahPalette driver = TaibahPalette(
     primary: Color(0xFF0E7C5A),
     primaryDeep: Color(0xFF064434),
     accent: Color(0xFFF5A524),
   );
 
-  static const TibaPalette admin = TibaPalette(
+  static const TaibahPalette admin = TaibahPalette(
     primary: Color(0xFF5B3E96),
     primaryDeep: Color(0xFF33215C),
     accent: Color(0xFFF5A524),
   );
 
-  static TibaPalette of(AppRole role) {
+  static TaibahPalette of(AppRole role) {
     switch (role) {
       case AppRole.passenger:
         return passenger;
@@ -94,14 +94,14 @@ class TibaPalette {
   }
 }
 
-class TibaTheme {
-  const TibaTheme._();
+class TaibahTheme {
+  const TaibahTheme._();
 
   /// الاستدارة ثابتة عبر التطبيقات الثلاثة: أزرار وبطاقات وحقول بنفس اللغة.
   static const double radius = 14;
 
   static ThemeData of(AppRole role) {
-    final TibaPalette palette = TibaPalette.of(role);
+    final TaibahPalette palette = TaibahPalette.of(role);
 
     final ColorScheme scheme = ColorScheme.fromSeed(
       seedColor: palette.primary,

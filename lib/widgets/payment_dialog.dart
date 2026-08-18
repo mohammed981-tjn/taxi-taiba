@@ -97,7 +97,7 @@ class _PaymentDialogState extends State<PaymentDialog> {
               onPressed: () {
                 Navigator.pop(context, "paid");
               },
-              style: ElevatedButton.styleFrom(backgroundColor: TibaPalette.passenger.primary),
+              style: ElevatedButton.styleFrom(backgroundColor: TaibahPalette.passenger.primary),
               child: const Text(
                 "PAY CASH",
                 style: TextStyle(color: Colors.white),
@@ -105,7 +105,7 @@ class _PaymentDialogState extends State<PaymentDialog> {
             ),
             ElevatedButton(
               onPressed: () {},
-              style: ElevatedButton.styleFrom(backgroundColor: TibaPalette.passenger.primary),
+              style: ElevatedButton.styleFrom(backgroundColor: TaibahPalette.passenger.primary),
               child: const Text(
                 "PAY ONLINE",
                 style: TextStyle(color: Colors.white),

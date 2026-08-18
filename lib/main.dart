@@ -48,13 +48,13 @@ class MyApp extends StatelessWidget {
         builder: (context, localeProvider, child) {
           return MaterialApp(
             onGenerateTitle: (context) =>
-                AppLocalizations.of(context)?.appTitle ?? TibaBrand.nameLatin,
+                AppLocalizations.of(context)?.appTitle ?? TaibahBrand.nameLatin,
             debugShowCheckedModeBanner: false,
 
             // الهوية من مكان واحد — راجع lib/theme/app_theme.dart. كانت
             // `seedColor: Colors.deepPurple`، وهي قيمة `flutter create`
             // الافتراضية التي لم يمسّها أحد.
-            theme: TibaTheme.of(AppRole.passenger),
+            theme: TaibahTheme.of(AppRole.passenger),
 
             // 🔹 اللغة الحالية (تتغيّر عبر LocaleProvider) — RTL تلقائي للعربية
             locale: localeProvider.locale,

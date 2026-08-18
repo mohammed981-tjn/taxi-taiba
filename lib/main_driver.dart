@@ -4,7 +4,7 @@ import 'package:flutter_projects/app_bootstrap.dart';
 import 'package:flutter_projects/app_flavor.dart';
 import 'package:flutter_projects/theme/app_theme.dart';
 import 'package:flutter_projects/driver/driver_gate.dart';
-import 'package:flutter_projects/theme/tiba_splash.dart';
+import 'package:flutter_projects/theme/taibah_splash.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 /// نقطة دخول تطبيق السائق.
@@ -34,7 +34,7 @@ class DriverApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: '${TibaBrand.nameLatin} سائق',
+      title: '${TaibahBrand.nameLatin} سائق',
       debugShowCheckedModeBanner: false,
 
       locale: const Locale('ar'),
@@ -45,12 +45,12 @@ class DriverApp extends StatelessWidget {
         GlobalCupertinoLocalizations.delegate,
       ],
 
-      theme: TibaTheme.of(AppRole.driver),
+      theme: TaibahTheme.of(AppRole.driver),
 
       // نفس شاشة البداية التي يراها الراكب، بلون هذه النكهة.
       // والثلاث ثوانٍ ليست انتظاراً فارغاً: Firebase يستعيد الجلسة
       // خلالها، فلولاها لظهرت شاشة الدخول ثم اختفت لمن هو داخلٌ أصلاً.
-      home: TibaSplash(next: () => const DriverGate()),
+      home: TaibahSplash(next: () => const DriverGate()),
     );
   }
 }

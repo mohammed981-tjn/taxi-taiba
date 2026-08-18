@@ -34,7 +34,7 @@ class _TripHistoryPageState extends State<TripHistoryPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: TibaPalette.passenger.primary,
+        backgroundColor: TaibahPalette.passenger.primary,
         title: Text(
           AppLocalizations.of(context)!.historyTitle,
           style: const TextStyle(

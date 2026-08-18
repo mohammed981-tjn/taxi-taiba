@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_projects/app_flavor.dart';
 import 'package:flutter_projects/theme/app_theme.dart';
-import 'package:flutter_projects/theme/tiba_logo.dart';
+import 'package:flutter_projects/theme/taibah_logo.dart';
 
 /// شاشة البداية — واحدة للنكهات الثلاث.
 ///
@@ -15,8 +15,8 @@ import 'package:flutter_projects/theme/tiba_logo.dart';
 ///
 /// والحركة ليست زينة: الشعار يظهر من الشفافية ويصعد قليلاً، فتتبعه العين إلى
 /// موضعه في شاشة الدخول التالية بدل أن تبحث عنه من جديد.
-class TibaSplash extends StatefulWidget {
-  const TibaSplash({
+class TaibahSplash extends StatefulWidget {
+  const TaibahSplash({
     super.key,
     required this.next,
     this.role,
@@ -30,10 +30,10 @@ class TibaSplash extends StatefulWidget {
   final Duration duration;
 
   @override
-  State<TibaSplash> createState() => _TibaSplashState();
+  State<TaibahSplash> createState() => _TaibahSplashState();
 }
 
-class _TibaSplashState extends State<TibaSplash>
+class _TaibahSplashState extends State<TaibahSplash>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller = AnimationController(
     vsync: this,
@@ -74,7 +74,7 @@ class _TibaSplashState extends State<TibaSplash>
   @override
   Widget build(BuildContext context) {
     final AppRole role = widget.role ?? AppFlavor.role;
-    final TibaPalette palette = TibaPalette.of(role);
+    final TaibahPalette palette = TaibahPalette.of(role);
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       // شريط الحالة يُطابق الخلفية الداكنة، فلا يظهر شريطٌ فاتح فوق التدرّج.
@@ -108,7 +108,7 @@ class _TibaSplashState extends State<TibaSplash>
                       parent: _controller,
                       curve: Curves.easeOutCubic,
                     )),
-                    child: TibaWordmark(
+                    child: TaibahWordmark(
                       role: role,
                       onDark: true,
                       logoSize: 96,

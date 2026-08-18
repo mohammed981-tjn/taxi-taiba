@@ -35,7 +35,7 @@ android {
     def flavorName = (project.findProperty('flavor') ?: 'passenger').toString()
 
     def flavorSuffix = [passenger: '', driver: '.driver', admin: '.admin']
-    def flavorLabel  = [passenger: 'Tiba', driver: 'Tiba سائق', admin: 'Tiba إدارة']
+    def flavorLabel  = [passenger: 'Taibah', driver: 'Taibah سائق', admin: 'Taibah إدارة']
 
     // لون خلفية الأيقونة المتكيّفة — نفس لون النكهة في lib/theme/app_theme.dart.
     // تكرارٌ لا مفرّ منه: Gradle لا يقرأ Dart، وموارد أندرويد تُحسم عند البناء
@@ -98,7 +98,7 @@ android {
         manifestPlaceholders += [
             MAPS_API_KEY: (project.findProperty('maps.api.key') ?: ''),
             // ثلاثة تطبيقات باسم واحد على شاشة واحدة لا يُعرف أيّها أيّ.
-            APP_LABEL: (flavorLabel[flavorName] ?: 'Tiba')
+            APP_LABEL: (flavorLabel[flavorName] ?: 'Taibah')
         ]
     }
 

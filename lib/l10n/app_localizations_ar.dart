@@ -94,18 +94,18 @@ class AppLocalizationsAr extends AppLocalizations {
   String get errorOccurred => 'حدث خطأ ما';
 
   @override
-  String get aboutTitle => 'مرحباً بكم في Tiba';
+  String get aboutTitle => 'مرحباً بكم في Taibah';
 
   @override
   String get oagoDescription =>
-      'Tiba هي منصة تنقل ذكية تربط المسافرين بسائقين موثوقين للرحلات اليومية والرحلات الطويلة ونقل الشركات. بالإضافة إلى خدمة طلب السيارات العادية، توفر Tiba أيضاً خدمات تأجير السيارات، مما يسمح لأصحاب السيارات بإعارة سياراتهم للمسافرين. مع توفر حجز الفنادق والمساعدة في السفر، توفر Tiba حلاً شاملاً لجميع احتياجات النقل الخاصة بك. سواء كنت بحاجة إلى رحلة سريعة، أو سائق محترف، أو سيارة مستأجرة، فإن Tiba تجعل السفر سهلاً وآمناً ومريحاً.';
+      'Taibah هي منصة تنقل ذكية تربط المسافرين بسائقين موثوقين للرحلات اليومية والرحلات الطويلة ونقل الشركات. بالإضافة إلى خدمة طلب السيارات العادية، توفر Taibah أيضاً خدمات تأجير السيارات، مما يسمح لأصحاب السيارات بإعارة سياراتهم للمسافرين. مع توفر حجز الفنادق والمساعدة في السفر، توفر Taibah حلاً شاملاً لجميع احتياجات النقل الخاصة بك. سواء كنت بحاجة إلى رحلة سريعة، أو سائق محترف، أو سيارة مستأجرة، فإن Taibah تجعل السفر سهلاً وآمناً ومريحاً.';
 
   @override
   String get feedbackText =>
       'نحن نقدر ملاحظاتك! لا تتردد في مراسلتنا عبر البريد الإلكتروني على mohammed981@gmail.com.';
 
   @override
-  String get copyright => '© 2025 Tiba. جميع الحقوق محفوظة.';
+  String get copyright => '© 2025 Taibah. جميع الحقوق محفوظة.';
 
   @override
   String get chooseRide => 'اختر رحلة';
@@ -114,13 +114,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get confirmRide => 'تأكيد الرحلة';
 
   @override
-  String get oagoGo => 'Tiba Go';
+  String get oagoGo => 'Taibah Go';
 
   @override
-  String get oagoExecutive => 'Tiba Executive';
+  String get oagoExecutive => 'Taibah Executive';
 
   @override
-  String get oagoXL => 'Tiba XL';
+  String get oagoXL => 'Taibah XL';
 
   @override
   String get email => 'البريد الإلكتروني';
@@ -205,7 +205,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get introDesc4 =>
-      'اعرض سيارتك على Tiba وأجرها للمسافرين بينما تكسب دخلاً إضافياً!';
+      'اعرض سيارتك على Taibah وأجرها للمسافرين بينما تكسب دخلاً إضافياً!';
 
   @override
   String get introHeadline5 => 'أكثر من مجرد رحلات!';
@@ -219,7 +219,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get introDesc6 =>
-      'سجل الآن وابدأ في الاستمتاع بخدمات Tiba المذهلة اليوم!';
+      'سجل الآن وابدأ في الاستمتاع بخدمات Taibah المذهلة اليوم!';
 
   @override
   String get rateTripTitle => 'قيّم رحلتك';

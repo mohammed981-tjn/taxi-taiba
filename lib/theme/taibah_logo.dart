@@ -18,8 +18,8 @@ import 'package:flutter_projects/theme/app_theme.dart';
 /// والشكل: حرف طاء مبسَّط داخل حلقة — قوسٌ مفتوح يوحي بالطريق، ونقطةٌ
 /// كهرمانية هي الوجهة. بسيطٌ عمداً كي يُقرأ في مربّع ٤٨ بكسل على شريط
 /// الإشعارات كما يُقرأ ملءَ شاشة البداية.
-class TibaLogo extends StatelessWidget {
-  const TibaLogo({
+class TaibahLogo extends StatelessWidget {
+  const TaibahLogo({
     super.key,
     required this.size,
     this.role,
@@ -36,13 +36,13 @@ class TibaLogo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final TibaPalette palette = TibaPalette.of(role ?? AppFlavor.role);
+    final TaibahPalette palette = TaibahPalette.of(role ?? AppFlavor.role);
 
     return SizedBox(
       width: size,
       height: size,
       child: CustomPaint(
-        painter: _TibaLogoPainter(
+        painter: _TaibahLogoPainter(
           primary: onDark ? Colors.white : palette.primary,
           accent: palette.accent,
         ),
@@ -51,8 +51,8 @@ class TibaLogo extends StatelessWidget {
   }
 }
 
-class _TibaLogoPainter extends CustomPainter {
-  _TibaLogoPainter({required this.primary, required this.accent});
+class _TaibahLogoPainter extends CustomPainter {
+  _TaibahLogoPainter({required this.primary, required this.accent});
 
   final Color primary;
   final Color accent;
@@ -111,13 +111,13 @@ class _TibaLogoPainter extends CustomPainter {
   double _deg(double degrees) => degrees * math.pi / 180;
 
   @override
-  bool shouldRepaint(_TibaLogoPainter old) =>
+  bool shouldRepaint(_TaibahLogoPainter old) =>
       old.primary != primary || old.accent != accent;
 }
 
 /// الشعار مع الاسم — كتلة العلامة في شاشات الدخول.
-class TibaWordmark extends StatelessWidget {
-  const TibaWordmark({
+class TaibahWordmark extends StatelessWidget {
+  const TaibahWordmark({
     super.key,
     this.role,
     this.onDark = false,
@@ -133,14 +133,14 @@ class TibaWordmark extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final AppRole effective = role ?? AppFlavor.role;
-    final TibaPalette palette = TibaPalette.of(effective);
+    final TaibahPalette palette = TaibahPalette.of(effective);
     final Color ink = onDark ? Colors.white : palette.primary;
-    final String suffix = TibaBrand.suffixFor(effective);
+    final String suffix = TaibahBrand.suffixFor(effective);
 
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
-        TibaLogo(size: logoSize, role: effective, onDark: onDark),
+        TaibahLogo(size: logoSize, role: effective, onDark: onDark),
         SizedBox(height: logoSize * 0.22),
         Row(
           mainAxisSize: MainAxisSize.min,
@@ -148,7 +148,7 @@ class TibaWordmark extends StatelessWidget {
           textBaseline: TextBaseline.alphabetic,
           children: <Widget>[
             Text(
-              TibaBrand.nameLatin,
+              TaibahBrand.nameLatin,
               style: TextStyle(
                 fontSize: logoSize * 0.44,
                 fontWeight: FontWeight.w700,
@@ -172,7 +172,7 @@ class TibaWordmark extends StatelessWidget {
         if (showTagline) ...<Widget>[
           SizedBox(height: logoSize * 0.08),
           Text(
-            TibaBrand.taglineFor(effective),
+            TaibahBrand.taglineFor(effective),
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: logoSize * 0.17,

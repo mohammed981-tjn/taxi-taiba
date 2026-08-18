@@ -66,7 +66,7 @@ class _HomePageState extends State<HomePage> {
   StreamSubscription<DatabaseEvent>? tripStreamSubscription;
   bool requestingDirectionDetailsInfo = false;
 
-  String selectedCarType = "Tiba Go";
+  String selectedCarType = "Taibah Go";
 
   getCurrentLocation() async {
     LocationPermission permission = await Geolocator.checkPermission();
@@ -1308,9 +1308,9 @@ class _HomePageState extends State<HomePage> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Image.asset(
-                      selectedCarType == "Tiba Go" 
+                      selectedCarType == "Taibah Go" 
                           ? "assets/oagogo.png" 
-                          : selectedCarType == "Tiba Executive" 
+                          : selectedCarType == "Taibah Executive" 
                               ? "assets/oagoexec.png" 
                               : "assets/oagoxl.png",
                       height: 80,
@@ -1319,7 +1319,7 @@ class _HomePageState extends State<HomePage> {
                     ),
                     Text(
                       (tripDirectionDetailsInfo != null)
-                          ? money("${selectedCarType == "Tiba Go" ? (double.parse(associateMethods.calculateFareAmount(tripDirectionDetailsInfo!)) * 0.8).toStringAsFixed(1) : selectedCarType == "Tiba Executive" ? associateMethods.calculateFareAmount(tripDirectionDetailsInfo!) : (double.parse(associateMethods.calculateFareAmount(tripDirectionDetailsInfo!)) * 1.5).toStringAsFixed(1)}")
+                          ? money("${selectedCarType == "Taibah Go" ? (double.parse(associateMethods.calculateFareAmount(tripDirectionDetailsInfo!)) * 0.8).toStringAsFixed(1) : selectedCarType == "Taibah Executive" ? associateMethods.calculateFareAmount(tripDirectionDetailsInfo!) : (double.parse(associateMethods.calculateFareAmount(tripDirectionDetailsInfo!)) * 1.5).toStringAsFixed(1)}")
                           : "",
                       style: const TextStyle(
                         fontSize: 18,
@@ -1374,7 +1374,7 @@ class _HomePageState extends State<HomePage> {
                         searchDriver();
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: TibaPalette.passenger.primary,
+                        backgroundColor: TaibahPalette.passenger.primary,
                       ),
                       child: Text(
                         AppLocalizations.of(context)!.getDriver,
@@ -1487,7 +1487,7 @@ class _HomePageState extends State<HomePage> {
                     Container(
                       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20), // Spacing inside the rectangle
                       decoration: BoxDecoration(
-                        color: TibaPalette.passenger.primary, // Background color
+                        color: TaibahPalette.passenger.primary, // Background color
                         borderRadius: BorderRadius.circular(8), // Slightly rounded corners
                       ),
                       child: Text(

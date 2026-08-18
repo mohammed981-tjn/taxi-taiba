@@ -14,7 +14,7 @@ class _AboutPageState extends State<AboutPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: TibaPalette.passenger.primary,
+        backgroundColor: TaibahPalette.passenger.primary,
         title: Text(
           AppLocalizations.of(context)!.aboutTitle,
           style: const TextStyle(
@@ -43,7 +43,7 @@ class _AboutPageState extends State<AboutPage> {
                 width: 200,
                 height: 120,
                 fit: BoxFit.contain,
-                errorBuilder: (c, e, s) => Icon(Icons.directions_car, size: 100, color: TibaPalette.passenger.primary),
+                errorBuilder: (c, e, s) => Icon(Icons.directions_car, size: 100, color: TaibahPalette.passenger.primary),
               ),
             ),
             const SizedBox(height: 10),
