@@ -50,6 +50,11 @@ jobs:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
           RTDB_URL: ${{ vars.RTDB_URL || 'https://taxi-taiba-default-rtdb.europe-west1.firebasedatabase.app' }}
         run: |
+          # فشلُ الأداة كان يمرّ أخضر: حالة الخروج في `a | tee b` هي حالة
+          # `tee` لا حالة `a`. فسقطت الأداة بخطأ من Firebase وظهرت المهمّة
+          # ناجحة — وهو أسوأ من فشلٍ ظاهر، إذ يُبنى عليه.
+          set -o pipefail
+
           printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$RUNNER_TEMP/sa.json"
           export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
 

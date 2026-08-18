@@ -34,6 +34,13 @@ android {
     // CI.
     def flavorName = (project.findProperty('flavor') ?: 'passenger').toString()
 
+    // يُحسب هنا لا داخل `versionCode`: في Groovy يُقرأ
+    // `versionCode (x).toString()` على أنه `versionCode(x).toString()` —
+    // تُستدعى الدالّة أوّلاً فتعيد null، ثم يُطلب `toString()` من null.
+    def buildNumber = (project.findProperty('buildNumber') ?: '1')
+        .toString()
+        .toInteger()
+
     // لماذا للراكب لاحقةٌ أيضاً؟
     //
     // `com.rididago.com` ليس اسماً اخترناه — هو اسم القالب الذي بُني عليه هذا
@@ -105,8 +112,8 @@ android {
         //
         // يأتي من CI — `-PbuildNumber=${{ github.run_number }}` — فيزيد وحده
         // ولا يُنسى. والافتراضي `1` للبناء المحلّي حيث لا رقم تشغيل.
-        versionCode (project.findProperty('buildNumber') ?: '1').toString().toInteger()
-        versionName '1.0.0+' + (project.findProperty('buildNumber') ?: '1').toString()
+        versionCode buildNumber
+        versionName "1.0.0+${buildNumber}"
 
         // مفتاح الخرائط يُحقن عند البناء ولا يُخزَّن في المستودع:
         //   flutter build apk --release -Pmaps.api.key=AIza...
