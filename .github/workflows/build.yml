@@ -172,3 +172,61 @@ jobs:
           path: build/app/outputs/flutter-apk/${{ matrix.artifact }}.apk
           if-no-files-found: error
           retention-days: 30
+
+  # لوحة الإدارة على المتصفّح — من نفس الملفّ الذي تُبنى منه حزمة الأندرويد.
+  #
+  # لا هجرة ولا إعادة كتابة: `-t lib/main_admin.dart` هو ذاته في الحالتين،
+  # وFlutter يبني الهدفين من شجرة الاستيراد نفسها. وهذا يعمل لأن نكهة الإدارة
+  # لا تستورد geolocator ولا google_maps_flutter ولا permission_handler —
+  # تحقّقتُ بالبحث. لو استوردت واحدةً منها لانكسر بناء الويب وحده، وهو أوضح
+  # دليل على أن الفصل بين النكهات حقيقي لا اسمي.
+  #
+  # ولا تُبنى نكهتا الراكب والسائق للويب: كلتاهما تقوم على الخرائط والموقع،
+  # وتطبيق رحلات في متصفّح ليس منتجاً.
+  web:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Resolve dependencies
+        run: flutter pub get
+
+      # المعرّف علني بحكم التصميم — يظهر في كل حزمة تُبنى — فهو متغيّر لا سرّ.
+      # وغيابه لا يُفشل البناء بل يُنتج صفحة تفشل عند الإقلاع، وهو أسوأ: لذلك
+      # يُفحص هنا صراحةً.
+      - name: Check the web app id is set
+        env:
+          WEB_APP_ID: ${{ vars.FIREBASE_WEB_APP_ID }}
+        run: |
+          if [ -z "$WEB_APP_ID" ]; then
+            echo "::error::FIREBASE_WEB_APP_ID is not set."
+            echo "Settings > Secrets and variables > Actions > Variables."
+            exit 1
+          fi
+          echo "web app id: $WEB_APP_ID"
+
+      - name: Build the admin panel for the web
+        run: |
+          flutter build web --release \
+            -t lib/main_admin.dart \
+            --dart-define=FIREBASE_WEB_APP_ID="${{ vars.FIREBASE_WEB_APP_ID }}" \
+            --dart-define=CURRENCY="${{ vars.CURRENCY || 'ج.س' }}"
+
+      - name: List what was produced
+        run: ls -lh build/web/
+
+      - name: Upload the web build
+        uses: actions/upload-artifact@v4
+        with:
+          name: taiba-admin-web
+          path: build/web/
+          if-no-files-found: error
+          retention-days: 30
