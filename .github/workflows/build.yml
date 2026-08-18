@@ -147,6 +147,12 @@ jobs:
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
           MAPS_API_KEY: ${{ secrets.MAPS_API_KEY }}
         run: |
+          # بناءٌ بلا مفتاح خرائط ينجح ويُنشر، وخريطته رماديّة فارغة. صمتَ
+          # أربعين بناءً على هذا. التحذير هنا كي يُرى في السجلّ لا في الجوّال.
+          if [ -z "$MAPS_API_KEY" ]; then
+            echo "::warning::No MAPS_API_KEY secret — maps will be blank in this build. Set it in Settings → Secrets → Actions."
+          fi
+
           flutter build apk --release \
             --target-platform "${{ vars.ANDROID_ABIS || 'android-arm,android-arm64' }}" \
             -t "${{ matrix.target }}" \

@@ -1113,6 +1113,27 @@ class _HomePageState extends State<HomePage> {
             },
           ),
 
+          // خريطةٌ بلا مفتاح تُرسم رماديّةً صامتة، فيبدو العطل في الشبكة أو
+          // في الجهاز ويُبحث عنه في غير مكانه. هذا الشريط يقول أين هو.
+          if (googleMapKey.isEmpty)
+            Positioned(
+              top: 90,
+              left: 20,
+              right: 20,
+              child: Card(
+                color: Colors.amber.shade100,
+                child: const Padding(
+                  padding: EdgeInsets.all(12),
+                  child: Text(
+                    'الخريطة معطّلة في هذا البناء — لا مفتاح خرائط.\n'
+                    'يُضبط MAPS_API_KEY في أسرار المستودع ثم يُعاد البناء.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 12),
+                  ),
+                ),
+              ),
+            ),
+
           ///drawer button
           Positioned(
             top: 37,

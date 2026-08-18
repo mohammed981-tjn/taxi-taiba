@@ -6,7 +6,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_projects/driver/driver_earnings_page.dart';
 import 'package:flutter_projects/driver/driver_service.dart';
 import 'package:flutter_projects/driver/driver_trip_panel.dart';
+import 'package:flutter_projects/widgets/taibah_map.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 /// شاشة السائق.
 ///
@@ -200,7 +202,7 @@ class _DriverHomeState extends State<DriverHome> {
           ),
           Expanded(
             child: _tripId == null
-                ? _Idle(online: _online)
+                ? _Idle(online: _online, position: _position)
                 : DriverTripPanel(
                     tripId: _tripId!,
                     profile: widget.profile,
@@ -287,41 +289,119 @@ class _StatusCard extends StatelessWidget {
   }
 }
 
-class _Idle extends StatelessWidget {
-  const _Idle({required this.online});
+/// الانتظار — على خريطة لا على فراغ.
+///
+/// كانت الشاشة بين الطلبات مساحةً بيضاء فيها سطران. وهي الشاشة التي يقضي
+/// السائق أمامها أطول وقته، ولا تقول له شيئاً يحتاجه: أين هو، وأين يقف، وهل
+/// موقعه الذي تراه الخدمة هو موقعه فعلاً.
+///
+/// والسؤال الأخير هو الجوهر. إحداثيّتان مكتوبتان بالأرقام لا تُقرآن — أمّا
+/// دبّوسٌ في الحيّ الخطأ فيُرى فوراً. فالخريطة هنا ليست زينة بل أداة تحقّق:
+/// السائق أوّل من يكتشف أنّ موقعه غلط، قبل أن يُرسَل إليه راكب من حيّ آخر.
+class _Idle extends StatefulWidget {
+  const _Idle({required this.online, required this.position});
+
+  final bool online;
+  final Position? position;
+
+  @override
+  State<_Idle> createState() => _IdleState();
+}
+
+class _IdleState extends State<_Idle> {
+  GoogleMapController? _controller;
+
+  @override
+  void didUpdateWidget(covariant _Idle oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    final Position? now = widget.position;
+    if (now == null || _controller == null) return;
+
+    // أوّل موقع يستدعي قفزةً إلى مكانه؛ وما بعده تتبُّعٌ ناعم. ولولا الشرط
+    // لعادت الكاميرا إلى السائق كلّما تحرّك عشرين متراً، فلا يستطيع أن ينظر
+    // إلى شارعٍ مجاور.
+    if (oldWidget.position == null) {
+      _controller!.animateCamera(
+        CameraUpdate.newLatLngZoom(
+          LatLng(now.latitude, now.longitude),
+          15.5,
+        ),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller?.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final Position? at = widget.position;
+
+    final Set<Marker> markers = <Marker>{
+      if (at != null)
+        Marker(
+          markerId: const MarkerId('me'),
+          position: LatLng(at.latitude, at.longitude),
+          icon: BitmapDescriptor.defaultMarkerWithHue(
+            BitmapDescriptor.hueGreen,
+          ),
+          infoWindow: const InfoWindow(title: 'موقعك كما تراه الخدمة'),
+        ),
+    };
+
+    return Stack(
+      children: <Widget>[
+        TaibahMap(
+          initial: at == null
+              ? null
+              : CameraPosition(
+                  target: LatLng(at.latitude, at.longitude),
+                  zoom: 15.5,
+                ),
+          markers: markers,
+          myLocation: widget.online,
+          onMapCreated: (GoogleMapController c) => _controller = c,
+          padding: const EdgeInsets.only(bottom: 96),
+        ),
+        Positioned(
+          left: 12,
+          right: 12,
+          bottom: 12,
+          child: _IdleBanner(online: widget.online),
+        ),
+      ],
+    );
+  }
+}
+
+class _IdleBanner extends StatelessWidget {
+  const _IdleBanner({required this.online});
 
   final bool online;
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(28),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Icon(
-              online ? Icons.wifi_tethering : Icons.wifi_tethering_off,
-              size: 56,
-              color: online ? Colors.green : Colors.black26,
-            ),
-            const SizedBox(height: 14),
-            Text(
-              online ? 'بانتظار طلب' : 'أنت غير متصل',
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              online
-                  ? 'موقعك يُحدَّث تلقائياً. أبقِ الشاشة مفتوحة لتصلك الطلبات.'
-                  : 'لن تصلك طلبات ولن يراك أحد حتى تتصل.',
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: Colors.black54),
-            ),
-          ],
+    return Card(
+      elevation: 4,
+      child: ListTile(
+        leading: Icon(
+          online ? Icons.wifi_tethering : Icons.wifi_tethering_off,
+          size: 32,
+          color: online ? Colors.green : Colors.black26,
+        ),
+        title: Text(
+          online ? 'بانتظار طلب' : 'أنت غير متصل',
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        subtitle: Text(
+          online
+              ? 'موقعك يُحدَّث تلقائياً. أبقِ الشاشة مفتوحة لتصلك الطلبات.'
+              : 'لن تصلك طلبات ولن يراك أحد حتى تتصل.',
+          style: const TextStyle(color: Colors.black54),
         ),
       ),
     );
