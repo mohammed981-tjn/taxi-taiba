@@ -1,5 +1,6 @@
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
+import 'package:flutter_projects/market.dart';
 import 'package:flutter_projects/methods/associate_methods.dart';
 
 /// Shared state for the passenger app.
