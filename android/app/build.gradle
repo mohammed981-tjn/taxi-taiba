@@ -34,7 +34,21 @@ android {
     // CI.
     def flavorName = (project.findProperty('flavor') ?: 'passenger').toString()
 
-    def flavorSuffix = [passenger: '', driver: '.driver', admin: '.admin']
+    // لماذا للراكب لاحقةٌ أيضاً؟
+    //
+    // `com.rididago.com` ليس اسماً اخترناه — هو اسم القالب الذي بُني عليه هذا
+    // المشروع، وبُني عليه غيره. وأندرويد يقرأ هذا الاسم **تعريفاً للتطبيق**:
+    // حزمتان بالاسم نفسه هما تطبيق واحد عنده، فيُعرض تثبيت الثانية «تحديثاً»
+    // للأولى، ثم يُرفض لأن توقيعهما مختلف — «الحزمة تبدو غير صالحة».
+    //
+    // وهو ما حدث فعلاً: نزلت نسخة السائق والإدارة (لاحقتاهما تميّزانهما)
+    // ورُفضت نسخة الراكب وحدها، لأنها الوحيدة التي بقيت على اسم القالب.
+    //
+    // فلكلّ نكهة لاحقتها، ولا يبقى أحدها على الاسم المشترك. ولا يسري هذا حتى
+    // تُسجَّل `com.rididago.com.passenger` في كونسول Firebase ويُستبدل
+    // google-services.json — إلى حينها يعود البناء إلى الاسم القديم مع تحذير،
+    // كما هو مشروح تحت.
+    def flavorSuffix = [passenger: '.passenger', driver: '.driver', admin: '.admin']
     def flavorLabel  = [passenger: 'Taibah', driver: 'Taibah سائق', admin: 'Taibah إدارة']
 
     // لون خلفية الأيقونة المتكيّفة — نفس لون النكهة في lib/theme/app_theme.dart.
