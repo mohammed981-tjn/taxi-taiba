@@ -143,13 +143,13 @@ class _RatingScreenState extends State<RatingScreen> {
               CircleAvatar(
                 radius: 34,
                 backgroundColor: _navy.withValues(alpha: 0.08),
-                child: const Icon(Icons.person, size: 38, color: _navy),
+                child: Icon(Icons.person, size: 38, color: _navy),
               ),
               const SizedBox(height: 12),
               Text(
                 widget.driverName.isEmpty ? l.receiptDriver : widget.driverName,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
+                style: TextStyle(
                     fontSize: 19, fontWeight: FontWeight.bold, color: _navy),
               ),
               const SizedBox(height: 4),

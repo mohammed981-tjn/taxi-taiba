@@ -76,7 +76,7 @@ class ReceiptPage extends StatelessWidget {
               children: [
                 Text(
                   '$_currency $_total',
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 34, fontWeight: FontWeight.bold, color: _navy),
                 ),
                 const SizedBox(height: 4),

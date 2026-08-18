@@ -47,7 +47,7 @@ class _AdminGateState extends State<AdminGate> {
         email: _email.text.trim(),
         password: _password.text,
       );
-    } on FirebaseAuthException catch (error) {
+    } on FirebaseAuthException {
       // لا تُفصّل: «البريد غير موجود» مقابل «كلمة المرور خاطئة» تخبر المهاجم
       // أيّ البريدين مسجَّل. رسالة واحدة للحالتين.
       setState(() => _error = 'تعذّر الدخول — راجع البريد وكلمة المرور.');
