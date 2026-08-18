@@ -114,19 +114,44 @@ jobs:
           printf '%s' "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/upload.jks"
           echo "KEYSTORE_PATH=$RUNNER_TEMP/upload.jks" >> "$GITHUB_ENV"
 
-      - name: Build ${{ matrix.flavor }} APKs
+      # ملفٌّ واحد يفتح في أي هاتف، لا ثلاثة يختار المستخدم بينها.
+      #
+      # كان `--split-per-abi` يقسم المخرَج بحسب معمارية المعالج، فتخرج ثلاث
+      # حزم لكل نكهة. وهو الصواب في متجر Play — يرسل المتجر إلى كل جهاز حصّته
+      # وحدها — لكنه خطأ حين تُسلَّم الحزمة يداً بيد: من ينزّلها لا يعرف معالج
+      # هاتفه، ولا يجب أن يُسأل. وتثبيت الخاطئة يفشل برسالة لا تدلّ على السبب.
+      #
+      # فالحزمة الآن جامعة: مكتبةٌ أصلية لكل معمارية داخل ملفّ واحد، ويختار
+      # النظام عند التثبيت. الثمن ميغابايتات، والمقابل أن السؤال يختفي.
+      #
+      # وx86_64 مستثناة افتراضاً: لا يستعملها هاتف بيع في السنوات الأخيرة —
+      # المحاكيات وبعض أجهزة Chromebook وحدها. إدراجها يضخّم الملفّ لأجل من
+      # لا يحمله. أضفها عند الحاجة:
+      #   Settings ← Variables ← ANDROID_ABIS = android-arm,android-arm64,android-x64
+      #
+      # ولمتجر Play لاحقاً: `flutter build appbundle` — يتولّى المتجر التقسيم
+      # عندها، فيصل كل جهاز أصغر مما يصله من هذه الحزمة.
+      - name: Build ${{ matrix.flavor }} APK
         env:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
           MAPS_API_KEY: ${{ secrets.MAPS_API_KEY }}
         run: |
-          flutter build apk --release --split-per-abi \
+          flutter build apk --release \
+            --target-platform "${{ vars.ANDROID_ABIS || 'android-arm,android-arm64' }}" \
             -t "${{ matrix.target }}" \
             --dart-define=MAPS_API_KEY="$MAPS_API_KEY" \
             --dart-define=PLACES_COUNTRIES="${{ vars.PLACES_COUNTRIES || 'SD' }}" \
             --dart-define=CURRENCY="${{ vars.CURRENCY || 'ج.س' }}" \
             -Pmaps.api.key="$MAPS_API_KEY"
+
+      # الاسم يقول أيّ تطبيق هذا. `app-release.apk` ثلاث مرّات في مجلّد
+      # التنزيلات هو ثلاثة ملفّات لا يُعرف أيّها أيّ.
+      - name: Name it after its flavour
+        run: |
+          mv build/app/outputs/flutter-apk/app-release.apk \
+             "build/app/outputs/flutter-apk/${{ matrix.artifact }}.apk"
 
       - name: Report how it was signed
         run: |
@@ -139,12 +164,10 @@ jobs:
       - name: List what was produced
         run: ls -lh build/app/outputs/flutter-apk/
 
-      # Split per ABI, so arm64-v8a is the one for any phone sold in the last
-      # several years — the same variant the existing release APK was.
-      - name: Upload APKs
+      - name: Upload the APK
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact }}
-          path: build/app/outputs/flutter-apk/*.apk
+          path: build/app/outputs/flutter-apk/${{ matrix.artifact }}.apk
           if-no-files-found: error
           retention-days: 30
