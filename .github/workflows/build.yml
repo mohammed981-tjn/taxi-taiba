@@ -10,6 +10,11 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      publish:
+        description: "انشر النتيجة كإصدار — روابط تنزيل مباشرة للجوّال"
+        type: boolean
+        default: false
 
 jobs:
   build:
@@ -285,3 +290,67 @@ jobs:
           path: build/web/
           if-no-files-found: error
           retention-days: 30
+
+  # إصدارٌ فيه روابط تنزيل مباشرة — لأن أثر البناء لا يُنزَّل على جوّال.
+  #
+  # أثر Actions يشترط ثلاثة أشياء يعجز عنها متصفّح الجوّال عادةً: تسجيل دخول
+  # إلى GitHub، وتنزيل ملفّ `.zip`، وفكّ ضغطه ثم فتح ما بداخله. وهذا هو سبب
+  # تعطّل التجربة كلّها — لا التثبيت ولا التوقيع ولا هوية الحزمة.
+  #
+  # أمّا أصل الإصدار فرابطٌ مباشر إلى ملفّ `.apk` واحد: يُفتح بضغطة، بلا تسجيل
+  # دخول في مستودع عام، وبلا فكّ ضغط.
+  #
+  # ولا يُنشر مع كل بناء: يُطلب صراحةً بعلامة `publish` عند التشغيل اليدوي،
+  # كي لا يمتلئ سجلّ الإصدارات بكل دفعة.
+  release:
+    needs: build
+    if: github.event_name == 'workflow_dispatch' && inputs.publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    # الحدّ الأدنى: كتابة المحتوى وحدها، ولا شيء غيرها.
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Collect the three APKs
+        uses: actions/download-artifact@v4
+        with:
+          path: apks
+          merge-multiple: true
+
+      - name: What was collected
+        run: ls -lh apks/
+
+      # `gh` مثبَّت على المشغِّل أصلاً، فلا حاجة إلى إجراء من طرف ثالث لعمل
+      # يقع كلّه داخل هذا المستودع.
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="build-${{ github.run_number }}"
+
+          gh release create "$TAG" \
+            --title "Taibah — بناء ${{ github.run_number }}" \
+            --notes "$(cat <<'NOTES'
+          ثلاث حزم، واحدة لكل تطبيق. اضغط على الملفّ لتنزيله وتثبيته مباشرةً.
+
+          | الملفّ | التطبيق | الاسم على الشاشة |
+          |---|---|---|
+          | `taibah-passenger-release.apk` | الراكب | Taibah |
+          | `taibah-driver-release.apk` | السائق | Taibah سائق |
+          | `taibah-admin-release.apk` | الإدارة | Taibah إدارة |
+
+          كلّها جامعة — تعمل على أي هاتف — ولكلٍّ هويّة حزمة مستقلّة، فتجتمع
+          الثلاثة على جهاز واحد.
+
+          أوّل تثبيت من خارج المتجر يطلب إذن «تثبيت تطبيقات غير معروفة» للمتصفّح
+          أو لمدير الملفّات. اسمح به مرّة، ولن يُسأل ثانيةً.
+          NOTES
+          )" \
+            apks/*.apk
+
+          echo "### الإصدار" >> "$GITHUB_STEP_SUMMARY"
+          gh release view "$TAG" --json url --jq .url >> "$GITHUB_STEP_SUMMARY"
