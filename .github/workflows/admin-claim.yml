@@ -1,19 +1,23 @@
 name: Admin claim
 
-# صفة المدير تُمنح من هنا لا من الشيفرة، ولا تمرّ كلمة مرور في هذا المسار:
-# الأداة تعمل على حساب قائم ينشئه صاحبه بنفسه.
+# صفة المدير تُمنح من هنا لا من الشيفرة، ولا تمرّ كلمة مرور في هذا المسار —
+# ولا في سجلّ هذا التشغيل. و`invite` يُنشئ الحساب أيضاً حين لا يكون، لأن لوحة
+# الإدارة بلا تسجيل ذاتيّ فلا سبيل لصاحبها أن ينشئ حسابه من التطبيق.
+#
+# ثم يضبط كلمته من «نسيت كلمة المرور؟» في التطبيق: الرسالة تصل إلى بريده،
+# فلا يعرف أحد سواه ما اختار.
 
 on:
   workflow_dispatch:
     inputs:
       action:
-        description: "grant = منح · revoke = سحب · list = عرض"
+        description: "invite = إنشاء ومنح · grant = منح · revoke = سحب · list = عرض"
         type: choice
         required: true
         default: list
-        options: [list, grant, revoke]
+        options: [list, invite, grant, revoke]
       email:
-        description: "بريد الحساب (مطلوب لـ grant و revoke)"
+        description: "بريد الحساب (مطلوب لـ invite و grant و revoke)"
         required: false
         default: ""
 

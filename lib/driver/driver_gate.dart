@@ -32,6 +32,7 @@ class _DriverGateState extends State<DriverGate> {
   bool _busy = false;
   bool _registering = false;
   String? _error;
+  String? _notice;
 
   @override
   void dispose() {
@@ -46,6 +47,7 @@ class _DriverGateState extends State<DriverGate> {
     setState(() {
       _busy = true;
       _error = null;
+      _notice = null;
     });
 
     try {
@@ -63,13 +65,50 @@ class _DriverGateState extends State<DriverGate> {
     } on FirebaseAuthException catch (error) {
       setState(() {
         _error = error.code == 'weak-password'
-            ? 'كلمة المرور قصيرة — ثمانية محارف فأكثر.'
+            // الحدّ عند Firebase ستّة. قول «ثمانية» يجعل السائق يزيد طولها
+            // ويعيد المحاولة، والرفض لم يكن للطول أصلاً.
+            ? 'كلمة المرور قصيرة — ستّة محارف فأكثر.'
             : error.code == 'email-already-in-use'
                 ? 'هذا البريد مسجَّل — ادخل بدل أن تسجّل.'
                 : 'تعذّر — راجع البريد وكلمة المرور.';
       });
     } finally {
       if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  /// إعادة تعيين كلمة المرور.
+  ///
+  /// السائق ليس موظّفاً عندنا يمرّ على مكتب: ينسى كلمته فيحذف التطبيق. وليس
+  /// له بريد دعم يراسله. فالطريق الوحيد أن يستعيدها بنفسه من هنا.
+  Future<void> _resetPassword() async {
+    if (_busy) return;
+
+    final String email = _email.text.trim();
+    if (email.isEmpty) {
+      setState(() => _error = 'اكتب البريد أوّلاً.');
+      return;
+    }
+
+    setState(() {
+      _busy = true;
+      _error = null;
+      _notice = null;
+    });
+
+    try {
+      await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+    } on FirebaseAuthException {
+      // تُبتلع: التفريق بين «لا حساب بهذا البريد» و«أُرسلت» يكشف أيّ البريدين
+      // مسجَّل عندنا. والرسالة الواحدة صحيحة في الحالتين.
+    } finally {
+      if (mounted) {
+        setState(() {
+          _busy = false;
+          _notice = 'إن كان $email مسجَّلاً فستصلك رسالة إعادة تعيين.\n'
+              'راجع بريدك — وتفقّد «الرسائل غير المرغوبة».';
+        });
+      }
     }
   }
 
@@ -130,6 +169,14 @@ class _DriverGateState extends State<DriverGate> {
                     textAlign: TextAlign.center,
                   ),
                 ],
+                if (_notice != null) ...<Widget>[
+                  const SizedBox(height: 14),
+                  Text(
+                    _notice!,
+                    style: const TextStyle(color: Colors.black87),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
                 const SizedBox(height: 22),
                 FilledButton(
                   onPressed: _busy ? null : _submit,
@@ -155,6 +202,12 @@ class _DriverGateState extends State<DriverGate> {
                     _registering ? 'لديّ حساب — دخول' : 'سائق جديد؟ أنشئ حساباً',
                   ),
                 ),
+                // لا تظهر في وضع التسجيل: من ينشئ حساباً لم ينسَ شيئاً بعد.
+                if (!_registering)
+                  TextButton(
+                    onPressed: _busy ? null : _resetPassword,
+                    child: const Text('نسيت كلمة المرور؟'),
+                  ),
               ],
             ),
           ),

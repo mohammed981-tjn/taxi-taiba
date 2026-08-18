@@ -83,8 +83,16 @@ android {
         applicationId resolvedApplicationId
         minSdkVersion flutter.minSdkVersion
         targetSdkVersion 34
-        versionCode 1
-        versionName '1.0.0'
+        // رقم البناء لا رقمٌ ثابت.
+        //
+        // كان `1` في كلّ بناء، وأندرويد يقرأ هذا الرقم وحده ليعرف أيّ النسختين
+        // أحدث. فنسخةٌ بُنيت اليوم ونسخةٌ بُنيت قبل أسبوع متساويتان عنده، ولا
+        // سبيل لمعرفة أيّ بناءٍ على الجهاز حين يُبلَّغ عن عطل.
+        //
+        // يأتي من CI — `-PbuildNumber=${{ github.run_number }}` — فيزيد وحده
+        // ولا يُنسى. والافتراضي `1` للبناء المحلّي حيث لا رقم تشغيل.
+        versionCode (project.findProperty('buildNumber') ?: '1').toString().toInteger()
+        versionName '1.0.0+' + (project.findProperty('buildNumber') ?: '1').toString()
 
         // مفتاح الخرائط يُحقن عند البناء ولا يُخزَّن في المستودع:
         //   flutter build apk --release -Pmaps.api.key=AIza...

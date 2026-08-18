@@ -151,6 +151,7 @@ jobs:
             --target-platform "${{ vars.ANDROID_ABIS || 'android-arm,android-arm64' }}" \
             -t "${{ matrix.target }}" \
             -Pflavor="${{ matrix.flavor }}" \
+            -PbuildNumber="${{ github.run_number }}" \
             --dart-define=MAPS_API_KEY="$MAPS_API_KEY" \
             --dart-define=MARKET="${{ vars.MARKET || 'SA' }}" \
             -Pmaps.api.key="$MAPS_API_KEY"

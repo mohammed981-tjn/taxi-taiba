@@ -142,7 +142,18 @@ class TaibahWordmark extends StatelessWidget {
       children: <Widget>[
         TaibahLogo(size: logoSize, role: effective, onDark: onDark),
         SizedBox(height: logoSize * 0.22),
-        Row(
+        // يُصغَّر ولا يُقصّ.
+        //
+        // كان الاسم صفّاً حرّ العرض داخل عمود، فإذا ضاقت النافذة عن عرضه خرج
+        // من حدّها وقُصّ — ظهرت «إدارة» مبتورةً عند الحافّة في لقطة شاشة
+        // للبداية. والنافذة تضيق لأسباب لا يملكها التطبيق: إطار أوّل قبل أن
+        // تستقرّ مقاييس النافذة، شاشة مقسومة، هاتف صغير، جهاز قابل للطيّ.
+        //
+        // و`scaleDown` يصغّر عند الضيق فقط ولا يكبّر عند السعة، فالمقاس
+        // المقصود يبقى هو المقاس في الحالة العاديّة.
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Row(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.baseline,
           textBaseline: TextBaseline.alphabetic,
@@ -167,7 +178,8 @@ class TaibahWordmark extends StatelessWidget {
                 ),
               ),
             ],
-          ],
+            ],
+          ),
         ),
         if (showTagline) ...<Widget>[
           SizedBox(height: logoSize * 0.08),
