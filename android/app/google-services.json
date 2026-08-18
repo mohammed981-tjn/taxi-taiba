@@ -1,6 +1,7 @@
 {
   "project_info": {
     "project_number": "19401527632",
+    "firebase_url": "https://taxi-taiba-default-rtdb.europe-west1.firebasedatabase.app",
     "project_id": "taxi-taiba",
     "storage_bucket": "taxi-taiba.firebasestorage.app"
   },
@@ -10,6 +11,44 @@
         "mobilesdk_app_id": "1:19401527632:android:da01134abcf29f454d9c55",
         "android_client_info": {
           "package_name": "com.rididago.com"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDaFmqNkd7IrNUOwvTvY5AQk0nt-kaMJ0k"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:19401527632:android:ca3f9091f5fc27ec4d9c55",
+        "android_client_info": {
+          "package_name": "com.rididago.com.admin"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDaFmqNkd7IrNUOwvTvY5AQk0nt-kaMJ0k"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:19401527632:android:802c35a208f3d5884d9c55",
+        "android_client_info": {
+          "package_name": "com.rididago.com.driver"
         }
       },
       "oauth_client": [],

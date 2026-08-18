@@ -220,7 +220,23 @@ Realtime Database.
 والنكهة تصل إلى Gradle من سطر البناء `-Pflavor=driver`، فتبقى نقطة الدخول
 وهوية الحزمة معرَّفتين في مكان واحد: مصفوفة CI.
 
-### ⚠️ خطوة في كونسول Firebase لا يمكن تخطّيها
+### ✅ الخطوة في كونسول Firebase — نُفِّذت
+
+`google-services.json` صار يحمل ثلاثة عملاء، فالنكهات الثلاث تُحلّ إلى هويّاتها
+وتتعايش على الجهاز:
+
+```
+com.rididago.com          1:19401527632:android:da01134abcf29f454d9c55
+com.rididago.com.admin    1:19401527632:android:ca3f9091f5fc27ec4d9c55
+com.rididago.com.driver   1:19401527632:android:802c35a208f3d5884d9c55
+```
+
+وفائدة ثانية غير مقصودة: الملفّ الجديد يحمل `firebase_url` على مستوى المشروع —
+لم يكن فيه من قبل لأن القاعدة لم تكن قد أُنشئت. أي أنّ SDK يستطيع اشتقاق عنوان
+القاعدة وحده الآن. و`RTDB_URL` في `app_bootstrap.dart` تبقى: صريحٌ يوافق
+المشتقّ أهون من الاعتماد على اشتقاق قد يغيب مرّةً أخرى.
+
+**والخطوة الأصلية للتوثيق:**
 
 Firebase لا يعرف حزمةً لم تُسجَّل، وإضافة `applicationId` غير موجود في
 `google-services.json` تُفشل البناء بـ`No matching client found for package
