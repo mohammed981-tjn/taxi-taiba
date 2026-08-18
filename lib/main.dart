@@ -1,8 +1,7 @@
-import 'dart:io';
-
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_phoenix/flutter_phoenix.dart';
+import 'package:flutter_projects/app_bootstrap.dart';
+import 'package:flutter_projects/app_flavor.dart';
 import 'package:flutter_projects/appinfo/app_info.dart';
 import 'package:flutter_projects/l10n/app_localizations.dart';
 import 'package:flutter_projects/locale_provider.dart';
@@ -10,25 +9,18 @@ import 'package:flutter_projects/pages/splash_screen.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 
+/// نقطة دخول تطبيق الراكب — وهي الافتراضية، فـ`flutter build` يقصدها بلا `-t`.
+///
+/// ولا تستورد شيئاً من `lib/admin/`. هذا ليس ترتيباً بل شرط: ما يُستورد
+/// يُشحن، وشاشات الإدارة لا مكان لها في هاتف راكب. الحجّة كاملةً في
+/// `app_flavor.dart`.
+///
+/// وإقلاع Firebase انتقل إلى `app_bootstrap.dart` لمّا صارت نقاط الدخول أكثر
+/// من واحدة — نسخُه هنا وهناك هو ما يجعل نسخةً تُصلَح وأخرى تُنسى.
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+  AppFlavor.configure(AppRole.passenger);
 
-  if (Platform.isAndroid || Platform.isIOS) {
-    await Firebase.initializeApp();
-  } else {
-    await Firebase.initializeApp(
-      options: const FirebaseOptions(
-        apiKey: "AIzaSyCglOwiavIK2Qzr4PAP_WTC-GcmjASKcA8",
-        authDomain: "rdidago.firebaseapp.com",
-        databaseURL: "https://rdidago-default-rtdb.firebaseio.com",
-        projectId: "rdidago",
-        storageBucket: "rdidago.firebasestorage.app",
-        messagingSenderId: "433322846976",
-        appId: "1:433322846976:web:a32c8e4f2cee41976821e5",
-        measurementId: "G-0FHCN9T6LP",
-      ),
-    );
-  }
+  await bootstrapFirebase();
 
   // صلاحية الموقع
   await Permission.locationWhenInUse.isDenied.then((value) {

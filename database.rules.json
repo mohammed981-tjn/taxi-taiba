@@ -1,0 +1,84 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+
+    "users": {
+      ".read": "auth != null && auth.token.admin === true",
+
+      "$uid": {
+        ".read": "auth != null && (auth.uid === $uid || auth.token.admin === true)",
+
+        ".write": "auth != null && (auth.token.admin === true || (auth.uid === $uid && newData.child('blockStatus').val() === (data.exists() ? data.child('blockStatus').val() : 'no')))",
+
+        "name": { ".validate": "newData.isString() && newData.val().length <= 80" },
+        "email": { ".validate": "newData.isString() && newData.val().length <= 120" },
+        "phone": { ".validate": "newData.isString() && newData.val().length <= 20" },
+        "blockStatus": { ".validate": "newData.isString() && (newData.val() === 'no' || newData.val() === 'yes')" }
+      }
+    },
+
+    "drivers": {
+      ".read": "auth != null && auth.token.admin === true",
+
+      "$uid": {
+        ".read": "auth != null && (auth.uid === $uid || auth.token.admin === true)",
+
+        ".write": "auth != null && (auth.token.admin === true || (auth.uid === $uid && newData.child('earnings').val() === (data.exists() ? data.child('earnings').val() : 0) && newData.child('blockStatus').val() === (data.exists() ? data.child('blockStatus').val() : 'no') && newData.child('approvalStatus').val() === (data.exists() ? data.child('approvalStatus').val() : 'pending')))",
+
+        "earnings": { ".validate": "newData.isNumber() && newData.val() >= 0" },
+        "blockStatus": { ".validate": "newData.val() === 'no' || newData.val() === 'yes'" },
+        "approvalStatus": { ".validate": "newData.val() === 'pending' || newData.val() === 'approved' || newData.val() === 'suspended'" },
+
+        "ratings": {
+          ".read": "auth != null",
+          ".write": "auth != null",
+          ".validate": "newData.hasChildren(['count','sum','average']) && newData.child('count').isNumber() && newData.child('sum').isNumber() && newData.child('average').isNumber() && newData.child('count').val() === (data.exists() ? data.child('count').val() : 0) + 1 && newData.child('sum').val() >= (data.exists() ? data.child('sum').val() : 0) + 1 && newData.child('sum').val() <= (data.exists() ? data.child('sum').val() : 0) + 5"
+        },
+
+        "newTripStatus": {
+          ".write": "auth != null"
+        }
+      }
+    },
+
+    "onlineDrivers": {
+      ".read": "auth != null",
+      ".indexOn": ["g"],
+
+      "$uid": {
+        ".write": "auth != null && (auth.token.admin === true || (auth.uid === $uid && (!newData.exists() || (root.child('drivers').child(auth.uid).child('approvalStatus').val() === 'approved' && root.child('drivers').child(auth.uid).child('blockStatus').val() !== 'yes'))))",
+
+        "g": { ".validate": "newData.isString()" },
+        "l": { ".validate": "newData.hasChildren()" }
+      }
+    },
+
+    "tripRequests": {
+      ".read": "auth != null && auth.token.admin === true",
+      ".indexOn": ["userID", "driverID", "status"],
+
+      "$tripId": {
+        ".read": "auth != null && (data.child('userID').val() === auth.uid || data.child('driverID').val() === auth.uid || auth.token.admin === true)",
+
+        ".write": "auth != null && (auth.token.admin === true || (!data.exists() ? newData.child('userID').val() === auth.uid : (data.child('userID').val() === auth.uid || data.child('driverID').val() === auth.uid)))",
+
+        "userID": {
+          ".validate": "auth.token.admin === true || (newData.val() === auth.uid && (!data.exists() || data.val() === newData.val()))"
+        },
+
+        "fareAmount": {
+          ".validate": "auth.token.admin === true || !data.parent().child('driverID').exists() || data.parent().child('driverID').val() === auth.uid"
+        },
+
+        "rating": {
+          ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 5 && data.parent().child('userID').val() === auth.uid"
+        },
+
+        "status": {
+          ".validate": "newData.isString() && newData.val().length <= 20"
+        }
+      }
+    }
+  }
+}

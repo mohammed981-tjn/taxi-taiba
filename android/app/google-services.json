@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "433322846976",
-    "project_id": "rdidago",
-    "storage_bucket": "rdidago.firebasestorage.app"
+    "project_number": "19401527632",
+    "project_id": "taxi-taiba",
+    "storage_bucket": "taxi-taiba.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:433322846976:android:00f4d1ef6250c1116821e5",
+        "mobilesdk_app_id": "1:19401527632:android:da01134abcf29f454d9c55",
         "android_client_info": {
           "package_name": "com.rididago.com"
         }
@@ -15,7 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyDYS_scTzFeDNe2se2ilWyTYHrnmLlVAsY"
+          "current_key": "AIzaSyDaFmqNkd7IrNUOwvTvY5AQk0nt-kaMJ0k"
         }
       ],
       "services": {

@@ -135,3 +135,15 @@ app.*.symbols
 /.env.production
 /.metadata.example
 /.metadata
+
+# Gradle daemon cache that leaked in from a developer machine
+.gradle-user-home/
+*.bak
+
+# ليست من مشروع Flutter — بقايا تجربة firebase-js التزمت سهواً.
+package.json
+package-lock.json
+node_modules/
+
+# إعدادات محلّية لأداة، لا للمستودع.
+.claude/

@@ -1,0 +1,76 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!--
+      Rebuilt: this file went with global.dart in the "without secrets" commit,
+      because it carried com.google.android.geo.API_KEY as a literal. Its
+      absence is what produced "Build failed due to use of deleted Android v1
+      embedding" — a misleading message, since MainActivity already extends the
+      v2 io.flutter.embedding.android.FlutterActivity. Flutter reports v1
+      whenever it cannot find the flutterEmbedding metadata, and here there was
+      no manifest to find it in.
+
+      Permissions are the set the released APK actually declares, read back out
+      of it rather than guessed: network state and internet for Firebase, fine
+      and coarse location for geolocator.
+    -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
+    <application
+        android:label="OAGO"
+        android:name="${applicationName}"
+        android:icon="@mipmap/ic_launcher">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:theme="@style/LaunchTheme"
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
+            android:hardwareAccelerated="true"
+            android:windowSoftInputMode="adjustResize">
+
+            <!-- Swapped in once Flutter has drawn its first frame, so the
+                 launch image does not flash back over the app. -->
+            <meta-data
+                android:name="io.flutter.embedding.android.NormalTheme"
+                android:resource="@style/NormalTheme" />
+
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <meta-data
+            android:name="flutterEmbedding"
+            android:value="2" />
+
+        <!--
+          Injected by Gradle from the MAPS_API_KEY placeholder, so no key is
+          stored in the repository. Pass it at build time with the Gradle
+          property `maps.api.key` (see android/app/build.gradle), alongside the
+          Dart define of the same key that the HTTP calls read.
+
+          Left empty the app installs and runs; the map renders blank tiles,
+          which is a visible failure rather than a silent one.
+        -->
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="${MAPS_API_KEY}" />
+    </application>
+
+    <!-- Required from Android 11 on for url_launcher to see whether anything
+         can handle a tel: or https: intent before offering it. -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="https" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.DIAL" />
+            <data android:scheme="tel" />
+        </intent>
+    </queries>
+</manifest>

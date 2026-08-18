@@ -1,0 +1,146 @@
+name: Build APK
+
+# The APK is built here rather than on a machine, because that is the only
+# place this repository is guaranteed to build the same way twice: the SDK
+# version, the JDK and the Android toolchain are all pinned below instead of
+# being whatever the person pressing the button happens to have installed.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+
+    # نكهة لكل تطبيق، ومصفوفة تبنيهما معاً.
+    #
+    # وهذا هو موضع الحجّة الأمنية عملياً: نقطة الدخول تحدّد ما يدخل الحزمة، لأن
+    # مترجم Dart يُبقي كل ما يمكن بلوغه من `main()`. فلوحة الإدارة لا تصل إلى
+    # هاتف راكب لأنها ليست في شجرة استيراده — لا لأن شرطاً يخفيها. راجع
+    # lib/app_flavor.dart.
+    #
+    # `fail-fast: false` كي لا يُلغي فشلُ نكهة بناءَ الأخرى: نكهتان تفشلان
+    # لسببين مختلفين، ورؤيتهما معاً أسرع من جولتين.
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - flavor: passenger
+            target: lib/main.dart
+            artifact: oago-passenger-release
+          - flavor: admin
+            target: lib/main_admin.dart
+            artifact: taiba-admin-release
+
+    # `secrets` is not available inside an `if:` expression — only `env` is. So
+    # the secret is lifted to the job environment here and the steps below test
+    # `env.KEYSTORE_BASE64` instead. Without this the whole file fails to parse,
+    # which takes every build down, not just the signing step.
+    env:
+      KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Gradle 8.7 (see android/gradle/wrapper/gradle-wrapper.properties) and
+      # the Android Gradle Plugin both require 17. On 21 the build fails late,
+      # inside Gradle, with an error that does not name the JDK.
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      # Latest stable rather than a pin, and that is the fix for a real failure
+      # rather than a preference.
+      #
+      # There is no pubspec.lock in this repository, so pub resolves the newest
+      # packages the constraints allow — geolocator 14, permission_handler 12.
+      # Those need compileSdk 35, and `compileSdk flutter.compileSdkVersion` is
+      # whatever the installed SDK says: 34 on Flutter 3.24. Gradle then failed
+      # configuring :geolocator_android with "compileSdkVersion is not
+      # specified", which names neither the plugin version nor the SDK that
+      # actually disagree.
+      #
+      # Pinning the SDK without a lockfile pins only half the pair and leaves
+      # the other half free to drift past it. Pin both or neither; until there
+      # is a lockfile, tracking stable keeps the two in step.
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Versions
+        run: flutter --version
+
+      - name: Resolve dependencies
+        run: flutter pub get
+
+      # كان يُختم بـ`|| true`، فلا يُفشل شيئاً — ولا حتى الأخطاء. كان ذلك
+      # صحيحاً يوم لم يكن في المستودع بناءٌ أخضر واحد: إخفاء الـAPK خلف تحذيرات
+      # سبقت هذا الملف لا يفيد أحداً.
+      #
+      # ذلك اليوم مضى. `|| true` يسقط الآن، وتبقى `--no-fatal-*`: التحذيرات
+      # والملاحظات تُعرَض ولا تُفشِل، والأخطاء تُفشِل — وهو ما يجب أن تفعله.
+      - name: Analyze
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+
+      # يُنفَّذ ولا يُتسامح معه، بخلاف المحلّل أعلاه — وحساب نطاقات الجيوهاش هو
+      # السبب. خطأٌ فيه لا يُسقط التطبيق بل يُخفي السائقين، فتقول الشاشة «لا
+      # يوجد سائقون» وهي صادقة في ما ترى. عطلٌ صامت كهذا لا تمسكه تجربة يدوية
+      # إلا بالمصادفة، فيُمسك هنا.
+      - name: Test
+        run: flutter test
+
+      # android/gradlew and gradle-wrapper.jar are not in the repository — they
+      # are covered by .gitignore. The Flutter tool injects its own wrapper when
+      # it finds none, and keeps the existing gradle-wrapper.properties, so the
+      # pinned Gradle 8.7 is still what runs. If this step ever fails on a
+      # missing wrapper, commit the wrapper rather than changing the pin.
+      # يُكتب من السرّ إلى مسار مؤقّت خارج مساحة العمل، فلا يمكن أن يُلتقط في
+      # أثر أو يُدفع سهواً. غيابه ليس فشلاً: البناء يعود إلى توقيع التصحيح،
+      # وهو ما نريده لطلبات السحب.
+      - name: Restore the upload keystore
+        if: env.KEYSTORE_BASE64 != ''
+        run: |
+          printf '%s' "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/upload.jks"
+          echo "KEYSTORE_PATH=$RUNNER_TEMP/upload.jks" >> "$GITHUB_ENV"
+
+      - name: Build ${{ matrix.flavor }} APKs
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          MAPS_API_KEY: ${{ secrets.MAPS_API_KEY }}
+        run: |
+          flutter build apk --release --split-per-abi \
+            -t "${{ matrix.target }}" \
+            --dart-define=MAPS_API_KEY="$MAPS_API_KEY" \
+            --dart-define=PLACES_COUNTRIES="${{ vars.PLACES_COUNTRIES || 'SD' }}" \
+            -Pmaps.api.key="$MAPS_API_KEY"
+
+      - name: Report how it was signed
+        run: |
+          if [ -n "$KEYSTORE_PATH" ]; then
+            echo "signed with the upload key"
+          else
+            echo "::warning::No KEYSTORE_BASE64 secret — signed with the debug key, not publishable."
+          fi
+
+      - name: List what was produced
+        run: ls -lh build/app/outputs/flutter-apk/
+
+      # Split per ABI, so arm64-v8a is the one for any phone sold in the last
+      # several years — the same variant the existing release APK was.
+      - name: Upload APKs
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: build/app/outputs/flutter-apk/*.apk
+          if-no-files-found: error
+          retention-days: 30

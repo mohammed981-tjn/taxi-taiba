@@ -1,15 +1,14 @@
 import 'dart:async';
-import 'dart:math';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter_phoenix/flutter_phoenix.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_geofire/flutter_geofire.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:flutter_projects/auth/signin_page.dart';
 import 'package:flutter_projects/global.dart';
 import 'package:flutter_projects/locale_provider.dart';
+import 'package:flutter_projects/methods/geo_query.dart';
 import 'package:flutter_projects/methods/google_map_methods.dart';
 import 'package:flutter_projects/methods/manage_drivers_methods.dart';
 import 'package:flutter_projects/model/direction_details_model.dart';
@@ -17,6 +16,7 @@ import 'package:flutter_projects/model/online_nearby_drivers.dart';
 import 'package:flutter_projects/pages/about_page.dart';
 import 'package:flutter_projects/pages/choose_ride_page.dart';
 import 'package:flutter_projects/pages/profile_page.dart';
+import 'package:flutter_projects/pages/rating_screen.dart';
 import 'package:flutter_projects/pages/select_destination_page.dart';
 import 'package:flutter_projects/pages/trip_history_page.dart';
 import 'package:flutter_projects/pushNotificationSystem/push_notification_system.dart';
@@ -303,11 +303,27 @@ class _HomePageState extends State<HomePage> {
       BitmapDescriptor.asset(configuration, "assets/tracking.png")
           .then((iconImage) {
         carIconNearbyDriver = iconImage;
+
+        // السائقون الذين وصلوا قبل الأيقونة تُخطّى رسمتهم. فبدون هذا السطر
+        // يبقون غائبين عن الخريطة إلى أن يتحرّك أحدهم — وقد لا يتحرّك.
+        if (mounted && ManageDriversMethods.nearbyOnlineDriversList.isNotEmpty) {
+          updateAvailableNearbyOnlineDriversOnMap();
+        }
       });
     }
   }
 
   updateAvailableNearbyOnlineDriversOnMap() {
+    // الأيقونة تُحمَّل بشكل غير متزامن في build، والأحداث الآن تصل أبكر من
+    // قبل — فأول سائق قد يسبقها. و`carIconNearbyDriver!` أدناه كان سيرمي
+    // عندئذٍ. لا ضرر في التخطّي: الحدث التالي للسائق نفسه يعيد الرسم.
+    if (carIconNearbyDriver == null) {
+      debugPrint('map: car icon not ready yet, skipping this redraw');
+      return;
+    }
+
+    if (!mounted) return;
+
     setState(() {
       markerSet.clear();
     });
@@ -412,70 +428,148 @@ class _HomePageState extends State<HomePage> {
 
   final _driversRef = FirebaseDatabase.instance.ref().child('onlineDrivers');
 
+  /// نصف قطر البحث — نفس الـ٢٢ كم التي كان يقصّ عندها المرشّح القديم.
+  static const double _searchRadiusMeters = 22000;
+
+  /// كل الاشتراكات المفتوحة على القاعدة، محفوظة لتُلغى.
+  ///
+  /// كانت واحداً، وصارت عدّة: لكل مدى جيوهاش ثلاثة أحداث. والقائمة هي ما يضمن
+  /// أن الإغلاق يطال الجميع — اشتراكٌ منسيّ يبقى ينزّل ويُحاسَب عليه.
+  final List<StreamSubscription<DatabaseEvent>> _driverSubscriptions =
+      <StreamSubscription<DatabaseEvent>>[];
+
+  void _cancelDriverSubscriptions() {
+    for (final StreamSubscription<DatabaseEvent> subscription
+        in _driverSubscriptions) {
+      subscription.cancel();
+    }
+    _driverSubscriptions.clear();
+  }
+
+  /// الاستماع للسائقين القريبين — بالفروق لا بالشجرة، وبالجوار لا بالعالم.
+  ///
+  /// ما كان يجري قبل هذا السطر: `onValue` على `onlineDrivers` كلها. وهذان
+  /// خطآن مركّبان في مكالمة واحدة.
+  ///
+  /// الأول أن `onValue` يعيد **العقدة كاملة عند كل تغيير**. سائق واحد يتحرّك
+  /// متراً، فتنزل بيانات كل السائقين من جديد. مع ثلاثين سائقاً يحدّثون موقعهم
+  /// كل ثانيتين، هذا ٩٠٠ رسالة في الثانية إلى كل هاتف بدل ١٥ — أي أن الكلفة
+  /// تتناسب مع **مربّع** عدد السائقين، لا مع عددهم. وهنا ذهبت الغيغابايتات.
+  ///
+  /// والثاني أن النطاق كان الأرض كلها: كل سائق في كل مدينة يُنزَّل إلى كل
+  /// هاتف، ثم يُرمى في السطر التالي لأن `distance <= 22` رفضه. دفعتَ ثمن
+  /// نقله لتقرأ أنه بعيد.
+  ///
+  /// والبديل يعالج الاثنين: `onChildAdded/Changed/Removed` تنقل السائق الذي
+  /// تغيّر وحده، و`orderByChild('g')` مع مدى جيوهاش تقصر ما يصل على الجوار.
+  /// الفهرس الذي تحتاجه هذه المكالمة منشورٌ في `database.rules.json` تحت
+  /// `.indexOn: ["g"]` — وبدونه ترفض القاعدة الاستعلام صراحةً.
   void initializeCustomGeoListener() {
-    debugPrint('initializeCustomGeoListener');
+    if (currentPositionOfUser == null) {
+      debugPrint('initializeCustomGeoListener: no position yet');
+      return;
+    }
 
-    _driversRef.onValue.listen((event) {
-      final data = event.snapshot.value as Map<dynamic, dynamic>?;
+    // الإلغاء أولاً لا الإضافة فوق القائم: هذه الدالة تُستدعى ثانيةً بعد كل
+    // رحلة، وبغير هذا السطر تتراكم مجموعة استعلامات جديدة على القديمة.
+    _cancelDriverSubscriptions();
+    ManageDriversMethods.nearbyOnlineDriversList.clear();
 
-      if (data == null) {
-        debugPrint('No drivers online.');
-        return;
-      }
+    final List<List<String>> bounds = geohashQueryBounds(
+      currentPositionOfUser!.latitude,
+      currentPositionOfUser!.longitude,
+      _searchRadiusMeters,
+    );
 
-      ManageDriversMethods.nearbyOnlineDriversList.clear(); // Clear to refresh
-      debugPrint('data:::::: $data');
-      data.forEach((key, value) {
-        double lat = value['l'][0];
-        double lng = value['l'][1];
+    debugPrint('geo listener: ${bounds.length} range(s) for '
+        '${_searchRadiusMeters ~/ 1000}km');
 
-        double distance = calculateDistance(
-          currentPositionOfUser!.latitude,
-          currentPositionOfUser!.longitude,
-          lat,
-          lng,
-        );
+    for (final List<String> range in bounds) {
+      final Query query =
+          _driversRef.orderByChild('g').startAt(range[0]).endAt(range[1]);
 
-        if (distance <= 22) {
-          // 22 km radius (same as your GeoFire radius)
-          OnlineNearbyDrivers driver = OnlineNearbyDrivers(
-            uidDriver: key,
-            latDriver: lat,
-            lngDriver: lng,
-          );
-          ManageDriversMethods.nearbyOnlineDriversList.add(driver);
-        }
-      });
+      _driverSubscriptions.add(query.onChildAdded.listen(_onDriverUpserted));
+      _driverSubscriptions.add(query.onChildChanged.listen(_onDriverUpserted));
+      _driverSubscriptions.add(query.onChildRemoved.listen(_onDriverRemoved));
+    }
 
-      nearbyOnlineDriversKeysLoaded = true;
-      updateAvailableNearbyOnlineDriversOnMap();
-    });
+    nearbyOnlineDriversKeysLoaded = true;
   }
 
-  double calculateDistance(
-    double startLatitude,
-    double startLongitude,
-    double endLatitude,
-    double endLongitude,
-  ) {
-    const double earthRadius = 6371; // Radius of Earth in km
+  /// سائق دخل النطاق أو تحرّك داخله.
+  void _onDriverUpserted(DatabaseEvent event) {
+    final String? driverId = event.snapshot.key;
+    if (driverId == null) return;
 
-    double dLat = _degreesToRadians(endLatitude - startLatitude);
-    double dLon = _degreesToRadians(endLongitude - startLongitude);
+    final LatLng? position = _readDriverPosition(event.snapshot.value);
+    if (position == null) {
+      // شكل غير متوقّع في القاعدة يُتجاهل بهدوء: صفٌّ واحد تالف لا يجوز أن
+      // يُسقط بقيّة السائقين معه.
+      debugPrint('geo listener: unreadable location for $driverId');
+      return;
+    }
 
-    double a = sin(dLat / 2) * sin(dLat / 2) +
-        cos(_degreesToRadians(startLatitude)) *
-            cos(_degreesToRadians(endLatitude)) *
-            sin(dLon / 2) *
-            sin(dLon / 2);
+    // المدى النصّي يجلب صندوقاً، والصندوق أوسع من الدائرة بنحو ٢٧٪ في أركانه.
+    // فيبقى القصّ الدقيق هنا — على ما وصل وحده.
+    final double distance = distanceInMeters(
+      currentPositionOfUser!.latitude,
+      currentPositionOfUser!.longitude,
+      position.latitude,
+      position.longitude,
+    );
 
-    double c = 2 * atan2(sqrt(a), sqrt(1 - a));
+    if (distance > _searchRadiusMeters) {
+      // خرج من الدائرة وهو ما يزال في الصندوق — يُزال إن كان معروضاً.
+      ManageDriversMethods.removeDriverFromList(driverId);
+    } else {
+      ManageDriversMethods.updateOnlineNearbyDriversLocation(
+        OnlineNearbyDrivers(
+          uidDriver: driverId,
+          latDriver: position.latitude,
+          lngDriver: position.longitude,
+        ),
+      );
+    }
 
-    return earthRadius * c; // Distance in km
+    updateAvailableNearbyOnlineDriversOnMap();
   }
 
-  double _degreesToRadians(double degrees) {
-    return degrees * pi / 180;
+  /// سائق خرج من النطاق أو انقطع.
+  void _onDriverRemoved(DatabaseEvent event) {
+    final String? driverId = event.snapshot.key;
+    if (driverId == null) return;
+
+    ManageDriversMethods.removeDriverFromList(driverId);
+    updateAvailableNearbyOnlineDriversOnMap();
+  }
+
+  /// قراءة `l` بشكليها.
+  ///
+  /// GeoFire يكتبها قائمة `[lat, lng]`، لكن قاعدة الوقت الحقيقي تعيد القائمة
+  /// خريطةً `{0: lat, 1: lng}` متى كان فيها فراغ في الفهرسة. والشيفرة السابقة
+  /// كانت تفترض القائمة وحدها — `value['l'][0]` — فترمي استثناءً يقتل المستمع
+  /// كلّه عند أول صفّ مخالف.
+  LatLng? _readDriverPosition(Object? value) {
+    if (value is! Map) return null;
+
+    final Object? location = value['l'];
+
+    double? asDouble(Object? raw) => raw is num ? raw.toDouble() : null;
+
+    if (location is List && location.length >= 2) {
+      final double? lat = asDouble(location[0]);
+      final double? lng = asDouble(location[1]);
+      if (lat != null && lng != null) return LatLng(lat, lng);
+      return null;
+    }
+
+    if (location is Map) {
+      final double? lat = asDouble(location[0] ?? location['0']);
+      final double? lng = asDouble(location[1] ?? location['1']);
+      if (lat != null && lng != null) return LatLng(lat, lng);
+    }
+
+    return null;
   }
 
   searchDriver() {
@@ -647,6 +741,13 @@ class _HomePageState extends State<HomePage> {
       // "driverPhoto": "",
       "fareAmount": "",
       "status": "new",
+      // Written now, from the directions this request was quoted against,
+      // because a receipt is read long after those directions are gone. The
+      // driver app still settles `fareAmount` at the end; these are the parts
+      // that explain it, not a second source for the total.
+      if (tripDirectionDetailsInfo != null)
+        "fareBreakdown":
+            associateMethods.fareBreakdown(tripDirectionDetailsInfo!).toMap(),
     };
 
     tripRequestRef!.set(dataMap);
@@ -695,7 +796,9 @@ class _HomePageState extends State<HomePage> {
         if (status == "accepted") {
           displayTripDetailsContainer();
 
-          Geofire.stopListener();
+          // A driver is assigned, so the other cars are no longer of any use to
+          // this screen — and these are the streams that are actually running.
+          _cancelDriverSubscriptions();
 
           setState(() {
             markerSet.removeWhere(
@@ -715,6 +818,16 @@ class _HomePageState extends State<HomePage> {
             );
 
             if (responseFromPaymentDialog == "paid") {
+              // Read before the reference is dropped: the rating needs to know
+              // which trip and which driver it belongs to, and two lines below
+              // there is nothing left to ask.
+              final tripMap = eventSnapshot.snapshot.value as Map;
+              final String ratedTripId =
+                  tripMap['tripId']?.toString() ?? tripRequestRef!.key ?? '';
+              final String ratedDriverId = tripMap['driverID']?.toString() ?? '';
+              final String ratedDriverName =
+                  tripMap['driverName']?.toString() ?? '';
+
               tripRequestRef!.onDisconnect();
               tripRequestRef = null;
 
@@ -722,6 +835,24 @@ class _HomePageState extends State<HomePage> {
               tripStreamSubscription = null;
 
               resetAppNow();
+
+              if (!mounted) return;
+              // Asked here rather than on the next launch, because a rating
+              // given now is about a trip the passenger still remembers. It is
+              // awaited so the restart below does not tear the screen away
+              // mid-answer; skipping returns immediately.
+              if (ratedTripId.isNotEmpty) {
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => RatingScreen(
+                      tripId: ratedTripId,
+                      driverId: ratedDriverId,
+                      driverName: ratedDriverName,
+                    ),
+                  ),
+                );
+              }
 
               if (!mounted) return;
               Phoenix.rebirth(context);
@@ -787,6 +918,17 @@ class _HomePageState extends State<HomePage> {
 
       requestingDirectionDetailsInfo = false;
     }
+  }
+
+  @override
+  void dispose() {
+    // Neither stream was released when this screen went away, so leaving the
+    // map and coming back left the previous listeners running and added new
+    // ones beside them — each abandoned copy kept costing bandwidth for as
+    // long as the app stayed open.
+    _cancelDriverSubscriptions();
+    tripStreamSubscription?.cancel();
+    super.dispose();
   }
 
   @override
