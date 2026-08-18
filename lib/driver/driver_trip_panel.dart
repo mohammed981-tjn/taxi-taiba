@@ -1,0 +1,427 @@
+import 'package:firebase_database/firebase_database.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_projects/driver/driver_service.dart';
+import 'package:flutter_projects/methods/associate_methods.dart';
+
+/// الرحلة من العرض إلى التقييم.
+///
+/// الترتيب: عرض ← قبول ← وصلت ← بدأت ← انتهت ← تقييم الراكب. وكل انتقال
+/// كتابةٌ واحدة في `tripRequests/$tripId/status` يقرأها الراكب فوراً.
+class DriverTripPanel extends StatefulWidget {
+  const DriverTripPanel({
+    super.key,
+    required this.tripId,
+    required this.profile,
+    required this.onAccepted,
+    required this.onFinished,
+  });
+
+  final String tripId;
+  final Map<String, Object?> profile;
+  final VoidCallback onAccepted;
+  final VoidCallback onFinished;
+
+  @override
+  State<DriverTripPanel> createState() => _DriverTripPanelState();
+}
+
+class _DriverTripPanelState extends State<DriverTripPanel> {
+  bool _busy = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<DatabaseEvent>(
+      stream: DriverService.trip(widget.tripId).onValue,
+      builder: (BuildContext context, AsyncSnapshot<DatabaseEvent> snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        final Object? raw = snapshot.data?.snapshot.value;
+
+        if (raw is! Map) {
+          // الرحلة اختفت — ألغاها الراكب أو انتقلت إلى سائق آخر.
+          return _Gone(onDismiss: widget.onFinished);
+        }
+
+        final Map<String, Object?> trip = <String, Object?>{};
+        raw.forEach((Object? k, Object? v) {
+          if (k is String) trip[k] = v;
+        });
+
+        final String status = '${trip['status'] ?? 'new'}';
+        final String driverId = '${trip['driverID'] ?? 'waiting'}';
+
+        // سائق آخر سبقنا. القاعدة رفضت مطالبتنا أو لم نطالب أصلاً.
+        if (driverId != 'waiting' && driverId != DriverService.uid) {
+          return _Gone(onDismiss: widget.onFinished);
+        }
+
+        return ListView(
+          padding: const EdgeInsets.fromLTRB(12, 0, 12, 20),
+          children: <Widget>[
+            _TripCard(trip: trip, status: status),
+            const SizedBox(height: 14),
+            ..._actionsFor(status, trip),
+          ],
+        );
+      },
+    );
+  }
+
+  List<Widget> _actionsFor(String status, Map<String, Object?> trip) {
+    switch (status) {
+      case 'new':
+        return <Widget>[
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: OutlinedButton(
+                  onPressed: _busy ? null : _decline,
+                  child: const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 14),
+                    child: Text('رفض'),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                flex: 2,
+                child: FilledButton(
+                  onPressed: _busy ? null : _accept,
+                  child: const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 14),
+                    child: Text('قبول الرحلة'),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ];
+
+      case 'accepted':
+        return <Widget>[
+          _bigButton('وصلتُ إلى الراكب',
+              () => _setStatus('arrived'), Icons.location_on),
+        ];
+
+      case 'arrived':
+        return <Widget>[
+          _bigButton('بدء الرحلة', () => _setStatus('ontrip'), Icons.play_arrow),
+        ];
+
+      case 'ontrip':
+        return <Widget>[
+          _bigButton('إنهاء الرحلة', () => _end(trip), Icons.flag),
+        ];
+
+      case 'ended':
+        return <Widget>[
+          _RatePassenger(
+            tripId: widget.tripId,
+            passengerId: '${trip['userID'] ?? ''}',
+            passengerName: '${trip['userName'] ?? 'الراكب'}',
+            alreadyRated: trip['driverRating'] != null,
+            onDone: widget.onFinished,
+          ),
+        ];
+
+      default:
+        return <Widget>[
+          _bigButton('إغلاق', widget.onFinished, Icons.close),
+        ];
+    }
+  }
+
+  Widget _bigButton(String label, VoidCallback onTap, IconData icon) {
+    return FilledButton.icon(
+      onPressed: _busy ? null : onTap,
+      icon: Icon(icon),
+      label: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        child: Text(label, style: const TextStyle(fontSize: 16)),
+      ),
+    );
+  }
+
+  Future<void> _guard(Future<void> Function() action) async {
+    if (_busy) return;
+    setState(() => _busy = true);
+    try {
+      await action();
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('تعذّر: $error')));
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _accept() => _guard(() async {
+        final Object? car = widget.profile['car_details'];
+        final String carText = car is Map
+            ? <String>[
+                '${car['model'] ?? ''}',
+                '${car['number'] ?? ''}',
+                '${car['color'] ?? ''}',
+              ].where((String s) => s.trim().isNotEmpty).join(' · ')
+            : '';
+
+        await DriverService.acceptTrip(
+          tripId: widget.tripId,
+          name: '${widget.profile['name'] ?? ''}',
+          phone: '${widget.profile['phone'] ?? ''}',
+          carDetails: carText,
+        );
+
+        widget.onAccepted();
+      });
+
+  Future<void> _decline() => _guard(() async {
+        await DriverService.declineTrip();
+        widget.onFinished();
+      });
+
+  Future<void> _setStatus(String status) =>
+      _guard(() => DriverService.setTripStatus(widget.tripId, status));
+
+  /// الأجرة من تفصيلها المكتوب وقت الطلب، لا من حساب جديد.
+  ///
+  /// `fareBreakdown` كُتب في الرحلة لحظة طلبها، من نفس الاتجاهات التي سُعِّرت
+  /// عليها. فاستعماله هنا يعني أن ما يدفعه الراكب هو ما عُرض عليه — ولو
+  /// حُسبت الأجرة الآن من جديد لاختلفت مع تغيّر حركة المرور، وهو ما لا يقبله
+  /// أحد في نهاية رحلة.
+  Future<void> _end(Map<String, Object?> trip) => _guard(() async {
+        double fare = 0;
+
+        final Object? breakdown = trip['fareBreakdown'];
+        if (breakdown is Map) {
+          fare = double.tryParse('${breakdown['total']}') ?? 0;
+        }
+
+        if (fare <= 0) {
+          // رحلة قديمة بلا تفصيل — لا تُنهَ بصفر.
+          fare = AssociateMethods.fallbackFare;
+        }
+
+        await DriverService.endTrip(widget.tripId, fare);
+      });
+}
+
+class _TripCard extends StatelessWidget {
+  const _TripCard({required this.trip, required this.status});
+
+  final Map<String, Object?> trip;
+  final String status;
+
+  static const Map<String, String> _label = <String, String>{
+    'new': 'طلب جديد',
+    'accepted': 'في الطريق إلى الراكب',
+    'arrived': 'وصلتَ — بانتظار الراكب',
+    'ontrip': 'الرحلة جارية',
+    'ended': 'انتهت',
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final Object? breakdown = trip['fareBreakdown'];
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text(
+              _label[status] ?? status,
+              style: const TextStyle(
+                fontSize: 17,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const Divider(height: 22),
+            _row(Icons.person_outline, '${trip['userName'] ?? '—'}'),
+            _row(Icons.phone_outlined, '${trip['userPhone'] ?? '—'}'),
+            const SizedBox(height: 10),
+            _row(Icons.trip_origin, '${trip['pickUpAddress'] ?? '—'}'),
+            _row(Icons.location_on_outlined, '${trip['dropOffAddress'] ?? '—'}'),
+            if (breakdown is Map) ...<Widget>[
+              const Divider(height: 22),
+              Text(
+                '${breakdown['distanceKm']} كم · '
+                '${breakdown['durationMin']} دقيقة',
+                style: const TextStyle(fontSize: 12, color: Colors.black54),
+              ),
+              Text(
+                'الأجرة: ${breakdown['total']}',
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _row(IconData icon, String text) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Icon(icon, size: 16, color: Colors.black45),
+          const SizedBox(width: 8),
+          Expanded(child: Text(text)),
+        ],
+      ),
+    );
+  }
+}
+
+/// تقييم الراكب — النصف المفقود من التقييم المتبادل.
+class _RatePassenger extends StatefulWidget {
+  const _RatePassenger({
+    required this.tripId,
+    required this.passengerId,
+    required this.passengerName,
+    required this.alreadyRated,
+    required this.onDone,
+  });
+
+  final String tripId;
+  final String passengerId;
+  final String passengerName;
+  final bool alreadyRated;
+  final VoidCallback onDone;
+
+  @override
+  State<_RatePassenger> createState() => _RatePassengerState();
+}
+
+class _RatePassengerState extends State<_RatePassenger> {
+  int _stars = 0;
+  bool _busy = false;
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.alreadyRated) {
+      return Card(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            children: <Widget>[
+              const Icon(Icons.check_circle_outline,
+                  size: 44, color: Colors.green),
+              const SizedBox(height: 10),
+              const Text('انتهت الرحلة وسُجِّل تقييمك.'),
+              const SizedBox(height: 16),
+              FilledButton(
+                onPressed: widget.onDone,
+                child: const Text('العودة'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          children: <Widget>[
+            Text(
+              'كيف كان ${widget.passengerName}؟',
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 14),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List<Widget>.generate(5, (int index) {
+                final int star = index + 1;
+                return IconButton(
+                  onPressed: _busy ? null : () => setState(() => _stars = star),
+                  icon: Icon(
+                    star <= _stars ? Icons.star : Icons.star_border,
+                    size: 34,
+                    color: Colors.amber,
+                  ),
+                );
+              }),
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: <Widget>[
+                Expanded(
+                  child: TextButton(
+                    onPressed: _busy ? null : widget.onDone,
+                    child: const Text('تخطٍّ'),
+                  ),
+                ),
+                Expanded(
+                  child: FilledButton(
+                    onPressed: (_stars == 0 || _busy) ? null : _submit,
+                    child: const Text('إرسال'),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _submit() async {
+    setState(() => _busy = true);
+
+    try {
+      await DriverService.ratePassenger(
+        tripId: widget.tripId,
+        passengerId: widget.passengerId,
+        stars: _stars,
+      );
+    } catch (error) {
+      // الرحلة انتهت والأجرة سُوّيت؛ تقييمٌ لم يُحفظ لا يستحقّ حبس السائق هنا.
+      debugPrint('ratePassenger failed — $error');
+    }
+
+    if (mounted) widget.onDone();
+  }
+}
+
+class _Gone extends StatelessWidget {
+  const _Gone({required this.onDismiss});
+
+  final VoidCallback onDismiss;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(28),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            const Icon(Icons.timer_off_outlined, size: 52, color: Colors.black38),
+            const SizedBox(height: 14),
+            const Text(
+              'لم تعد الرحلة متاحة',
+              style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'ألغاها الراكب أو قبلها سائق آخر.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.black54),
+            ),
+            const SizedBox(height: 20),
+            FilledButton(onPressed: onDismiss, child: const Text('حسناً')),
+          ],
+        ),
+      ),
+    );
+  }
+}

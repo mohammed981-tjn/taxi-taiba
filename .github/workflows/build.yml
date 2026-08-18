@@ -32,6 +32,9 @@ jobs:
           - flavor: passenger
             target: lib/main.dart
             artifact: oago-passenger-release
+          - flavor: driver
+            target: lib/main_driver.dart
+            artifact: taiba-driver-release
           - flavor: admin
             target: lib/main_admin.dart
             artifact: taiba-admin-release
@@ -122,6 +125,7 @@ jobs:
             -t "${{ matrix.target }}" \
             --dart-define=MAPS_API_KEY="$MAPS_API_KEY" \
             --dart-define=PLACES_COUNTRIES="${{ vars.PLACES_COUNTRIES || 'SD' }}" \
+            --dart-define=CURRENCY="${{ vars.CURRENCY || 'ج.س' }}" \
             -Pmaps.api.key="$MAPS_API_KEY"
 
       - name: Report how it was signed

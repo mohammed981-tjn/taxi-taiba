@@ -1,3 +1,4 @@
+import 'package:flutter_projects/currency.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_projects/appinfo/app_info.dart';
 import 'package:flutter_projects/l10n/app_localizations.dart';
@@ -171,7 +172,7 @@ class _ChooseRidePageState extends State<ChooseRidePage> {
               ),
             ),
             Text(
-              "₦ ${fare.toStringAsFixed(1)}",
+              money(fare.toStringAsFixed(1)),
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
           ],

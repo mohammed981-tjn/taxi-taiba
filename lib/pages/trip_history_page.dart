@@ -1,3 +1,4 @@
+import 'package:flutter_projects/currency.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
@@ -12,8 +13,21 @@ class TripHistoryPage extends StatefulWidget {
 }
 
 class _TripHistoryPageState extends State<TripHistoryPage> {
-  final completedTripRequestOfCurrentUser =
-      FirebaseDatabase.instance.ref().child("tripRequests");
+  /// رحلات هذا الراكب وحده — بالاستعلام لا بتنزيل الجدول.
+  ///
+  /// كان `.child("tripRequests")` عارياً: كل رحلة لكل مستخدم في المنصّة تنزل
+  /// إلى الهاتف، ثم يُرمى أكثرها في المرشّح أدناه. وهذا خطآن معاً — كلفةٌ
+  /// تنمو مع المنصّة كلها لا مع سجلّ صاحبها، **وخصوصيةٌ مفقودة**: عناوين
+  /// الغرباء وأسماؤهم وأرقامهم كانت تصل إلى جهاز لا يخصّهم.
+  ///
+  /// والقاعدة الآن تشترط هذا الشكل بالذات: القراءة مسموحة إن كان الاستعلام
+  /// `orderByChild('userID').equalTo(uid)`. أي أنّ القراءة العارية لم تعد
+  /// تُرفض بالذوق بل بالقاعدة — ولو أُعيدت لعادت الشاشة بخطأ صلاحية.
+  final completedTripRequestOfCurrentUser = FirebaseDatabase.instance
+      .ref()
+      .child("tripRequests")
+      .orderByChild("userID")
+      .equalTo(FirebaseAuth.instance.currentUser!.uid);
 
   @override
   Widget build(BuildContext context) {
@@ -127,7 +141,7 @@ class _TripHistoryPageState extends State<TripHistoryPage> {
                                 width: 5,
                               ),
                               Text(
-                                "₦ ${filteredTrips[index]['fareAmount']}",
+                                money(filteredTrips[index]['fareAmount']),
                                 style: const TextStyle(
                                   fontSize: 16,
                                   color: Colors.black,

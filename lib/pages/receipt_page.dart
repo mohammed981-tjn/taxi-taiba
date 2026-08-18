@@ -1,3 +1,4 @@
+import 'package:flutter_projects/currency.dart';
 import 'package:flutter/material.dart';
 
 import '../l10n/app_localizations.dart';
@@ -18,7 +19,7 @@ class ReceiptPage extends StatelessWidget {
   final Map trip;
 
   static const Color _navy = Color(0xFF010E4C);
-  static const String _currency = '₦';
+  static const String _currency = currencySymbol;
 
   String _s(String key) => trip[key]?.toString() ?? '';
 

@@ -40,6 +40,11 @@ class AssociateMethods {
   static const double _durationPerMinuteAmount = 0.3;
   static const double _baseFareAmount = 200;
 
+  /// أجرة تُستعمل حين لا تحمل الرحلة تفصيلاً — رحلة قديمة سبقت
+  /// `fareBreakdown`. وهي الأساس وحده: إنهاء رحلة بصفر أسوأ من
+  /// إنهائها بالحدّ الأدنى، وكلاهما يُراجَع من لوحة الإدارة.
+  static const double fallbackFare = _baseFareAmount;
+
   showSnackBarMsg(String msg, BuildContext cxt) {
     var snackBar = SnackBar(content: Text(msg));
     ScaffoldMessenger.of(cxt).showSnackBar(snackBar);

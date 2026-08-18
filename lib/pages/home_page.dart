@@ -1,4 +1,6 @@
 import 'dart:async';
+
+import 'package:flutter_projects/currency.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter_phoenix/flutter_phoenix.dart';
 import 'package:geolocator/geolocator.dart';
@@ -1316,7 +1318,7 @@ class _HomePageState extends State<HomePage> {
                     ),
                     Text(
                       (tripDirectionDetailsInfo != null)
-                          ? "₦ ${selectedCarType == "OAGO Go" ? (double.parse(associateMethods.calculateFareAmount(tripDirectionDetailsInfo!)) * 0.8).toStringAsFixed(1) : selectedCarType == "OAGO Executive" ? associateMethods.calculateFareAmount(tripDirectionDetailsInfo!) : (double.parse(associateMethods.calculateFareAmount(tripDirectionDetailsInfo!)) * 1.5).toStringAsFixed(1)}"
+                          ? money("${selectedCarType == "OAGO Go" ? (double.parse(associateMethods.calculateFareAmount(tripDirectionDetailsInfo!)) * 0.8).toStringAsFixed(1) : selectedCarType == "OAGO Executive" ? associateMethods.calculateFareAmount(tripDirectionDetailsInfo!) : (double.parse(associateMethods.calculateFareAmount(tripDirectionDetailsInfo!)) * 1.5).toStringAsFixed(1)}")
                           : "",
                       style: const TextStyle(
                         fontSize: 18,
