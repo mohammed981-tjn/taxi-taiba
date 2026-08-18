@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_projects/theme/app_theme.dart';
 import 'package:flutter_projects/appinfo/app_info.dart';
 import 'package:flutter_projects/global.dart';
 import 'package:flutter_projects/methods/google_map_methods.dart';
@@ -58,7 +59,7 @@ class _SelectDestinationPageState extends State<SelectDestinationPage> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF010E4C),
+        backgroundColor: TibaPalette.passenger.primary,
         elevation: 0,
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
@@ -75,7 +76,7 @@ class _SelectDestinationPageState extends State<SelectDestinationPage> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: const Color(0xFF010E4C),
+              color: TibaPalette.passenger.primary,
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.1),

@@ -1,6 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_projects/admin/admin_home.dart';
+import 'package:flutter_projects/app_flavor.dart';
+import 'package:flutter_projects/theme/tiba_logo.dart';
 
 /// بوّابة اللوحة: دخول، ثم تحقّق من الراية.
 ///
@@ -82,14 +84,8 @@ class _AdminGateState extends State<AdminGate> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: <Widget>[
-                const Icon(Icons.admin_panel_settings_outlined, size: 64),
-                const SizedBox(height: 16),
-                const Text(
-                  'لوحة تحكّم طيبة',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 28),
+                const TibaWordmark(role: AppRole.admin),
+                const SizedBox(height: 30),
                 TextField(
                   controller: _email,
                   keyboardType: TextInputType.emailAddress,

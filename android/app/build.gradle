@@ -35,7 +35,16 @@ android {
     def flavorName = (project.findProperty('flavor') ?: 'passenger').toString()
 
     def flavorSuffix = [passenger: '', driver: '.driver', admin: '.admin']
-    def flavorLabel  = [passenger: 'OAGO', driver: 'طيبة سائق', admin: 'طيبة إدارة']
+    def flavorLabel  = [passenger: 'Tiba', driver: 'Tiba سائق', admin: 'Tiba إدارة']
+
+    // لون خلفية الأيقونة المتكيّفة — نفس لون النكهة في lib/theme/app_theme.dart.
+    // تكرارٌ لا مفرّ منه: Gradle لا يقرأ Dart، وموارد أندرويد تُحسم عند البناء
+    // لا عند التشغيل. وهما مذكوران هنا وهناك بالتعليق نفسه كي لا ينفرد أحدهما.
+    def flavorIconColor = [
+        passenger: '#0D1B4C',
+        driver:    '#0E7C5A',
+        admin:     '#5B3E96'
+    ]
 
     def baseApplicationId = 'com.rididago.com'
     def wantedApplicationId = baseApplicationId + (flavorSuffix[flavorName] ?: '')
@@ -81,10 +90,15 @@ android {
         //   flutter build apk --release -Pmaps.api.key=AIza...
         // والافتراضي فارغ كي يبني المستودع بلا مفتاح — عندها تظهر الخريطة
         // فارغة، وهو فشل مرئي أهون من فشل البناء كلّه.
+        // يُولَّد كمورد بدل ملفّ في res/: ثلاثة مجلّدات مصادر لأجل لون واحد
+        // هي ثلاثة أماكن تُنسى.
+        resValue "color", "ic_launcher_background",
+                 (flavorIconColor[flavorName] ?: '#0D1B4C')
+
         manifestPlaceholders += [
             MAPS_API_KEY: (project.findProperty('maps.api.key') ?: ''),
             // ثلاثة تطبيقات باسم واحد على شاشة واحدة لا يُعرف أيّها أيّ.
-            APP_LABEL: (flavorLabel[flavorName] ?: 'OAGO')
+            APP_LABEL: (flavorLabel[flavorName] ?: 'Tiba')
         ]
     }
 

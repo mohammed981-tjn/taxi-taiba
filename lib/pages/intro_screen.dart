@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_projects/theme/app_theme.dart';
 import 'package:flutter_projects/auth/signup_page.dart';
 import 'package:flutter_projects/l10n/app_localizations.dart';
 import 'package:flutter_projects/locale_provider.dart';
@@ -135,7 +136,7 @@ class _IntroPageState extends State<IntroPage> {
                   width: selectedIndex == index ? 28 : 10,
                   decoration: BoxDecoration(
                     color: selectedIndex == index
-                        ? const Color(0xFF010E4C)
+                        ? TibaPalette.passenger.primary
                         : Colors.grey.shade300,
                     borderRadius: BorderRadius.circular(20),
                   ),
@@ -162,15 +163,15 @@ class _IntroPageState extends State<IntroPage> {
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(30),
-                        border: Border.all(color: const Color(0xFF010E4C), width: 1.5),
+                        border: Border.all(color: TibaPalette.passenger.primary, width: 1.5),
                       ),
                       alignment: Alignment.center,
                       child: Text(
                         l10n.signUp,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
-                          color: Color(0xFF010E4C),
+                          color: TibaPalette.passenger.primary,
                         ),
                       ),
                     ),
@@ -190,7 +191,7 @@ class _IntroPageState extends State<IntroPage> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF010E4C),
+                        color: TibaPalette.passenger.primary,
                         borderRadius: BorderRadius.circular(30),
                       ),
                       alignment: Alignment.center,

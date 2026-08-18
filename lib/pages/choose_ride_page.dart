@@ -1,5 +1,6 @@
 import 'package:flutter_projects/currency.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_projects/theme/app_theme.dart';
 import 'package:flutter_projects/appinfo/app_info.dart';
 import 'package:flutter_projects/l10n/app_localizations.dart';
 import 'package:flutter_projects/methods/associate_methods.dart';
@@ -16,7 +17,7 @@ class ChooseRidePage extends StatefulWidget {
 }
 
 class _ChooseRidePageState extends State<ChooseRidePage> {
-  String selectedCarType = "OAGO Go";
+  String selectedCarType = "Tiba Go";
   AssociateMethods associateMethods = AssociateMethods();
 
   @override
@@ -24,7 +25,7 @@ class _ChooseRidePageState extends State<ChooseRidePage> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF010E4C),
+        backgroundColor: TibaPalette.passenger.primary,
         title: Text(
           AppLocalizations.of(context)!.chooseRide,
           style: const TextStyle(color: Colors.white),
@@ -111,7 +112,7 @@ class _ChooseRidePageState extends State<ChooseRidePage> {
                 Navigator.pop(context, selectedCarType);
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF010E4C),
+                backgroundColor: TibaPalette.passenger.primary,
                 minimumSize: const Size(double.infinity, 50),
               ),
               child: Text(

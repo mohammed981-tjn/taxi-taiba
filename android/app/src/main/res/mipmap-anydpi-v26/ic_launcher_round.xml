@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  الأيقونة المتكيّفة — أندرويد ٨ فأعلى، وهو ما يحمله كل جهاز عملياً.
+  والأجهزة الأقدم تعود إلى mipmap-*/ic_launcher.png القديمة تلقائياً، فلا
+  ينكسر شيء.
+
+  اللون من `resValue` في build.gradle، فيختلف بالنكهة بلا ملفّ ثانٍ.
+-->
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@color/ic_launcher_background" />
+    <foreground android:drawable="@drawable/ic_launcher_foreground" />
+    <monochrome android:drawable="@drawable/ic_launcher_foreground" />
+</adaptive-icon>

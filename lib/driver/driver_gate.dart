@@ -1,9 +1,11 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_projects/app_flavor.dart';
 import 'package:flutter_projects/driver/driver_home.dart';
 import 'package:flutter_projects/driver/driver_register_page.dart';
 import 'package:flutter_projects/driver/driver_service.dart';
+import 'package:flutter_projects/theme/tiba_logo.dart';
 
 /// دخول السائق، ثم الحالة.
 ///
@@ -100,14 +102,8 @@ class _DriverGateState extends State<DriverGate> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: <Widget>[
-                const Icon(Icons.drive_eta_outlined, size: 64),
-                const SizedBox(height: 14),
-                const Text(
-                  'طيبة — السائق',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 26),
+                const TibaWordmark(role: AppRole.driver),
+                const SizedBox(height: 30),
                 TextField(
                   controller: _email,
                   keyboardType: TextInputType.emailAddress,

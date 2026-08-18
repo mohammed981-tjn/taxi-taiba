@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  شعار طيبة كمتّجه — لا صورة نقطيّة.
+
+  السبب أن الأيقونة النقطيّة تحتاج خمس نسخ بخمس كثافات، وثلاث نكهات تعني
+  خمس عشرة صورة تُصدَّر يدوياً وتُنسى إحداها. والمتّجه ملفٌّ واحد، ولونُ
+  خلفيّته يأتي من Gradle لكل نكهة.
+
+  الرقعة ١٠٨×١٠٨ بمواصفة الأيقونة المتكيّفة، والمضمون داخل المربّع الآمن
+  الأوسط (٦٦×٦٦) لأن النظام يقصّ الأطراف بأشكال مختلفة حسب الجهاز.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- الحلقة: قوس مفتوح من أعلى اليمين — الطريق لا الدائرة المغلقة. -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="5.2"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000"
+        android:pathData="M 68.5,35.2 A 22 22 0 1 1 54,32 " />
+
+    <!-- ساق الطاء. -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="5.2"
+        android:strokeLineCap="round"
+        android:pathData="M 53.6,45.5 L 53.6,60.5" />
+
+    <!-- القاعدة. -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="5.2"
+        android:strokeLineCap="round"
+        android:pathData="M 45.5,60.5 L 61.8,60.5" />
+
+    <!-- الوجهة — النقطة الكهرمانية في فتحة الحلقة. -->
+    <path
+        android:fillColor="#F5A524"
+        android:pathData="M 70.5,32 m -4.4,0 a 4.4,4.4 0 1,0 8.8,0 a 4.4,4.4 0 1,0 -8.8,0" />
+</vector>

@@ -6,6 +6,7 @@ import 'package:flutter_projects/appinfo/app_info.dart';
 import 'package:flutter_projects/l10n/app_localizations.dart';
 import 'package:flutter_projects/locale_provider.dart';
 import 'package:flutter_projects/pages/splash_screen.dart';
+import 'package:flutter_projects/theme/app_theme.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 
@@ -47,13 +48,13 @@ class MyApp extends StatelessWidget {
         builder: (context, localeProvider, child) {
           return MaterialApp(
             onGenerateTitle: (context) =>
-                AppLocalizations.of(context)?.appTitle ?? 'Users App',
+                AppLocalizations.of(context)?.appTitle ?? TibaBrand.nameLatin,
             debugShowCheckedModeBanner: false,
 
-            theme: ThemeData(
-              colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-              useMaterial3: true,
-            ),
+            // الهوية من مكان واحد — راجع lib/theme/app_theme.dart. كانت
+            // `seedColor: Colors.deepPurple`، وهي قيمة `flutter create`
+            // الافتراضية التي لم يمسّها أحد.
+            theme: TibaTheme.of(AppRole.passenger),
 
             // 🔹 اللغة الحالية (تتغيّر عبر LocaleProvider) — RTL تلقائي للعربية
             locale: localeProvider.locale,

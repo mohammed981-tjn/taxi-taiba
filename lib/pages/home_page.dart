@@ -6,6 +6,7 @@ import 'package:flutter_phoenix/flutter_phoenix.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_projects/theme/app_theme.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:flutter_projects/auth/signin_page.dart';
 import 'package:flutter_projects/global.dart';
@@ -65,7 +66,7 @@ class _HomePageState extends State<HomePage> {
   StreamSubscription<DatabaseEvent>? tripStreamSubscription;
   bool requestingDirectionDetailsInfo = false;
 
-  String selectedCarType = "OAGO Go";
+  String selectedCarType = "Tiba Go";
 
   getCurrentLocation() async {
     LocationPermission permission = await Geolocator.checkPermission();
@@ -1307,9 +1308,9 @@ class _HomePageState extends State<HomePage> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Image.asset(
-                      selectedCarType == "OAGO Go" 
+                      selectedCarType == "Tiba Go" 
                           ? "assets/oagogo.png" 
-                          : selectedCarType == "OAGO Executive" 
+                          : selectedCarType == "Tiba Executive" 
                               ? "assets/oagoexec.png" 
                               : "assets/oagoxl.png",
                       height: 80,
@@ -1318,7 +1319,7 @@ class _HomePageState extends State<HomePage> {
                     ),
                     Text(
                       (tripDirectionDetailsInfo != null)
-                          ? money("${selectedCarType == "OAGO Go" ? (double.parse(associateMethods.calculateFareAmount(tripDirectionDetailsInfo!)) * 0.8).toStringAsFixed(1) : selectedCarType == "OAGO Executive" ? associateMethods.calculateFareAmount(tripDirectionDetailsInfo!) : (double.parse(associateMethods.calculateFareAmount(tripDirectionDetailsInfo!)) * 1.5).toStringAsFixed(1)}")
+                          ? money("${selectedCarType == "Tiba Go" ? (double.parse(associateMethods.calculateFareAmount(tripDirectionDetailsInfo!)) * 0.8).toStringAsFixed(1) : selectedCarType == "Tiba Executive" ? associateMethods.calculateFareAmount(tripDirectionDetailsInfo!) : (double.parse(associateMethods.calculateFareAmount(tripDirectionDetailsInfo!)) * 1.5).toStringAsFixed(1)}")
                           : "",
                       style: const TextStyle(
                         fontSize: 18,
@@ -1373,7 +1374,7 @@ class _HomePageState extends State<HomePage> {
                         searchDriver();
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF010E4C),
+                        backgroundColor: TibaPalette.passenger.primary,
                       ),
                       child: Text(
                         AppLocalizations.of(context)!.getDriver,
@@ -1486,7 +1487,7 @@ class _HomePageState extends State<HomePage> {
                     Container(
                       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20), // Spacing inside the rectangle
                       decoration: BoxDecoration(
-                        color: const Color(0xFF010E4C), // Background color
+                        color: TibaPalette.passenger.primary, // Background color
                         borderRadius: BorderRadius.circular(8), // Slightly rounded corners
                       ),
                       child: Text(

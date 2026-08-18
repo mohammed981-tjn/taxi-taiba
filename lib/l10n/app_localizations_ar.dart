@@ -9,7 +9,7 @@ class AppLocalizationsAr extends AppLocalizations {
   AppLocalizationsAr([String locale = 'ar']) : super(locale);
 
   @override
-  String get appTitle => 'تطبيق المستخدمين';
+  String get appTitle => 'طيبة';
 
   @override
   String get welcomeText => 'رفيق سفرك المثالي!';
@@ -94,18 +94,18 @@ class AppLocalizationsAr extends AppLocalizations {
   String get errorOccurred => 'حدث خطأ ما';
 
   @override
-  String get aboutTitle => 'مرحباً بكم في OAGO Ride';
+  String get aboutTitle => 'مرحباً بكم في Tiba';
 
   @override
   String get oagoDescription =>
-      'OAGO Ride هي منصة تنقل ذكية تربط المسافرين بسائقين موثوقين للرحلات اليومية والرحلات الطويلة ونقل الشركات. بالإضافة إلى خدمة طلب السيارات العادية، توفر OAGO أيضاً خدمات تأجير السيارات، مما يسمح لأصحاب السيارات بإعارة سياراتهم للمسافرين. مع توفر حجز الفنادق والمساعدة في السفر، توفر OAGO حلاً شاملاً لجميع احتياجات النقل الخاصة بك. سواء كنت بحاجة إلى رحلة سريعة، أو سائق محترف، أو سيارة مستأجرة، فإن OAGO تجعل السفر سهلاً وآمناً ومريحاً.';
+      'Tiba هي منصة تنقل ذكية تربط المسافرين بسائقين موثوقين للرحلات اليومية والرحلات الطويلة ونقل الشركات. بالإضافة إلى خدمة طلب السيارات العادية، توفر Tiba أيضاً خدمات تأجير السيارات، مما يسمح لأصحاب السيارات بإعارة سياراتهم للمسافرين. مع توفر حجز الفنادق والمساعدة في السفر، توفر Tiba حلاً شاملاً لجميع احتياجات النقل الخاصة بك. سواء كنت بحاجة إلى رحلة سريعة، أو سائق محترف، أو سيارة مستأجرة، فإن Tiba تجعل السفر سهلاً وآمناً ومريحاً.';
 
   @override
   String get feedbackText =>
       'نحن نقدر ملاحظاتك! لا تتردد في مراسلتنا عبر البريد الإلكتروني على mohammed981@gmail.com.';
 
   @override
-  String get copyright => '© 2025 OAGO Ride. جميع الحقوق محفوظة.';
+  String get copyright => '© 2025 Tiba. جميع الحقوق محفوظة.';
 
   @override
   String get chooseRide => 'اختر رحلة';
@@ -114,13 +114,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get confirmRide => 'تأكيد الرحلة';
 
   @override
-  String get oagoGo => 'OAGO Go';
+  String get oagoGo => 'Tiba Go';
 
   @override
-  String get oagoExecutive => 'OAGO Executive';
+  String get oagoExecutive => 'Tiba Executive';
 
   @override
-  String get oagoXL => 'OAGO XL';
+  String get oagoXL => 'Tiba XL';
 
   @override
   String get email => 'البريد الإلكتروني';
@@ -205,7 +205,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get introDesc4 =>
-      'اعرض سيارتك على OAGO Ride وأجرها للمسافرين بينما تكسب دخلاً إضافياً!';
+      'اعرض سيارتك على Tiba وأجرها للمسافرين بينما تكسب دخلاً إضافياً!';
 
   @override
   String get introHeadline5 => 'أكثر من مجرد رحلات!';
@@ -219,7 +219,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get introDesc6 =>
-      'سجل الآن وابدأ في الاستمتاع بخدمات OAGO Ride المذهلة اليوم!';
+      'سجل الآن وابدأ في الاستمتاع بخدمات Tiba المذهلة اليوم!';
 
   @override
   String get rateTripTitle => 'قيّم رحلتك';

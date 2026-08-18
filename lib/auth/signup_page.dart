@@ -1,6 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_projects/theme/tiba_logo.dart';
+import 'package:flutter_projects/theme/app_theme.dart';
+import 'package:flutter_projects/app_flavor.dart';
 import 'package:flutter_projects/auth/signin_page.dart';
 import 'package:flutter_projects/global.dart';
 import 'package:flutter_projects/l10n/app_localizations.dart';
@@ -84,24 +87,38 @@ class _SignUpPageState extends State<SignUpPage>
           padding: const EdgeInsets.all(0),
           child: Column(
             children: [
-              SizedBox(
+              // ترويسة العلامة بدل صورة القالب — راجع signin_page.dart.
+              Container(
                 width: double.infinity,
-                height: MediaQuery.of(context).size.height * 0.4,
-                child: Image.asset(
-                  "assets/signup.jpg",
-                  fit: BoxFit.cover,
+                padding: const EdgeInsets.fromLTRB(24, 56, 24, 40),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: <Color>[
+                      TibaPalette.passenger.primary,
+                      TibaPalette.passenger.primaryDeep,
+                    ],
+                  ),
+                  borderRadius: const BorderRadius.vertical(
+                    bottom: Radius.circular(28),
+                  ),
+                ),
+                child: const TibaWordmark(
+                  role: AppRole.passenger,
+                  onDark: true,
+                  logoSize: 68,
                 ),
               ),
-
-              const SizedBox(height: 10,),
+              const SizedBox(height: 26),
 
               Text(
                 AppLocalizations.of(context)!.rideWithUs,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 26,
+                style: TextStyle(
+                  fontSize: 22,
                   fontWeight: FontWeight.bold,
-                  color: Colors.blue,
+                  color: TibaPalette.passenger.primary,
                 ),
               ),
 

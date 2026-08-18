@@ -1,5 +1,6 @@
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_projects/theme/app_theme.dart';
 
 import '../l10n/app_localizations.dart';
 
@@ -27,7 +28,7 @@ class RatingScreen extends StatefulWidget {
 }
 
 class _RatingScreenState extends State<RatingScreen> {
-  static const Color _navy = Color(0xFF010E4C);
+  static final Color _navy = TibaPalette.passenger.primary;
 
   int _stars = 0;
   final Set<String> _tags = {};
@@ -176,7 +177,7 @@ class _RatingScreenState extends State<RatingScreen> {
                             }),
                     icon: Icon(
                       filled ? Icons.star_rounded : Icons.star_border_rounded,
-                      color: filled ? const Color(0xFFF5A623) : Colors.black26,
+                      color: filled ? Color(0xFFF5A623) : Colors.black26,
                     ),
                   );
                 }),

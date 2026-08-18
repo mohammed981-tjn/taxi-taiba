@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_projects/theme/app_theme.dart';
 import '../l10n/app_localizations.dart';
 
 class AboutPage extends StatefulWidget {
@@ -13,7 +14,7 @@ class _AboutPageState extends State<AboutPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xFF010E4C),
+        backgroundColor: TibaPalette.passenger.primary,
         title: Text(
           AppLocalizations.of(context)!.aboutTitle,
           style: const TextStyle(
@@ -42,7 +43,7 @@ class _AboutPageState extends State<AboutPage> {
                 width: 200,
                 height: 120,
                 fit: BoxFit.contain,
-                errorBuilder: (c, e, s) => const Icon(Icons.directions_car, size: 100, color: Color(0xFF010E4C)),
+                errorBuilder: (c, e, s) => Icon(Icons.directions_car, size: 100, color: TibaPalette.passenger.primary),
               ),
             ),
             const SizedBox(height: 10),

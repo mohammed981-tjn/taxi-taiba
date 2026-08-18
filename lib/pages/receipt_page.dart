@@ -1,5 +1,6 @@
 import 'package:flutter_projects/currency.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_projects/theme/app_theme.dart';
 
 import '../l10n/app_localizations.dart';
 
@@ -18,7 +19,9 @@ class ReceiptPage extends StatelessWidget {
 
   final Map trip;
 
-  static const Color _navy = Color(0xFF010E4C);
+  // `final` لا `const`: حقلُ كائنٍ ثابت ليس تعبيراً ثابتاً في Dart وإن
+  // كان الكائن نفسه ثابتاً. وليست متغيّرة ساكنة قابلة للتبديل.
+  static final Color _navy = TibaPalette.passenger.primary;
   static const String _currency = currencySymbol;
 
   String _s(String key) => trip[key]?.toString() ?? '';
@@ -163,7 +166,7 @@ class _Section extends StatelessWidget {
           width: double.infinity,
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: const Color(0xFFF6F7FB),
+            color: Color(0xFFF6F7FB),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Column(
@@ -185,7 +188,7 @@ class _Line extends StatelessWidget {
     final style = TextStyle(
       fontSize: bold ? 16 : 14.5,
       fontWeight: bold ? FontWeight.bold : FontWeight.normal,
-      color: bold ? const Color(0xFF010E4C) : Colors.black87,
+      color: bold ? TibaPalette.passenger.primary : Colors.black87,
     );
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 3),

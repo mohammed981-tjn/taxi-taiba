@@ -2,6 +2,7 @@ import 'package:flutter_projects/currency.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_projects/theme/app_theme.dart';
 
 class PaymentDialog extends StatefulWidget {
   final String fareAmount;
@@ -96,7 +97,7 @@ class _PaymentDialogState extends State<PaymentDialog> {
               onPressed: () {
                 Navigator.pop(context, "paid");
               },
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF010E4C)),
+              style: ElevatedButton.styleFrom(backgroundColor: TibaPalette.passenger.primary),
               child: const Text(
                 "PAY CASH",
                 style: TextStyle(color: Colors.white),
@@ -104,7 +105,7 @@ class _PaymentDialogState extends State<PaymentDialog> {
             ),
             ElevatedButton(
               onPressed: () {},
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF010E4C)),
+              style: ElevatedButton.styleFrom(backgroundColor: TibaPalette.passenger.primary),
               child: const Text(
                 "PAY ONLINE",
                 style: TextStyle(color: Colors.white),

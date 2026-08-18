@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_projects/theme/app_theme.dart';
 import 'package:flutter_projects/global.dart';
 import 'package:flutter_projects/l10n/app_localizations.dart';
 
@@ -57,7 +58,7 @@ class _ProfilePageState extends State<ProfilePage> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF010E4C),
+        backgroundColor: TibaPalette.passenger.primary,
         title: Text(
           l10n.profileTitle,
           style: const TextStyle(color: Colors.white),
@@ -97,7 +98,7 @@ class _ProfilePageState extends State<ProfilePage> {
               ElevatedButton(
                 onPressed: updateProfile,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF010E4C),
+                  backgroundColor: TibaPalette.passenger.primary,
                   minimumSize: const Size(double.infinity, 50),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
@@ -119,7 +120,7 @@ class _ProfilePageState extends State<ProfilePage> {
       style: const TextStyle(color: Colors.black, fontSize: 16),
       decoration: InputDecoration(
         labelText: label,
-        prefixIcon: Icon(icon, color: const Color(0xFF010E4C)),
+        prefixIcon: Icon(icon, color: TibaPalette.passenger.primary),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
         disabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
