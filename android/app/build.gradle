@@ -19,8 +19,59 @@ android {
         jvmTarget = '17'
     }
 
+    // ── هوية الحزمة لكل نكهة ────────────────────────────────────────────
+    //
+    // كانت النكهات الثلاث تحمل `applicationId` واحداً، وهو ما يراه أندرويد
+    // **تعريفاً للتطبيق**: نفس المعرّف = نفس التطبيق. فتثبيت لوحة الإدارة كان
+    // يُعرَض كتحديث لتطبيق الراكب، ثم يفشل بـ«تتعارض مع حزمة حالية» لأن
+    // توقيعهما أو محتواهما لا يتطابق. ولا يمكن أن تجتمع الثلاثة على جهاز.
+    //
+    // الفصل في Dart كان صحيحاً وناقصاً: يمنع الشيفرة من الانتشار، ولا يجعل
+    // منها تطبيقات. الهوية هنا هي ما يجعلها كذلك.
+    //
+    // والنكهة تصل من سطر البناء — `-Pflavor=driver` — كي تبقى نقطة الدخول
+    // (`-t lib/main_driver.dart`) وهوية الحزمة معرَّفتين في مكان واحد: مصفوفة
+    // CI.
+    def flavorName = (project.findProperty('flavor') ?: 'passenger').toString()
+
+    def flavorSuffix = [passenger: '', driver: '.driver', admin: '.admin']
+    def flavorLabel  = [passenger: 'OAGO', driver: 'طيبة سائق', admin: 'طيبة إدارة']
+
+    def baseApplicationId = 'com.rididago.com'
+    def wantedApplicationId = baseApplicationId + (flavorSuffix[flavorName] ?: '')
+
+    // Firebase لا يعرف حزمةً لم تُسجَّل: إضافةُ `applicationId` غير موجود في
+    // google-services.json تُفشل البناء بـ«No matching client found». فبدل أن
+    // ينكسر البناء حتى تُسجَّل الحزمتان الجديدتان في الكونسول، يُقرأ الملفّ
+    // هنا ويُختار المعرّف الذي يعرفه — مع تحذير صريح.
+    //
+    // فيبقى البناء أخضر اليوم، ويصير الفصل نافذاً من تلقاء نفسه لحظة نزول
+    // google-services.json جديد يحوي الحزم الثلاث. لا تعديل شيفرة بعدها.
+    def registeredPackages = []
+    def googleServices = file('google-services.json')
+    if (googleServices.exists()) {
+        registeredPackages = new groovy.json.JsonSlurper()
+            .parse(googleServices)
+            .client
+            .collect { it.client_info.android_client_info.package_name }
+    }
+
+    def resolvedApplicationId = wantedApplicationId
+    if (!registeredPackages.contains(wantedApplicationId)) {
+        resolvedApplicationId = baseApplicationId
+        if (wantedApplicationId != baseApplicationId) {
+            logger.warn(
+                "\n[flavour] '${wantedApplicationId}' is not registered in " +
+                "google-services.json — falling back to '${baseApplicationId}'.\n" +
+                "[flavour] This build CANNOT be installed alongside the other " +
+                "flavours until that package is added in the Firebase console " +
+                "and google-services.json is replaced.\n"
+            )
+        }
+    }
+
     defaultConfig {
-        applicationId 'com.rididago.com'
+        applicationId resolvedApplicationId
         minSdkVersion flutter.minSdkVersion
         targetSdkVersion 34
         versionCode 1
@@ -31,7 +82,9 @@ android {
         // والافتراضي فارغ كي يبني المستودع بلا مفتاح — عندها تظهر الخريطة
         // فارغة، وهو فشل مرئي أهون من فشل البناء كلّه.
         manifestPlaceholders += [
-            MAPS_API_KEY: (project.findProperty('maps.api.key') ?: '')
+            MAPS_API_KEY: (project.findProperty('maps.api.key') ?: ''),
+            // ثلاثة تطبيقات باسم واحد على شاشة واحدة لا يُعرف أيّها أيّ.
+            APP_LABEL: (flavorLabel[flavorName] ?: 'OAGO')
         ]
     }
 

@@ -141,6 +141,7 @@ jobs:
           flutter build apk --release \
             --target-platform "${{ vars.ANDROID_ABIS || 'android-arm,android-arm64' }}" \
             -t "${{ matrix.target }}" \
+            -Pflavor="${{ matrix.flavor }}" \
             --dart-define=MAPS_API_KEY="$MAPS_API_KEY" \
             --dart-define=PLACES_COUNTRIES="${{ vars.PLACES_COUNTRIES || 'SD' }}" \
             --dart-define=CURRENCY="${{ vars.CURRENCY || 'ج.س' }}" \
