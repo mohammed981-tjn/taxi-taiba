@@ -22,6 +22,7 @@ import 'package:flutter_projects/pages/choose_ride_page.dart';
 import 'package:flutter_projects/pages/profile_page.dart';
 import 'package:flutter_projects/pages/rating_screen.dart';
 import 'package:flutter_projects/pages/select_destination_page.dart';
+import 'package:flutter_projects/pricing.dart';
 import 'package:flutter_projects/pages/trip_history_page.dart';
 import 'package:flutter_projects/pushNotificationSystem/push_notification_system.dart';
 import 'package:flutter_projects/widgets/information_dialog.dart';
@@ -84,7 +85,8 @@ class _HomePageState extends State<HomePage> {
   /// يُكتب على الرحلة **بعد** `ended` فيعيد إطلاق الحوار على رحلة سُوّيت.
   bool _settled = false;
 
-  String selectedCarType = "Taibah Go";
+  /// الفئة مفتاحٌ ثابت لا نصّ مترجَم — راجع lib/pricing.dart.
+  VehicleTier selectedTier = VehicleTier.go;
 
   getCurrentLocation() async {
     LocationPermission permission = await Geolocator.checkPermission();
@@ -162,10 +164,10 @@ class _HomePageState extends State<HomePage> {
       ),
     );
 
-    if (responseFromChooseRidePage != null) {
+    if (responseFromChooseRidePage is VehicleTier) {
       if (!mounted) return;
       setState(() {
-        selectedCarType = responseFromChooseRidePage;
+        selectedTier = responseFromChooseRidePage;
         searchContainerHeight = 0;
         bottomMapPadding = 250;
         rideDetailsContainerHeight = 255;
@@ -819,9 +821,16 @@ class _HomePageState extends State<HomePage> {
       // because a receipt is read long after those directions are gone. The
       // driver app still settles `fareAmount` at the end; these are the parts
       // that explain it, not a second source for the total.
+      // الفئة تُكتب في الرحلة.
+      //
+      // كانت تُعرَض وتُضرَب ثم تُرمى: لا السائق يعرف أيّ فئة طُلبت، ولا
+      // الإيصال، ولا لوحة الإدارة. فراكبٌ يطلب XL ويصله سيّارة صغيرة لا يجد
+      // في النظام ما يثبت ما طلب.
+      "vehicleTier": selectedTier.id,
       if (tripDirectionDetailsInfo != null)
-        "fareBreakdown":
-            associateMethods.fareBreakdown(tripDirectionDetailsInfo!).toMap(),
+        "fareBreakdown": associateMethods
+            .fareBreakdown(tripDirectionDetailsInfo!, tier: selectedTier)
+            .toMap(),
     };
 
     tripRequestRef!.set(dataMap);
@@ -1459,18 +1468,26 @@ class _HomePageState extends State<HomePage> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Image.asset(
-                      selectedCarType == "Taibah Go" 
-                          ? "assets/oagogo.png" 
-                          : selectedCarType == "Taibah Executive" 
-                              ? "assets/oagoexec.png" 
-                              : "assets/oagoxl.png",
+                      switch (selectedTier) {
+                        VehicleTier.go => "assets/oagogo.png",
+                        VehicleTier.executive => "assets/oagoexec.png",
+                        VehicleTier.xl => "assets/oagoxl.png",
+                      },
                       height: 80,
                       width: 140,
                       errorBuilder: (c, e, s) => const Icon(Icons.directions_car, size: 80),
                     ),
                     Text(
+                      // نفس الدالّة التي تُحصَّل بها الأجرة، ونفس الفئة.
+                      // كان هنا ثلاثيٌّ متداخل يضرب المجموع بمعاملات تخصّه،
+                      // ويقارن الفئة بنصّ **مترجَم** — فأوّل ترجمة عربيّة
+                      // كانت ستُسقط كلّ رحلة على الفرع الأخير: ×1.5 على كل
+                      // راكب، بلا خطأ ظاهر.
                       (tripDirectionDetailsInfo != null)
-                          ? money("${selectedCarType == "Taibah Go" ? (double.parse(associateMethods.calculateFareAmount(tripDirectionDetailsInfo!)) * 0.8).toStringAsFixed(1) : selectedCarType == "Taibah Executive" ? associateMethods.calculateFareAmount(tripDirectionDetailsInfo!) : (double.parse(associateMethods.calculateFareAmount(tripDirectionDetailsInfo!)) * 1.5).toStringAsFixed(1)}")
+                          ? money(associateMethods.calculateFareAmount(
+                              tripDirectionDetailsInfo!,
+                              tier: selectedTier,
+                            ))
                           : "",
                       style: const TextStyle(
                         fontSize: 18,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_projects/model/direction_details_model.dart';
+import 'package:flutter_projects/pricing.dart';
 
 /// A fare split into the parts that produced it.
 ///
@@ -36,14 +37,10 @@ class FareBreakdown {
 }
 
 class AssociateMethods {
-  static const double _distancePerKmAmount = 0.4;
-  static const double _durationPerMinuteAmount = 0.3;
-  static const double _baseFareAmount = 200;
-
   /// أجرة تُستعمل حين لا تحمل الرحلة تفصيلاً — رحلة قديمة سبقت
   /// `fareBreakdown`. وهي الأساس وحده: إنهاء رحلة بصفر أسوأ من
   /// إنهائها بالحدّ الأدنى، وكلاهما يُراجَع من لوحة الإدارة.
-  static const double fallbackFare = _baseFareAmount;
+  static const double fallbackFare = FareRates.minimum;
 
   showSnackBarMsg(String msg, BuildContext cxt) {
     var snackBar = SnackBar(content: Text(msg));
@@ -60,20 +57,33 @@ class AssociateMethods {
   /// holds and what the receipt line will claim it is.
   ///
   /// Google returns metres and seconds, hence the /1000 and /60.
-  FareBreakdown fareBreakdown(DirectionDetailsModel directionDetails) {
+  /// المعامل يضرب **المكوّنات** لا المجموع.
+  ///
+  /// لو ضُرب المجموع وحده لما جمعت أسطر الإيصال إلى ما دُفع: يقرأ الراكب
+  /// أساساً ومسافةً وزمناً تحتها إجماليٌّ لا يساوي جمعها. والإيصال الذي لا
+  /// يُجمَع هو أوّل ما يُشكَّك فيه.
+  FareBreakdown fareBreakdown(
+    DirectionDetailsModel directionDetails, {
+    VehicleTier tier = VehicleTier.go,
+  }) {
     final double distanceKm = (directionDetails.distanceValueDigits ?? 0) / 1000;
     final double durationMin = (directionDetails.durationValueDigits ?? 0) / 60;
 
+    final double m = tier.multiplier;
+
     return FareBreakdown(
-      base: _baseFareAmount,
-      distance: distanceKm * _distancePerKmAmount,
-      duration: durationMin * _durationPerMinuteAmount,
+      base: FareRates.base * m,
+      distance: distanceKm * FareRates.perKm * m,
+      duration: durationMin * FareRates.perMinute * m,
       distanceKm: distanceKm,
       durationMin: durationMin,
     );
   }
 
-  calculateFareAmount(DirectionDetailsModel directionDetails) {
-    return fareBreakdown(directionDetails).total.toStringAsFixed(1);
+  calculateFareAmount(
+    DirectionDetailsModel directionDetails, {
+    VehicleTier tier = VehicleTier.go,
+  }) {
+    return fareBreakdown(directionDetails, tier: tier).total.toStringAsFixed(1);
   }
 }

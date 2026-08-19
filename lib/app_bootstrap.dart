@@ -1,7 +1,10 @@
 import 'dart:io';
+import 'dart:ui';
 
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 
 /// The Realtime Database instance, in full.
@@ -56,4 +59,36 @@ Future<void> bootstrapFirebase() async {
   // sites — is the same value repeated in a dozen files, where one missed copy
   // fails silently rather than loudly.
   FirebaseDatabase.instance.databaseURL = rtdbUrl;
+
+  _reportCrashes();
+}
+
+/// توصيل الأعطال.
+///
+/// لم يكن في المستودع كلّه أثرٌ لتقرير أعطال: لا Crashlytics ولا Sentry ولا
+/// حتى `FlutterError.onError`. أي أنّ سائقاً يسقط تطبيقه في المدينة وسط رحلة
+/// لا يترك خبراً — يعيد التشغيل، أو يحذف التطبيق، ولا نعرف أنّ شيئاً وقع.
+/// والعطل الذي لا يُرى لا يُصلَح.
+///
+/// و`versionCode` رُبط برقم التشغيل تحديداً كي يُنسب العطل إلى بنائه. كان
+/// نصف الترتيب قائماً بلا نصفه الآخر.
+void _reportCrashes() {
+  // الويب خارج هذا: الحزمة بلا تنفيذ هناك، ولوحة الإدارة تُبنى للويب.
+  if (kIsWeb) return;
+  if (!Platform.isAndroid && !Platform.isIOS) return;
+
+  final FirebaseCrashlytics crashlytics = FirebaseCrashlytics.instance;
+
+  // أخطاء إطار Flutter — البناء والتخطيط والرسم.
+  FlutterError.onError = (FlutterErrorDetails details) {
+    FlutterError.presentError(details);
+    crashlytics.recordFlutterFatalError(details);
+  };
+
+  // وما يقع خارج الإطار: أخطاء غير مُلتقَطة في `Future` ومناطق غير متزامنة —
+  // وهي أكثر ما يقع في تطبيق كلّ شاشة فيه تُصغي إلى قاعدة بيانات.
+  PlatformDispatcher.instance.onError = (Object error, StackTrace stack) {
+    crashlytics.recordError(error, stack, fatal: true);
+    return true;
+  };
 }
