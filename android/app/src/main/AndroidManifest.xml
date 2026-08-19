@@ -17,6 +17,25 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
+    <!--
+      خدمة المقدّمة — الفرق بين سائق يعمل وسائق يظنّ أنه يعمل.
+
+      بلا هذه الصلاحيات يتوقّف بثّ الموقع لحظة إقفال الشاشة، ويمحو
+      `onDisconnect` السائقَ من `onlineDrivers` خلال دقيقة، بينما المفتاح على
+      شاشته ما زال يقول «متصل». فينتظر ساعةً ولا يصله طلب ولا شيء يخبره لماذا.
+
+      و`POST_NOTIFICATIONS` مطلوبة على أندرويد 13 فما فوق كي يظهر إشعار الخدمة
+      أصلاً — وبلا إشعار لا يُسمح للخدمة بالعمل.
+
+      ولم تُضَف `ACCESS_BACKGROUND_LOCATION` عمداً: خدمة المقدّمة مع
+      `whileInUse` تكفي لما نفعله، وتلك الصلاحية تفتح مراجعة إجبارية في Google
+      Play بفيديو توضيحي ورفضاً محتملاً للنكهات الثلاث.
+    -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+
     <application
         android:label="${APP_LABEL}"
         android:name="${applicationName}"

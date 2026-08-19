@@ -2,6 +2,7 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_projects/driver/driver_service.dart';
 import 'package:flutter_projects/methods/associate_methods.dart';
+import 'package:geolocator/geolocator.dart';
 
 /// الرحلة من العرض إلى التقييم.
 ///
@@ -12,14 +13,25 @@ class DriverTripPanel extends StatefulWidget {
     super.key,
     required this.tripId,
     required this.profile,
-    required this.onAccepted,
+    required this.onAccepting,
+    required this.onAcceptFailed,
     required this.onFinished,
+    this.position,
   });
 
   final String tripId;
   final Map<String, Object?> profile;
-  final VoidCallback onAccepted;
+
+  /// يُستدعى **قبل** كتابة القبول، لا بعدها — راجع driver_home.dart.
+  final VoidCallback onAccepting;
+
+  /// ويُتراجَع عنه إن رفضت القاعدة المطالبة.
+  final VoidCallback onAcceptFailed;
+
   final VoidCallback onFinished;
+
+  /// آخر موقع للسائق — يُكتب مع القبول ويقيس بُعد نقطة الانطلاق.
+  final Position? position;
 
   @override
   State<DriverTripPanel> createState() => _DriverTripPanelState();
@@ -103,11 +115,18 @@ class _DriverTripPanelState extends State<DriverTripPanel> {
         return <Widget>[
           _bigButton('وصلتُ إلى الراكب',
               () => _setStatus('arrived'), Icons.location_on),
+          const SizedBox(height: 4),
+          _cancelButton('إلغاء الرحلة', 'driverCancelled'),
         ];
 
       case 'arrived':
         return <Widget>[
           _bigButton('بدء الرحلة', () => _setStatus('ontrip'), Icons.play_arrow),
+          const SizedBox(height: 4),
+          // «الراكب لم يحضر» ليست إلغاءً عادياً: هي الحالة التي يقف فيها
+          // السائق عند العنوان بلا أحد، وهي التي تُبنى عليها رسوم الانتظار
+          // لاحقاً. فتُسجَّل بسببها لا مدموجةً في إلغاءٍ مجهول.
+          _cancelButton('الراكب لم يحضر', 'noShow'),
         ];
 
       case 'ontrip':
@@ -169,15 +188,66 @@ class _DriverTripPanelState extends State<DriverTripPanel> {
               ].where((String s) => s.trim().isNotEmpty).join(' · ')
             : '';
 
-        await DriverService.acceptTrip(
-          tripId: widget.tripId,
-          name: '${widget.profile['name'] ?? ''}',
-          phone: '${widget.profile['phone'] ?? ''}',
-          carDetails: carText,
-        );
+        widget.onAccepting();
 
-        widget.onAccepted();
+        try {
+          await DriverService.acceptTrip(
+            tripId: widget.tripId,
+            name: '${widget.profile['name'] ?? ''}',
+            phone: '${widget.profile['phone'] ?? ''}',
+            carDetails: carText,
+            position: widget.position,
+          );
+        } catch (error) {
+          // سبقنا سائق آخر فرفضت القاعدة المطالبة. يُخفض العلم كي لا يبقى
+          // السائق محبوساً في رحلة ليست له.
+          widget.onAcceptFailed();
+          rethrow;
+        }
       });
+
+  /// إلغاء بعد القبول.
+  ///
+  /// لم يكن لأيّ من الطرفين سبيل إلى الإلغاء بعد القبول: عطلٌ في السيّارة أو
+  /// راكبٌ لا يظهر يترك الرحلة معلّقةً إلى الأبد، وليس أمام السائق إلا أن
+  /// يضغط «إنهاء» فتُحسب رحلةً تمّت وتدخل الأرباح.
+  Future<void> _cancel(String reason) => _guard(() async {
+        await DriverService.cancelTrip(widget.tripId, reason: reason);
+        widget.onFinished();
+      });
+
+  Widget _cancelButton(String label, String reason) => TextButton.icon(
+        onPressed: _busy ? null : () => _confirmCancel(label, reason),
+        icon: const Icon(Icons.close, size: 18),
+        label: Text(label),
+        style: TextButton.styleFrom(foregroundColor: Colors.red.shade700),
+      );
+
+  void _confirmCancel(String label, String reason) {
+    showDialog<void>(
+      context: context,
+      builder: (BuildContext context) => AlertDialog(
+        title: Text(label),
+        content: const Text(
+          'سيُبلَّغ الراكب فوراً، وتُسجَّل الرحلة ملغاةً في سجلّك.',
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('تراجع'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: Colors.red.shade700),
+            onPressed: () {
+              Navigator.pop(context);
+              _cancel(reason);
+            },
+            child: const Text('تأكيد الإلغاء'),
+          ),
+        ],
+      ),
+    );
+  }
 
   Future<void> _decline() => _guard(() async {
         await DriverService.declineTrip();

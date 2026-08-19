@@ -104,6 +104,7 @@ class DriverService {
     required String name,
     required String phone,
     required String carDetails,
+    Position? position,
   }) async {
     await trip(tripId).update(<String, Object?>{
       'driverID': uid,
@@ -111,10 +112,36 @@ class DriverService {
       'driverPhone': phone,
       'carDetails': carDetails,
       'status': 'accepted',
+      // الموقع يُكتب هنا، لا في تدفّق الحركة وحده.
+      //
+      // تدفّق الموقع يرشّح عند عشرين متراً — وهو صواب، فالكتابة مع كل خطوة
+      // تُحاسَب. لكنّ سائقاً يقبل وهو واقف على الرصيف لا يقطع عشرين متراً،
+      // فلا يُكتب موقعه، فيبقى الراكب على «نبحث عن سائق» بعد أن قُبلت رحلته.
+      //
+      // فأوّل موقع يُكتب مع القبول نفسه، ثم يتبعه التدفّق.
+      if (position != null) 'driverLocation': _locationMap(position),
     });
+
+    // الرحلة الجارية على الخادم لا في ذاكرة التطبيق.
+    //
+    // كانت في حقلٍ داخل الشاشة وحدها. فإن أُغلق التطبيق أو قتله النظام —
+    // وأندرويد يقتل تطبيقاً في الخلفيّة بلا استئذان — عاد السائق إلى الخريطة
+    // ولا سبيل له إلى رحلةٍ القاعدةُ تقول إنّها له. راكبٌ ينتظر وسائقٌ لا يرى.
+    await me.child('activeTrip').set(tripId);
 
     await me.child('newTripStatus').set('idle');
   }
+
+  /// موضع السائق كما تقرؤه شاشة الراكب.
+  static Map<String, String> _locationMap(Position position) =>
+      <String, String>{
+        'latitude': position.latitude.toString(),
+        'longitude': position.longitude.toString(),
+      };
+
+  /// بثّ الموقع داخل الرحلة — هذا ما يرسم السيّارة على خريطة الراكب.
+  static Future<void> publishTripLocation(String tripId, Position position) =>
+      trip(tripId).child('driverLocation').set(_locationMap(position));
 
   /// الرفض — لا يُكتب في الرحلة شيء.
   ///
@@ -129,12 +156,40 @@ class DriverService {
   ///
   /// `fareAmount` لا تكتبه إلا يدُ السائق المُسنَد — تحقّقٌ في القاعدة، وهو ما
   /// يُبطل اللغم القديم في تطبيق الراكب حيث كان `currentUser.uid` هو الراكب.
-  static Future<void> endTrip(String tripId, double fare) {
-    return trip(tripId).update(<String, Object?>{
+  static Future<void> endTrip(String tripId, double fare) async {
+    await trip(tripId).update(<String, Object?>{
       'fareAmount': fare.toStringAsFixed(1),
       'status': 'ended',
-      'endedAt': DateTime.now().toIso8601String(),
+      // وقت الخادم لا ساعة الجهاز: هاتفٌ ساعته متأخّرة ساعتين يجعل رحلةً
+      // انتهت الآن تبدو أقدم من رحلة سبقتها، فيختلّ ترتيب السجلّ والأرباح.
+      'endedAt': ServerValue.timestamp,
     });
+
+    await me.child('activeTrip').set('');
+  }
+
+  /// إلغاء الرحلة من طرف السائق.
+  ///
+  /// الإلغاء يُسجَّل ولا يُمحى. كان الراكب يحذف العقدة كلّها، فتختفي الرحلة
+  /// من الوجود — ومعدّل الإلغاء أهمّ مؤشّر تشغيليّ في خدمة نقل: لا يُعرف
+  /// سائقٌ يلغي كثيراً إن كانت إلغاءاته لا تترك أثراً.
+  static Future<void> cancelTrip(String tripId, {String reason = ''}) async {
+    await trip(tripId).update(<String, Object?>{
+      'status': 'cancelled',
+      'cancelledBy': 'driver',
+      'cancelReason': reason,
+      'cancelledAt': ServerValue.timestamp,
+    });
+
+    await me.child('activeTrip').set('');
+    await me.child('newTripStatus').set('idle');
+  }
+
+  /// الرحلة الجارية إن وُجدت — تُقرأ عند الإقلاع قبل أيّ شيء آخر.
+  static Future<String?> activeTripId() async {
+    final DataSnapshot snapshot = await me.child('activeTrip').get();
+    final String value = '${snapshot.value ?? ''}';
+    return value.isEmpty ? null : value;
   }
 
   /// تقييم الراكب — الطرف المفقود من التقييم المتبادل.
@@ -163,6 +218,10 @@ class DriverService {
         'count': newCount,
         'sum': newSum,
         'average': double.parse((newSum / newCount).toStringAsFixed(2)),
+        // الرحلة التي أنتجت هذا التقييم — تكتبها القاعدة شرطاً لا زينة:
+        // بدونها لا سبيل للتحقّق من أنّ الكاتب ركب فعلاً مع من يقيّمه، وكان
+        // أيّ حساب يستطيع رفع تقييم أيّ سائق أو خفضه.
+        'tripId': tripId,
       });
     });
   }

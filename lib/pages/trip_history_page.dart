@@ -78,9 +78,14 @@ class _TripHistoryPageState extends State<TripHistoryPage> {
             (key, value) => tripsList.add({"key": key, ...value}),
           );
           
-          // Filter trips for current user and status ended
-          var filteredTrips = tripsList.where((trip) => 
-            trip['status'] == "ended" && 
+          // الملغاة رحلاتٌ أيضاً.
+          //
+          // كان المرشّح `status == "ended"` وحدها، فرحلةٌ أُلغيت تختفي من
+          // السجلّ كأنّها لم تُطلَب. والراكب الذي أُلغيت عليه رحلة هو أوّل من
+          // يفتح السجلّ ليتأكّد ممّا جرى — فيجده فارغاً، ويظنّ أن التطبيق
+          // نسيها.
+          var filteredTrips = tripsList.where((trip) =>
+            (trip['status'] == "ended" || trip['status'] == "cancelled") &&
             trip['userID'] == FirebaseAuth.instance.currentUser!.uid
           ).toList();
 

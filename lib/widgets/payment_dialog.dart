@@ -99,18 +99,16 @@ class _PaymentDialogState extends State<PaymentDialog> {
               },
               style: ElevatedButton.styleFrom(backgroundColor: TaibahPalette.passenger.primary),
               child: const Text(
-                "PAY CASH",
+                "الدفع نقداً",
                 style: TextStyle(color: Colors.white),
               ),
             ),
-            ElevatedButton(
-              onPressed: () {},
-              style: ElevatedButton.styleFrom(backgroundColor: TaibahPalette.passenger.primary),
-              child: const Text(
-                "PAY ONLINE",
-                style: TextStyle(color: Colors.white),
-              ),
-            ),
+            // زرّ «PAY ONLINE» حُذف ولم يُعطَّل.
+            //
+            // كان `onPressed: () {}` — يضغطه الراكب فلا يحدث شيء، فيظنّ العطل
+            // في هاتفه ويعيد الضغط. وزرٌّ معطَّل يقول «قريباً» أصدق منه، وزرٌّ
+            // غير موجود أصدق من كليهما: الدفع نقداً هو ما تفعله الخدمة اليوم،
+            // ويوم يصير هناك دفع إلكتروني يعود الزرّ ومعه ما ينفّذه.
           ],
         ),
 

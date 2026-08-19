@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_projects/driver/driver_earnings_page.dart';
 import 'package:flutter_projects/driver/driver_service.dart';
@@ -35,10 +36,38 @@ class _DriverHomeState extends State<DriverHome> {
   /// آخر موقع — يُعرض ويُبثّ.
   Position? _position;
 
+  /// يُرفع بعد قراءة `activeTrip`، فلا يُركَّب مستمع العروض قبلها.
+  bool _recovered = false;
+
   @override
   void initState() {
     super.initState();
-    _listenForOffers();
+    _recoverThenListen();
+  }
+
+  /// الاسترجاع أوّلاً، ثم الإصغاء.
+  ///
+  /// الترتيب هنا ليس تفصيلاً. لو رُكّب المستمع أوّلاً — كما كان — لوصل عرضٌ
+  /// جديد كُتب أثناء غياب السائق فداس على الرحلة المسترجَعة، ووجد السائق نفسه
+  /// في عرضٍ جديد ورحلتُه الجارية معلّقة عند راكب ينتظر.
+  Future<void> _recoverThenListen() async {
+    try {
+      final String? active = await DriverService.activeTripId();
+      if (active != null && mounted) {
+        setState(() {
+          _tripId = active;
+          _tripStarted = true;
+        });
+        // الرحلة تحتاج موقعاً يُبثّ: السائق عاد من إغلاق التطبيق وسط رحلة،
+        // والراكب ما زال ينتظر أن تتحرّك السيّارة على خريطته.
+        await _resumeLocationForTrip();
+      }
+    } catch (_) {
+      // الاسترجاع رفاهية: فشله لا يمنع السائق من العمل من جديد.
+    } finally {
+      if (mounted) setState(() => _recovered = true);
+      _listenForOffers();
+    }
   }
 
   @override
@@ -70,6 +99,23 @@ class _DriverHomeState extends State<DriverHome> {
         }
 
         if (!mounted) return;
+
+        // سائقٌ في رحلة لا يُعرَض عليه شيء.
+        //
+        // كان أيّ نصّ غير `idle` يُقبل بلا شرط ويصير معرّفَ الرحلة المعروضة.
+        // فعرضٌ جديد يصل أثناء رحلة جارية كان يخطفها: تُستبدل اللوحة، ويضيع
+        // الراكب الذي في السيّارة. ونفس الشيء يحدث مع الكلمات التي كان تطبيق
+        // الراكب يكتبها هنا (`timeout` و`cancelled`) — كانت تُعامَل معرّفاتِ
+        // رحلات ثم تُفتح لها لوحة لرحلة لا وجود لها.
+        if (_tripStarted) {
+          DriverService.declineTrip();
+          return;
+        }
+
+        // مفاتيح Firebase تبدأ بـ`-` وطولها عشرون محرفاً. أيّ نصّ آخر ليس
+        // رحلة، ولا يُفتح له شيء.
+        if (!value.startsWith('-') || value.length < 15) return;
+
         setState(() {
           _tripId = value;
           _tripStarted = false;
@@ -100,14 +146,82 @@ class _DriverHomeState extends State<DriverHome> {
     }
   }
 
+  /// إعدادات التدفّق — ومعها خدمة المقدّمة.
+  ///
+  /// هذا هو الفرق بين سائق يعمل وسائق يظنّ أنه يعمل. `LocationSettings`
+  /// المجرّدة تتوقّف لحظة خروج التطبيق من الواجهة: يُقفل السائق الشاشة ويضع
+  /// الهاتف في جيبه — وهو ما يفعله كلّ سائق — فيتوقّف البثّ، ويمحوه
+  /// `onDisconnect` من `onlineDrivers` خلال دقيقة، بينما المفتاح على شاشته
+  /// ما زال يقول «متصل». فينتظر ساعةً ولا يصله طلب، ولا شيء يخبره لماذا.
+  ///
+  /// و`ForegroundNotificationConfig` تجعل أندرويد يبقي العمليّة حيّة مقابل
+  /// إشعار دائم يراه السائق — وهو شرط النظام لا خيارنا، ومن حقّ المستخدم أن
+  /// يعرف أنّ موقعه يُقرأ.
+  static LocationSettings get _trackingSettings {
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      return AndroidSettings(
+        accuracy: LocationAccuracy.bestForNavigation,
+        // عشرون متراً لا كل متر: تحديثٌ لكل خطوة يكتب في القاعدة عشرات المرات
+        // في الدقيقة ويُحاسَب عليه.
+        distanceFilter: 20,
+        forceLocationManager: false,
+        foregroundNotificationConfig: const ForegroundNotificationConfig(
+          notificationTitle: 'Taibah سائق — أنت متّصل',
+          notificationText: 'موقعك يُبثّ لاستقبال الطلبات.',
+          notificationChannelName: 'حالة الاتصال',
+          enableWakeLock: true,
+          setOngoing: true,
+        ),
+      );
+    }
+
+    if (defaultTargetPlatform == TargetPlatform.iOS) {
+      return AppleSettings(
+        accuracy: LocationAccuracy.bestForNavigation,
+        distanceFilter: 20,
+        allowBackgroundLocationUpdates: true,
+        showBackgroundLocationIndicator: true,
+        pauseLocationUpdatesAutomatically: false,
+      );
+    }
+
+    return const LocationSettings(
+      accuracy: LocationAccuracy.bestForNavigation,
+      distanceFilter: 20,
+    );
+  }
+
   Future<void> _goOnline() async {
+    // خدمة الموقع نفسها قبل الصلاحية.
+    //
+    // صلاحيةٌ ممنوحة وGPS مطفأ حالةٌ شائعة، وكانت تُخرج استثناءً خاماً بالإنجليزية
+    // في شريط سفليّ — رسالةٌ لا تقول للسائق أن يفتح إعداداً واحداً.
+    if (!await Geolocator.isLocationServiceEnabled()) {
+      _askToOpen(
+        title: 'خدمة الموقع مطفأة',
+        body: 'شغّل «الموقع» في إعدادات الهاتف كي تستقبل الطلبات.',
+        open: Geolocator.openLocationSettings,
+      );
+      return;
+    }
+
     LocationPermission permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
     }
 
-    if (permission == LocationPermission.denied ||
-        permission == LocationPermission.deniedForever) {
+    if (permission == LocationPermission.deniedForever) {
+      // `deniedForever` طريق مسدود من داخل التطبيق: النظام لا يعرض الطلب مرّة
+      // أخرى مهما استُدعي. الطريق الوحيد صفحة إعدادات التطبيق — فتُفتح له.
+      _askToOpen(
+        title: 'صلاحية الموقع مرفوضة',
+        body: 'لن يراك أيّ راكب بلا موقع. افتح إعدادات التطبيق واسمح بالموقع.',
+        open: Geolocator.openAppSettings,
+      );
+      return;
+    }
+
+    if (permission == LocationPermission.denied) {
       _say('بلا صلاحية الموقع لا يمكن الاتصال — موقعك هو ما يراه الراكب.');
       return;
     }
@@ -123,18 +237,28 @@ class _DriverHomeState extends State<DriverHome> {
     await DriverService.clearOnDisconnect();
     await DriverService.goOnline(position);
 
-    // عشرون متراً لا كل متر: تحديثٌ لكل خطوة يكتب في القاعدة عشرات المرات في
-    // الدقيقة ويُحاسَب عليه — وهو نفس نمط الكلفة الذي أُصلح في تطبيق الراكب،
-    // من الطرف الآخر.
-    _positionSubscription = Geolocator.getPositionStream(
-      locationSettings: const LocationSettings(
-        accuracy: LocationAccuracy.bestForNavigation,
-        distanceFilter: 20,
-      ),
-    ).listen((Position p) {
-      _position = p;
-      DriverService.publishLocation(p);
-    });
+    _positionSubscription =
+        Geolocator.getPositionStream(locationSettings: _trackingSettings).listen(
+      (Position p) {
+        _position = p;
+        DriverService.publishLocation(p);
+
+        // وأثناء الرحلة يُكتب الموضع على الرحلة نفسها — وهو ما يرسم السيّارة
+        // على خريطة الراكب. بدونه يرى الراكب اسم سائق ولا يرى أين هو.
+        final String? trip = _tripId;
+        if (trip != null && _tripStarted) {
+          DriverService.publishTripLocation(trip, p);
+        }
+      },
+      // تدفّقٌ بلا `onError` ينتهي بصمت حين يُطفأ GPS أثناء الاتصال: يبقى
+      // المفتاح «متصل» ولا يُبثّ شيء — سائقٌ شبح على خريطة الراكب.
+      onError: (Object error) {
+        if (!mounted) return;
+        _say('انقطع تتبّع الموقع — أعد الاتصال.');
+        _goOffline();
+      },
+      cancelOnError: true,
+    );
 
     if (!mounted) return;
     setState(() {
@@ -150,6 +274,52 @@ class _DriverHomeState extends State<DriverHome> {
 
     if (!mounted) return;
     setState(() => _online = false);
+  }
+
+  /// إعادة تشغيل البثّ لرحلة استُرجعت بعد إعادة تشغيل التطبيق.
+  Future<void> _resumeLocationForTrip() async {
+    if (!await Geolocator.isLocationServiceEnabled()) return;
+
+    final LocationPermission permission = await Geolocator.checkPermission();
+    if (permission != LocationPermission.always &&
+        permission != LocationPermission.whileInUse) {
+      return;
+    }
+
+    await _goOnline();
+  }
+
+  /// حوارٌ بزرّ يفتح الإعداد المطلوب.
+  ///
+  /// شريطٌ سفليّ يقول «افتح الإعدادات» يختفي بعد ثانيتين ولا يفتح شيئاً. وهذه
+  /// حالة يقف فيها السائق تماماً — فتستحقّ حواراً وزرّاً يعمل.
+  void _askToOpen({
+    required String title,
+    required String body,
+    required Future<bool> Function() open,
+  }) {
+    if (!mounted) return;
+
+    showDialog<void>(
+      context: context,
+      builder: (BuildContext context) => AlertDialog(
+        title: Text(title),
+        content: Text(body),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('لاحقاً'),
+          ),
+          FilledButton(
+            onPressed: () {
+              Navigator.pop(context);
+              open();
+            },
+            child: const Text('افتح الإعدادات'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _say(String message) {
@@ -206,7 +376,16 @@ class _DriverHomeState extends State<DriverHome> {
                 : DriverTripPanel(
                     tripId: _tripId!,
                     profile: widget.profile,
-                    onAccepted: () => setState(() => _tripStarted = true),
+                    position: _position,
+                    // يُرفع **قبل** الكتابة لا بعدها.
+                    //
+                    // `acceptTrip` تكتب `newTripStatus = 'idle'`، وRTDB يُطلق
+                    // الحدث محلياً قبل أن يعود `await`. فكان المستمع يرى
+                    // `idle` والعلم لم يُرفع بعد، فيمسح اللوحة في اللحظة التي
+                    // ضغط فيها السائق «قبول» — القاعدة تقول إنّ الرحلة له،
+                    // وشاشته تقول إنّه على الخريطة.
+                    onAccepting: () => setState(() => _tripStarted = true),
+                    onAcceptFailed: () => setState(() => _tripStarted = false),
                     onFinished: () => setState(() {
                       _tripId = null;
                       _tripStarted = false;

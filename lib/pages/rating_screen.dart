@@ -97,6 +97,10 @@ class _RatingScreenState extends State<RatingScreen> {
             // Stored as well as derivable, so a list of drivers can be sorted
             // without every row doing arithmetic.
             'average': double.parse((newSum / newCount).toStringAsFixed(2)),
+            // الرحلة التي أنتجت هذا التقييم. تشترطها القاعدة: بها وحدها تتحقّق
+            // من أنّ الكاتب ركب فعلاً مع هذا السائق وأنّ الرحلة انتهت. بدونها
+            // كان أيّ حساب مسجَّل يستطيع رفع تقييم أيّ سائق أو خفضه.
+            'tripId': widget.tripId,
           });
         });
       }
