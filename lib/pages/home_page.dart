@@ -11,6 +11,7 @@ import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:flutter_projects/auth/signin_page.dart';
 import 'package:flutter_projects/global.dart';
 import 'package:flutter_projects/locale_provider.dart';
+import 'package:flutter_projects/market.dart';
 import 'package:flutter_projects/methods/associate_methods.dart';
 import 'package:flutter_projects/methods/geo_query.dart';
 import 'package:flutter_projects/methods/google_map_methods.dart';

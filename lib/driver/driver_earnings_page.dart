@@ -104,7 +104,7 @@ class DriverEarningsPage extends StatelessWidget {
                     ],
                   ),
                 ),
-              ),
+              );
               }
 
               final MapEntry<String, Map<String, Object?>> e =

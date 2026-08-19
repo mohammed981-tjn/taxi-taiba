@@ -36,9 +36,6 @@ class _DriverHomeState extends State<DriverHome> {
   /// آخر موقع — يُعرض ويُبثّ.
   Position? _position;
 
-  /// يُرفع بعد قراءة `activeTrip`، فلا يُركَّب مستمع العروض قبلها.
-  bool _recovered = false;
-
   @override
   void initState() {
     super.initState();
@@ -65,7 +62,7 @@ class _DriverHomeState extends State<DriverHome> {
     } catch (_) {
       // الاسترجاع رفاهية: فشله لا يمنع السائق من العمل من جديد.
     } finally {
-      if (mounted) setState(() => _recovered = true);
+      // الإصغاء يبدأ هنا وحده — بعد أن يُعرف إن كانت هناك رحلة جارية.
       _listenForOffers();
     }
   }
