@@ -15,6 +15,15 @@ class AdminUsersPage extends StatefulWidget {
 }
 
 class _AdminUsersPageState extends State<AdminUsersPage> {
+  // التدفّق يُنشأ مرّةً واحدة.
+  //
+  // `AdminData.users` و`AdminData.trips` وأخواتها **دوالّ حصول**: كلّ نداء
+  // يولّد كائن `Query` جديداً، و`Query.onValue` يعطي تدفّقاً جديداً معه. فالقيمة
+  // التي يراها `StreamBuilder` لا تساوي نفسها بين بناءٍ وبناء، فيلغي الاشتراك
+  // ويعيد إنشاءه مع كلّ إعادة رسم — ومع كلّ حرف يكتبه المشغّل في خانة البحث
+  // تُفرَغ القائمة إلى دوّارة انتظار ثم يُعاد تحميل ثلاثمئة سجلّ.
+  late final Stream<DatabaseEvent> _stream = AdminData.users.onValue;
+
   String _search = '';
 
   @override
@@ -36,7 +45,7 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
         ),
         Expanded(
           child: StreamBuilder<DatabaseEvent>(
-            stream: AdminData.users.onValue,
+            stream: _stream,
             builder:
                 (BuildContext context, AsyncSnapshot<DatabaseEvent> snapshot) {
               if (snapshot.hasError) {

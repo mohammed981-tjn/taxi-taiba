@@ -56,11 +56,17 @@ class MyApp extends StatelessWidget {
             // الافتراضية التي لم يمسّها أحد.
             theme: TaibahTheme.of(AppRole.passenger),
 
-            // 🔹 اللغة الحالية (تتغيّر عبر LocaleProvider) — RTL تلقائي للعربية
-            locale: localeProvider.locale,
+            // اللغة — و`null` تعني «لغة الجهاز».
+            //
+            // كانت `Locale('en')` مثبَّتة في المزوّد، فيفتح التطبيق
+            // بالإنجليزيّة على هاتف عربيّ في السعوديّة. و`null` تجعل Flutter
+            // يوفّق لغة الجهاز مع المدعوم، ويقع على الأولى في
+            // `supportedLocales` حين لا يجد — وهي العربيّة.
+            locale: localeProvider.localeOrNull,
 
-            // 🔹 اللغات المدعومة + مفوّضو الترجمة (المولّدة + العامة من Flutter)
-            supportedLocales: AppLocalizations.supportedLocales,
+            // العربيّة أوّلاً: هذا الترتيب هو ما يُحسم به التوفيق حين لا
+            // تُطابِق لغةُ الجهاز شيئاً.
+            supportedLocales: const <Locale>[Locale('ar'), Locale('en')],
             localizationsDelegates: AppLocalizations.localizationsDelegates,
 
             // شاشة البداية

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_projects/driver/driver_service.dart';
 import 'package:flutter_projects/methods/associate_methods.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 /// الرحلة من العرض إلى التقييم.
 ///
@@ -72,7 +73,11 @@ class _DriverTripPanelState extends State<DriverTripPanel> {
         return ListView(
           padding: const EdgeInsets.fromLTRB(12, 0, 12, 20),
           children: <Widget>[
-            _TripCard(trip: trip, status: status),
+            _TripCard(
+              trip: trip,
+              status: status,
+              driverAt: widget.position,
+            ),
             const SizedBox(height: 14),
             ..._actionsFor(status, trip),
           ],
@@ -113,6 +118,8 @@ class _DriverTripPanelState extends State<DriverTripPanel> {
 
       case 'accepted':
         return <Widget>[
+          _navigateButton('التوجّه إلى الراكب', trip['pickUpLatLng']),
+          const SizedBox(height: 4),
           _bigButton('وصلتُ إلى الراكب',
               () => _setStatus('arrived'), Icons.location_on),
           const SizedBox(height: 4),
@@ -131,6 +138,8 @@ class _DriverTripPanelState extends State<DriverTripPanel> {
 
       case 'ontrip':
         return <Widget>[
+          _navigateButton('التوجّه إلى الوجهة', trip['dropOffLatLng']),
+          const SizedBox(height: 4),
           _bigButton('إنهاء الرحلة', () => _end(trip), Icons.flag),
         ];
 
@@ -150,6 +159,26 @@ class _DriverTripPanelState extends State<DriverTripPanel> {
           _bigButton('إغلاق', widget.onFinished, Icons.close),
         ];
     }
+  }
+
+  /// زرٌّ يسلّم الوجهة إلى خرائط Google.
+  ///
+  /// السائق كان يقرأ عنواناً نصّاً ثم يكتبه بيده في تطبيق آخر وهو خلف المقود.
+  Widget _navigateButton(String label, Object? latLng) {
+    if (latLng is! Map) return const SizedBox.shrink();
+
+    final double? lat = double.tryParse('${latLng['latitude']}');
+    final double? lng = double.tryParse('${latLng['longitude']}');
+    if (lat == null || lng == null) return const SizedBox.shrink();
+
+    return OutlinedButton.icon(
+      onPressed: () => _TripCard._navigateTo(lat, lng),
+      icon: const Icon(Icons.navigation_outlined),
+      label: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        child: Text(label, style: const TextStyle(fontSize: 15)),
+      ),
+    );
   }
 
   Widget _bigButton(String label, VoidCallback onTap, IconData icon) {
@@ -281,10 +310,17 @@ class _DriverTripPanelState extends State<DriverTripPanel> {
 }
 
 class _TripCard extends StatelessWidget {
-  const _TripCard({required this.trip, required this.status});
+  const _TripCard({
+    required this.trip,
+    required this.status,
+    this.driverAt,
+  });
 
   final Map<String, Object?> trip;
   final String status;
+
+  /// موقع السائق الآن — به يُقاس بُعد نقطة الانطلاق.
+  final Position? driverAt;
 
   static const Map<String, String> _label = <String, String>{
     'new': 'طلب جديد',
@@ -317,6 +353,18 @@ class _TripCard extends StatelessWidget {
             const SizedBox(height: 10),
             _row(Icons.trip_origin, '${trip['pickUpAddress'] ?? '—'}'),
             _row(Icons.location_on_outlined, '${trip['dropOffAddress'] ?? '—'}'),
+
+            // كم يبعد الراكب عنّي؟
+            //
+            // السؤال الأوّل الذي يسأله سائق أمام عرضٍ جديد، ولم تكن الشاشة
+            // تجيبه: عنوانان نصّاً، والمسافة المعروضة تحتهما هي طول **الرحلة**
+            // لا بُعد نقطة الانطلاق — وهو ما يُقرأ خطأً فيُقبَل عرضٌ بعيد
+            // ويُرفض قريب.
+            //
+            // ويُحسب هنا بالإحداثيّات الموجودة في العقدة أصلاً، بلا نداء
+            // Directions لكلّ عرض — نداءٌ مدفوع لسؤالٍ تكفيه هندسةٌ بسيطة.
+            if (_pickupDistanceText != null)
+              _row(Icons.straighten, _pickupDistanceText!),
             if (breakdown is Map) ...<Widget>[
               const Divider(height: 22),
               Text(
@@ -333,6 +381,46 @@ class _TripCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  /// بُعد نقطة الانطلاق عن السائق.
+  String? get _pickupDistanceText {
+    final Position? me = driverAt;
+    if (me == null) return null;
+
+    final Object? pickUp = trip['pickUpLatLng'];
+    if (pickUp is! Map) return null;
+
+    final double? lat = double.tryParse('${pickUp['latitude']}');
+    final double? lng = double.tryParse('${pickUp['longitude']}');
+    if (lat == null || lng == null) return null;
+
+    final double metres = Geolocator.distanceBetween(
+      me.latitude,
+      me.longitude,
+      lat,
+      lng,
+    );
+
+    return metres < 1000
+        ? 'يبعد عنك ${metres.round()} م'
+        : 'يبعد عنك ${(metres / 1000).toStringAsFixed(1)} كم';
+  }
+
+  /// فتح الملاحة إلى نقطة الانطلاق أو الوجهة.
+  ///
+  /// رابط `https` لا مخطّط `google.navigation:` — الأوّل يسمح به بيان
+  /// أندرويد أصلاً، والثاني يحتاج إعلاناً صريحاً وقد لا يُوجَد له تطبيق.
+  static Future<void> _navigateTo(double lat, double lng) async {
+    final Uri uri = Uri.parse(
+      'https://www.google.com/maps/dir/?api=1&destination=$lat,$lng',
+    );
+
+    try {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (_) {
+      // لا شيء يُفعَل: السائق يرى العنوان نصّاً على أيّ حال.
+    }
   }
 
   Widget _row(IconData icon, String text) {

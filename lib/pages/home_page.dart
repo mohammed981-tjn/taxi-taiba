@@ -458,8 +458,13 @@ class _HomePageState extends State<HomePage> {
 
   final _driversRef = FirebaseDatabase.instance.ref().child('onlineDrivers');
 
-  /// نصف قطر البحث — نفس الـ٢٢ كم التي كان يقصّ عندها المرشّح القديم.
-  static const double _searchRadiusMeters = 22000;
+  /// نصف قطر ما يُعرَض على الخريطة — من `lib/market.dart`.
+  ///
+  /// كان ٢٢ كم، وهو نطاق **الإرسال** لا نطاق العرض. الفرق أنّ ٢٢ كم تغطّي
+  /// أكثر من ألفي كيلومتر مربّع: المدينة كلّها تتدفّق إلى كلّ هاتف، ويُعاد
+  /// رسم الخريطة مع كلّ سائق يتحرّك في أيّ حيّ. والراكب لا ينتفع بدبّوسٍ على
+  /// حافّة الشاشة.
+  double get _searchRadiusMeters => market.displayRadiusMeters;
 
   /// كل الاشتراكات المفتوحة على القاعدة، محفوظة لتُلغى.
   ///

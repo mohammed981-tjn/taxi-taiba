@@ -64,15 +64,26 @@ class DriverEarningsPage extends StatelessWidget {
 
           if (ended.isEmpty) return _centered('لا رحلات منتهية بعد.');
 
-          return ListView(
+          // `ListView.builder` لا `ListView(children: [...])`.
+          //
+          // الثانية تبني كلّ عنصر في القائمة دفعةً واحدة — كلّ رحلة في مهنة
+          // السائق — سواء رآها أم لا. والأولى تبني ما يظهر على الشاشة وحده.
+          return ListView.builder(
             padding: const EdgeInsets.all(12),
-            children: <Widget>[
-              Card(
+            itemCount: ended.length + 1,
+            itemBuilder: (BuildContext context, int index) {
+              if (index == 0) {
+                return Card(
                 child: Padding(
                   padding: const EdgeInsets.all(22),
                   child: Column(
                     children: <Widget>[
-                      const Text('إجمالي الأرباح',
+                      // العنوان يقول ما يُعرَض فعلاً.
+                      //
+                      // الاستعلام مقيَّد بآخر خمسين رحلة، فتسميته «إجمالي
+                      // الأرباح» تجعل الرقم كاذباً على سائق أتمّ أكثر منها —
+                      // وأسوأ من رقمٍ ناقص رقمٌ ناقصٌ يُقدَّم كاملاً.
+                      const Text('أرباح آخر الرحلات',
                           style: TextStyle(color: Colors.black54)),
                       const SizedBox(height: 6),
                       Text(
@@ -94,23 +105,25 @@ class DriverEarningsPage extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(height: 8),
-              ...ended.map(
-                (MapEntry<String, Map<String, Object?>> e) => Card(
-                  margin: const EdgeInsets.only(bottom: 8),
-                  child: ListTile(
-                    leading: const Icon(Icons.check_circle_outline,
-                        color: Colors.green),
-                    title: Text('${e.value['dropOffAddress'] ?? '—'}'),
-                    subtitle: Text('${e.value['userName'] ?? '—'}'),
-                    trailing: Text(
-                      _fareOf(e.value).toStringAsFixed(1),
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
+              }
+
+              final MapEntry<String, Map<String, Object?>> e =
+                  ended[index - 1];
+
+              return Card(
+                margin: const EdgeInsets.only(bottom: 8),
+                child: ListTile(
+                  leading: const Icon(Icons.check_circle_outline,
+                      color: Colors.green),
+                  title: Text('${e.value['dropOffAddress'] ?? '—'}'),
+                  subtitle: Text('${e.value['userName'] ?? '—'}'),
+                  trailing: Text(
+                    _fareOf(e.value).toStringAsFixed(1),
+                    style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                 ),
-              ),
-            ],
+              );
+            },
           );
         },
       ),

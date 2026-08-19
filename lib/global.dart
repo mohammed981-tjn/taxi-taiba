@@ -50,6 +50,16 @@ String get placesComponents => placesCountries
 /// مكان واحد، وتغييره تغييرٌ لا يضيف. يُعاد النظر فيه حين يُلمس ذلك السطر.
 CameraPosition get kGooglePlex => market.camera;
 
+/// لغة نتائج Places — تتبع لغة الواجهة.
+///
+/// كانت `&language=ar` ثابتةً في موضعين. فمبدّل اللغة يقلب الواجهة إلى
+/// الإنجليزيّة ويترك أسماء الأحياء عربيّة — وسائقٌ باكستانيّ يقرأ اللاتينيّة
+/// وحدها يجد وجهته مكتوبةً بحروف لا يعرفها.
+///
+/// وتُضبط من `LocaleProvider` عند كلّ تغيير لغة، فلا تحتاج نداءات الشبكة إلى
+/// `BuildContext` لتعرف اللغة.
+String placesLanguage = 'ar';
+
 final AssociateMethods associateMethods = AssociateMethods();
 
 /* ── the signed-in passenger ─────────────────────────────────────────────── */

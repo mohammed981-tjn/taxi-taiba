@@ -238,8 +238,16 @@ class DriverService {
   /// من يملك الحساب هو دعوةٌ لأن يكتب ما يشاء؛ ومجموعٌ يُحسب من الرحلات
   /// المنتهية لا يكذب إلا إذا كذبت الرحلات. ولذلك القاعدة تجمّد ذلك الحقل،
   /// وهذه الشاشة لا تقرؤه.
+  /// وبحدّ.
+  ///
+  /// كان الاستعلام بلا `limitToLast`: سائقٌ أتمّ ألف رحلة ينزّل ألف رحلة في كلّ
+  /// مرّة يفتح فيها شاشة الأرباح، ويعيد الجمع والفرز عليها كلّها في خيط
+  /// الواجهة. الشاشة تعرض الأخيرة، فلا معنى لتنزيل ما قبلها.
+  static const int recentTripsLimit = 50;
+
   static Query get myTrips => _root
       .child('tripRequests')
       .orderByChild('driverID')
-      .equalTo(uid);
+      .equalTo(uid)
+      .limitToLast(recentTripsLimit);
 }

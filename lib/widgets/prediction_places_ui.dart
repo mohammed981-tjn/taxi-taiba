@@ -44,7 +44,7 @@ class _PredictionPlacesUiState extends State<PredictionPlacesUi> {
         "&key=$googleMapKey"
         "&fields=name,geometry/location"
         "&sessiontoken=${PlacesSession.token}"
-        "&language=ar";
+        "&language=$placesLanguage";
 
     var responseFromPlaceDetailsAPI = await GoogleMapMethods.sendRequestToApi(urlPlaceDetailsAPI);
 

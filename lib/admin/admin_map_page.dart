@@ -23,6 +23,13 @@ class AdminMapPage extends StatefulWidget {
 class _AdminMapPageState extends State<AdminMapPage> {
   GoogleMapController? _controller;
 
+  // التدفّقان يُنشآن مرّةً واحدة — راجع التعليق في admin_users_page.dart.
+  // وهنا الأثر أشدّ: كلّ نبضة موقع من أيّ سائق كانت تعيد بناء الشجرة، فيتبدّل
+  // التدفّقان، فيُلغى الاشتراكان ويُعاد إنشاؤهما — عشرات المرّات في الدقيقة.
+  final Stream<DatabaseEvent> _onlineStream =
+      FirebaseDatabase.instance.ref('onlineDrivers').onValue;
+  late final Stream<DatabaseEvent> _profilesStream = AdminData.drivers.onValue;
+
   /// يُرفع بعد أوّل ضبط للكاميرا، فلا تقفز الخريطة كلّما تحرّك سائق.
   bool _framed = false;
 
@@ -35,13 +42,13 @@ class _AdminMapPageState extends State<AdminMapPage> {
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<DatabaseEvent>(
-      stream: FirebaseDatabase.instance.ref('onlineDrivers').onValue,
+      stream: _onlineStream,
       builder: (BuildContext context, AsyncSnapshot<DatabaseEvent> online) {
         // أسماء السائقين ولوحاتهم من العقدة الأخرى: `onlineDrivers` تحمل
         // الموضع وحده عمداً — تُكتب مع كل عشرين متراً، فكلّ حقل فيها يُدفع
         // ثمنه مرّات في الدقيقة.
         return StreamBuilder<DatabaseEvent>(
-          stream: AdminData.drivers.onValue,
+          stream: _profilesStream,
           builder:
               (BuildContext context, AsyncSnapshot<DatabaseEvent> profiles) {
             final Map<String, Map<String, Object?>> byUid =

@@ -68,7 +68,7 @@ class _SelectDestinationPageState extends State<SelectDestinationPage> {
           // رمز الجلسة: يجمع أحرف البحث وطلبَ التفاصيل الذي يختمها في وحدة
           // محاسبة واحدة بدل واحدةٍ لكل حرف. راجع lib/methods/places_session.dart.
           "&sessiontoken=${PlacesSession.token}"
-          "&language=ar";
+          "&language=$placesLanguage";
       var responseFromPlacesAPI = await GoogleMapMethods.sendRequestToApi(placesAPIurl);
 
       if (responseFromPlacesAPI == "error") {
