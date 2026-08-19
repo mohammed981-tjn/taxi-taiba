@@ -1,3 +1,4 @@
+import 'package:flutter_projects/widgets/app_skeletons.dart';
 import 'package:flutter_projects/currency.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
@@ -64,7 +65,16 @@ class _TripHistoryPageState extends State<TripHistoryPage> {
               ),
             );
           }
-          if (!(snapshotData.hasData) || snapshotData.data!.snapshot.value == null) {
+          // شرطان لا شرط واحد.
+          //
+          // كانا مدموجين، فكانت الشاشة تقول «لا يوجد سجلّ» **أثناء التحميل** —
+          // أي أنّها تكذب على راكبٍ له عشرون رحلة، ثم تصحّح نفسها بعد لحظة.
+          // ومن يفتح السجلّ ليتأكّد من رحلةٍ أُلغيت يقرأ الجملة ويخرج.
+          if (!snapshotData.hasData) {
+            return const TripCardSkeleton();
+          }
+
+          if (snapshotData.data!.snapshot.value == null) {
             return Center(
               child: Text(
                 AppLocalizations.of(context)!.noRecordFound,

@@ -11,6 +11,7 @@ import 'package:flutter_projects/driver/driver_trip_panel.dart';
 import 'package:flutter_projects/widgets/taibah_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 /// شاشة السائق.
@@ -157,6 +158,7 @@ class _DriverHomeState extends State<DriverHome> {
       if (value) {
         await _goOnline();
         await _askNotificationPermission();
+        await _showBatteryAdviceOnce();
       } else {
         await _goOffline();
       }
@@ -198,7 +200,11 @@ class _DriverHomeState extends State<DriverHome> {
 
     if (defaultTargetPlatform == TargetPlatform.iOS) {
       return AppleSettings(
-        accuracy: LocationAccuracy.bestForNavigation,
+        // `best` لا `bestForNavigation`: الثانية توثّقها Apple للملاحة
+        // وللجهاز الموصول بالطاقة، وتستنزف بطاريّة سائقٍ ينتظر في موقف.
+        // وعلى أندرويد لا فرق — الثلاثة تُخطَّط إلى الأولويّة القصوى نفسها،
+        // ولذلك بقي فرعها كما هو.
+        accuracy: LocationAccuracy.best,
         distanceFilter: 20,
         allowBackgroundLocationUpdates: true,
         showBackgroundLocationIndicator: true,
@@ -247,11 +253,43 @@ class _DriverHomeState extends State<DriverHome> {
       return;
     }
 
-    final Position position = await Geolocator.getCurrentPosition(
-      locationSettings: const LocationSettings(
-        accuracy: LocationAccuracy.bestForNavigation,
-      ),
-    );
+    // لقطةٌ محدودةٌ بمهلة، ولها بديل.
+    //
+    // كانت `bestForNavigation` **بلا مهلة**، وتسبق كلّ شيء في مسار الاتصال.
+    // فسائقٌ داخل مبنى أو في قبو ينتظر تثبيتاً قد لا يأتي: يحدّق في دوّار
+    // والمفتاح لا يخضرّ، ولا رسالة تقول لماذا. والدقّة القصوى هنا لا تشتري
+    // شيئاً — هذه نقطة ظهورٍ أوّليّة يصحّحها التدفّق خلال ثوانٍ.
+    Position? position;
+    try {
+      position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.medium,
+          timeLimit: Duration(seconds: 8),
+        ),
+      );
+    } catch (_) {
+      // آخر موقع معروف أفضل من لا شيء: يجعل السائق ظاهراً الآن، ثم يصحّحه
+      // أوّل حدث من التدفّق.
+      position = await Geolocator.getLastKnownPosition();
+    }
+
+    if (position == null) {
+      _say('تعذّر تحديد موقعك — اخرج إلى مكان مكشوف وأعد المحاولة.');
+      return;
+    }
+
+    // موقعٌ مزيّف لا يُنشَر أصلاً.
+    //
+    // التوزيع عندنا جغرافيٌّ صرف: `g` وحدها تقرّر مَن يُعرَض عليه الطلب.
+    // فسائقٌ بتطبيق تزييف يثبّت نفسه عند مدخل الحرم يحصد طلبات أزحم منطقة في
+    // المدينة وهو في بيته، والراكب ينتظر سيّارةً على بعد ثمانية كيلومترات.
+    //
+    // وحدٌّ مُصارَحٌ به: `isMocked` جوهريّة على أندرويد وحده. على iOS تعيد
+    // `false` دائماً، فهذا الحاجز لا يحميك هناك.
+    if (position.isMocked) {
+      _say('موقعك يبدو مزيَّفاً. أوقف تطبيقات الموقع الوهمي ثم أعد المحاولة.');
+      return;
+    }
 
     // يُسجَّل قبل أول كتابة: لو مات التطبيق بعدها مباشرةً، يمحو الخادمُ
     // السائقَ من القائمة بدل أن يبقى ظاهراً لا يجيب.
@@ -261,6 +299,15 @@ class _DriverHomeState extends State<DriverHome> {
     _positionSubscription =
         Geolocator.getPositionStream(locationSettings: _trackingSettings).listen(
       (Position p) {
+        // ولا يُسقَط بصمت: إسقاطه يعيد بالضبط حالة السائق الشبح — المفتاح
+        // يقول «متّصل»، وآخر موقع صادق باقٍ في `onlineDrivers`، و`onDisconnect`
+        // لا يعمل لأنّ المقبس حيّ. يُخبَر ويُخرَج، كما يُفعل مع أيّ خطأ.
+        if (p.isMocked) {
+          _say('توقّف البثّ: موقعك يبدو مزيَّفاً.');
+          _goOffline();
+          return;
+        }
+
         _position = p;
         DriverService.publishLocation(p);
 
@@ -321,6 +368,90 @@ class _DriverHomeState extends State<DriverHome> {
     }
     // ولا يُعلَّق الاتصال على الجواب: من رفض الإشعار يبقى قادراً على العمل.
   }
+
+  /// نافذة العتاد الصينيّ — تُعرَض مرّةً واحدة في عمر التثبيت.
+  ///
+  /// خدمة المقدّمة عقدٌ مع أندرويد الأصليّ، و**MIUI وEMUI وColorOS تنقضه**:
+  /// تقتل العمليّة رغم الخدمة ما لم يكن التطبيق في قائمة البطاريّة البيضاء.
+  /// ولMIUI فوق ذلك مفتاح «التشغيل التلقائي» **لا يقرؤه ولا يضبطه أيّ واجهة
+  /// برمجيّة في أندرويد** — لا من التطبيق ولا من أيّ حزمة.
+  ///
+  /// أي أنّ ما بنيناه من خدمة مقدّمة لا يكفي وحده على هذه الأجهزة، ولا شيء
+  /// في الشيفرة يستطيع إصلاحه. الطريق الوحيد أن يفعلها السائق بيده — فيُقال
+  /// له، بوضوح، مرّةً واحدة.
+  ///
+  /// ولا يُعلَن `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` في البيان: يجرّ
+  /// مراجعةً إجباريّة في Play للنكهات الثلاث، ولا نحتاجه — قراءة الحالة
+  /// وحدها لا تحتاج إذناً معلَناً.
+  ///
+  /// ويُعرَض النصّ حتى لو كانت البطاريّة غير مقيَّدة: الفحص أعمى تماماً عن
+  /// مفتاح «التشغيل التلقائي»، فسائقٌ مستثنىً من قيود البطاريّة يُقتَل مع
+  /// ذلك. تُليَّن الفقرة الأولى فقط.
+  Future<void> _showBatteryAdviceOnce() async {
+    if (defaultTargetPlatform != TargetPlatform.android) return;
+
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    if (prefs.getBool(_batteryAdviceKey) ?? false) return;
+
+    final bool unrestricted =
+        await Permission.ignoreBatteryOptimizations.isGranted;
+
+    await prefs.setBool(_batteryAdviceKey, true);
+
+    if (!mounted) return;
+
+    await showDialog<void>(
+      context: context,
+      builder: (BuildContext context) => AlertDialog(
+        title: const Text('كي تبقى متّصلاً والشاشة مقفلة'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              if (!unrestricted) ...<Widget>[
+                const Text(
+                  '١) إعدادات الهاتف ← التطبيقات ← Taibah سائق ← البطاريّة\n'
+                  '    اختر «بلا قيود».',
+                ),
+                const SizedBox(height: 12),
+              ],
+              const Text(
+                'مع أجهزة شاومي وهواوي وأوبو فعّل أيضاً «التشغيل التلقائي» '
+                '(Autostart).',
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                'ثم ثبّت التطبيق في قائمة المهامّ الأخيرة (القفل الصغير) — '
+                'فإزالته من القائمة توقف البثّ مهما كانت الإعدادات.',
+              ),
+              const SizedBox(height: 14),
+              Text(
+                'بدون ذلك قد يُغلق النظام التطبيق وأنت تقود، فلا تصلك طلبات '
+                'ويختفي موقعك عن الركّاب.',
+                style: TextStyle(color: Colors.red.shade700, fontSize: 12.5),
+              ),
+            ],
+          ),
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('فهمت'),
+          ),
+          FilledButton(
+            onPressed: () {
+              Navigator.pop(context);
+              Geolocator.openAppSettings();
+            },
+            child: const Text('افتح الإعدادات'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  static const String _batteryAdviceKey = 'driver_battery_advice_shown';
 
   /// إعادة تشغيل البثّ لرحلة استُرجعت بعد إعادة تشغيل التطبيق.
   Future<void> _resumeLocationForTrip() async {

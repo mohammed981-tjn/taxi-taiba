@@ -114,6 +114,7 @@ class DriverService {
       'driverPhone': phone,
       'carDetails': carDetails,
       'status': 'accepted',
+      'acceptedAt': ServerValue.timestamp,
       // الموقع يُكتب هنا، لا في تدفّق الحركة وحده.
       //
       // تدفّق الموقع يرشّح عند عشرين متراً — وهو صواب، فالكتابة مع كل خطوة
@@ -155,8 +156,29 @@ class DriverService {
     await DriverAlerts.clearOffer();
   }
 
-  static Future<void> setTripStatus(String tripId, String status) =>
-      trip(tripId).update(<String, Object?>{'status': status});
+  /// وكلّ انتقال يترك ختماً زمنيّاً من الخادم.
+  ///
+  /// كلّ شكوى في خدمة نقل تنتهي إلى سؤال توقيت: «تأخّر أربعين دقيقة»، «ما
+  /// جاء أصلاً»، «أنهى الرحلة مبكّراً». وكانت الرحلة تحمل ختمين اثنين —
+  /// الانتهاء والإلغاء — فثلاثة انتقالات من خمسة بلا وقت. لا سبيل للفصل في
+  /// نزاع، ولا لكشف رحلة عالقة قُبلت قبل ساعتين ولم تبدأ.
+  ///
+  /// والختم من **الخادم** لا من الجهاز: `ServerValue.timestamp` يُحسم على
+  /// خادم Firebase، والقاعدة تشترطه صراحةً. وبغير ذلك يكون الطرف المتنازَع
+  /// معه هو من يؤلّف السجلّ الذي يحسم النزاع.
+  static const Map<String, String> _stampFor = <String, String>{
+    'arrived': 'arrivedAt',
+    'ontrip': 'startedAt',
+  };
+
+  static Future<void> setTripStatus(String tripId, String status) {
+    final String? stamp = _stampFor[status];
+
+    return trip(tripId).update(<String, Object?>{
+      'status': status,
+      if (stamp != null) stamp: ServerValue.timestamp,
+    });
+  }
 
   /// إنهاء الرحلة بالأجرة.
   ///

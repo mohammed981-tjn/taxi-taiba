@@ -87,6 +87,12 @@
           ".validate": "newData.isString() && newData.val().matches(/^([0-9]{1,5}([.][0-9]{1,2})?)?$/) && (auth.token.admin === true || newData.val() === '' || data.parent().child('driverID').val() === auth.uid)"
         },
 
+        "acceptedAt":  { ".validate": "newData.val() === now && !data.exists()" },
+        "arrivedAt":   { ".validate": "newData.val() === now && !data.exists()" },
+        "startedAt":   { ".validate": "newData.val() === now && !data.exists()" },
+        "endedAt":     { ".validate": "newData.val() === now && !data.exists()" },
+        "cancelledAt": { ".validate": "newData.val() === now && !data.exists()" },
+
         "vehicleTier": {
           ".validate": "newData.isString() && (newData.val() === 'go' || newData.val() === 'executive' || newData.val() === 'xl')"
         },

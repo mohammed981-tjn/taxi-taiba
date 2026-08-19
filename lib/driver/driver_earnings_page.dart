@@ -1,5 +1,6 @@
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_projects/widgets/app_skeletons.dart';
 import 'package:flutter_projects/driver/driver_service.dart';
 
 /// الأرباح — **مشتقّة من الرحلات، لا مقروءة من عدّاد**.
@@ -31,7 +32,7 @@ class DriverEarningsPage extends StatelessWidget {
           }
 
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return const TripCardSkeleton();
           }
 
           final Object? raw = snapshot.data?.snapshot.value;
