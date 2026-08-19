@@ -12,6 +12,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get appTitle => 'طيبة';
 
   @override
+  String get noInternet => 'لا يوجد اتصال بالإنترنت';
+
+  @override
   String get welcomeText => 'رفيق سفرك المثالي!';
 
   @override

@@ -12,6 +12,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appTitle => 'Taibah';
 
   @override
+  String get noInternet => 'No internet connection';
+
+  @override
   String get welcomeText => 'Your Ultimate Travel Companion!';
 
   @override

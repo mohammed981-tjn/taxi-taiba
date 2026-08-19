@@ -5,6 +5,7 @@ import 'package:flutter_projects/app_flavor.dart';
 import 'package:flutter_projects/appinfo/app_info.dart';
 import 'package:flutter_projects/l10n/app_localizations.dart';
 import 'package:flutter_projects/locale_provider.dart';
+import 'package:flutter_projects/widgets/connectivity_banner.dart';
 import 'package:flutter_projects/pages/splash_screen.dart';
 import 'package:flutter_projects/theme/app_theme.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -68,6 +69,16 @@ class MyApp extends StatelessWidget {
             // تُطابِق لغةُ الجهاز شيئاً.
             supportedLocales: const <Locale>[Locale('ar'), Locale('en')],
             localizationsDelegates: AppLocalizations.localizationsDelegates,
+
+            // الشريط فوق الـNavigator. وهنا وحده تُقرأ الترجمة، لأنّ هذه
+            // النكهة هي التي تسجّل `AppLocalizations` — و`builder` يعمل
+            // **تحت** `Localizations` فالقراءة آمنة.
+            builder: (BuildContext context, Widget? child) =>
+                ConnectivityBanner(
+              message: AppLocalizations.of(context)?.noInternet ??
+                  'لا يوجد اتصال بالإنترنت',
+              child: child ?? const SizedBox.shrink(),
+            ),
 
             // شاشة البداية
             home: const SplashScreen(),

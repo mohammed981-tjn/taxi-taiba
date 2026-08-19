@@ -4,6 +4,7 @@ import 'package:flutter_projects/app_bootstrap.dart';
 import 'package:flutter_projects/app_flavor.dart';
 import 'package:flutter_projects/theme/app_theme.dart';
 import 'package:flutter_projects/driver/driver_gate.dart';
+import 'package:flutter_projects/widgets/connectivity_banner.dart';
 import 'package:flutter_projects/theme/taibah_splash.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -50,6 +51,13 @@ class DriverApp extends StatelessWidget {
       // نفس شاشة البداية التي يراها الراكب، بلون هذه النكهة.
       // والثلاث ثوانٍ ليست انتظاراً فارغاً: Firebase يستعيد الجلسة
       // خلالها، فلولاها لظهرت شاشة الدخول ثم اختفت لمن هو داخلٌ أصلاً.
+      // الشريط فوق الـNavigator كي يظهر على أيّ شاشة. والنصّ حرفيّ هنا لأنّ
+      // هذه النكهة عربيّةٌ مثبَّتة ولا مندوب ترجمة مسجَّلاً فيها — قراءةُ
+      // الترجمة هنا تعطي `null` وتستبدل التطبيق بشاشة خطأ.
+      builder: (BuildContext context, Widget? child) => ConnectivityBanner(
+        message: 'لا يوجد اتصال بالإنترنت',
+        child: child ?? const SizedBox.shrink(),
+      ),
       home: TaibahSplash(next: () => const DriverGate()),
     );
   }

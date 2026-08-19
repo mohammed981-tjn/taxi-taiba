@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_projects/admin/admin_gate.dart';
+import 'package:flutter_projects/widgets/connectivity_banner.dart';
 import 'package:flutter_projects/theme/taibah_splash.dart';
 import 'package:flutter_projects/app_bootstrap.dart';
 import 'package:flutter_projects/app_flavor.dart';
@@ -46,6 +47,13 @@ class AdminApp extends StatelessWidget {
       // نفس شاشة البداية التي يراها الراكب، بلون هذه النكهة.
       // والثلاث ثوانٍ ليست انتظاراً فارغاً: Firebase يستعيد الجلسة
       // خلالها، فلولاها لظهرت شاشة الدخول ثم اختفت لمن هو داخلٌ أصلاً.
+      // الشريط فوق الـNavigator كي يظهر على أيّ شاشة. والنصّ حرفيّ هنا لأنّ
+      // هذه النكهة عربيّةٌ مثبَّتة ولا مندوب ترجمة مسجَّلاً فيها — قراءةُ
+      // الترجمة هنا تعطي `null` وتستبدل التطبيق بشاشة خطأ.
+      builder: (BuildContext context, Widget? child) => ConnectivityBanner(
+        message: 'لا يوجد اتصال بالإنترنت',
+        child: child ?? const SizedBox.shrink(),
+      ),
       home: TaibahSplash(next: () => const AdminGate()),
     );
   }

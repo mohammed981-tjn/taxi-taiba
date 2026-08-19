@@ -93,5 +93,9 @@
   "receiptPayment": "Payment",
   "receiptPaymentCash": "Cash",
   "receiptNoBreakdown": "This trip was recorded before fare details were saved, so only the total is available.",
-  "viewReceipt": "View receipt"
+  "viewReceipt": "View receipt",
+  "noInternet": "No internet connection",
+  "@noInternet": {
+    "description": "Shown in a banner across the top when the device has no network interface."
+  }
 }

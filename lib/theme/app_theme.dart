@@ -119,12 +119,36 @@ class TaibahTheme {
       colorScheme: scheme,
       scaffoldBackgroundColor: scheme.surface,
 
+      // خطّ واحد، لا خطّ كلّ هاتف.
+      //
+      // لم يكن هنا `fontFamily` إطلاقاً، فكان التطبيق يبدو منتجاً مختلفاً على
+      // كلّ جهاز: خطّ MIUI العربيّ على شاومي، وغيره على سامسونج، وثالث على
+      // هواوي. وتعليق رأس هذا الملفّ يَعِد بهويّة واحدة — هذا تنفيذُ الوعد لا
+      // إضافةُ ميزة.
+      fontFamily: 'Cairo',
+
+      // وارتفاع السطر: قياسات Material مضبوطة للحروف اللاتينيّة، والعربيّ خطّ
+      // متّصل بنقاطٍ فوق السطر وتحته، فتتلاصق الأسطر وتبدو الفقرة كتلةً.
+      //
+      // ولا يُمرَّر `bodyColor` ولا `displayColor` هنا: تمريرهما يسحق تدرّج
+      // `black87`/`black54` بين النصّ الأساسيّ والثانويّ في كلّ شاشة. و
+      // `ThemeData` يطبّق `fontFamily` على أنماط Material أوّلاً ثم يدمج هذا
+      // فوقها، فالدمج يُبقي كلّ لونٍ وحجمٍ ووزن.
+      textTheme: const TextTheme(
+        bodyLarge: TextStyle(height: 1.6),
+        bodyMedium: TextStyle(height: 1.6),
+        bodySmall: TextStyle(height: 1.55),
+      ),
+
       appBarTheme: AppBarTheme(
         backgroundColor: palette.primary,
         foregroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
+        // نمطٌ صريح يتجاوز `fontFamily` العامّ، فيُذكَر فيه الخطّ صراحةً —
+        // وإلّا رُسم عنوان الشريط بخطّ النظام فوق متنٍ بـCairo.
         titleTextStyle: const TextStyle(
+          fontFamily: 'Cairo',
           fontSize: 18,
           fontWeight: FontWeight.w600,
           color: Colors.white,
@@ -171,6 +195,7 @@ class TaibahTheme {
             borderRadius: BorderRadius.circular(radius),
           ),
           textStyle: const TextStyle(
+            fontFamily: 'Cairo',
             fontSize: 16,
             fontWeight: FontWeight.w600,
           ),

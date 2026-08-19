@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_projects/driver/driver_alerts.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter_projects/methods/geo_query.dart';
 import 'package:geolocator/geolocator.dart';
@@ -80,6 +81,7 @@ class DriverService {
   static Future<void> goOffline() async {
     await _online.remove();
     await me.child('newTripStatus').set('idle');
+    await DriverAlerts.clearOffer();
   }
 
   /// يُخرج السائق تلقائياً إن مات التطبيق أو انقطعت الشبكة.
@@ -130,6 +132,7 @@ class DriverService {
     await me.child('activeTrip').set(tripId);
 
     await me.child('newTripStatus').set('idle');
+    await DriverAlerts.clearOffer();
   }
 
   /// موضع السائق كما تقرؤه شاشة الراكب.
@@ -147,7 +150,10 @@ class DriverService {
   ///
   /// الراكب ينتقل إلى السائق التالي بانتهاء مهلته. وكتابة الرفض في الرحلة
   /// تعني أن يرى الراكب «رُفض» بدل «نبحث عن سائق»، وهو أسوأ.
-  static Future<void> declineTrip() => me.child('newTripStatus').set('idle');
+  static Future<void> declineTrip() async {
+    await me.child('newTripStatus').set('idle');
+    await DriverAlerts.clearOffer();
+  }
 
   static Future<void> setTripStatus(String tripId, String status) =>
       trip(tripId).update(<String, Object?>{'status': status});

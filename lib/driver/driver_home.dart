@@ -5,10 +5,12 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_projects/driver/driver_earnings_page.dart';
+import 'package:flutter_projects/driver/driver_alerts.dart';
 import 'package:flutter_projects/driver/driver_service.dart';
 import 'package:flutter_projects/driver/driver_trip_panel.dart';
 import 'package:flutter_projects/widgets/taibah_map.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 /// شاشة السائق.
@@ -90,6 +92,13 @@ class _DriverHomeState extends State<DriverHome> {
         if (value == 'idle' || value.isEmpty) {
           // لا تمسح رحلةً جارية: `idle` تُكتب أيضاً لحظة القبول.
           if (_tripId != null && !_tripStarted) {
+            // وهذا هو الموضع غير البديهيّ لمسح الإشعار.
+            //
+            // مؤقّت الراكب يكتب `idle` هنا بعد عشرين ثانية ويُحيل الرحلة إلى
+            // سائق آخر — ولا يمرّ هذا المسار بـ«رفض» إطلاقاً. فبلا مسحٍ هنا
+            // يبقى على شاشة السائق إشعارٌ يعلن رحلةً صارت لغيره، يفتحه بعد
+            // دقيقة فيجد لوحةً فارغة.
+            DriverAlerts.clearOffer();
             setState(() => _tripId = null);
           }
           return;
@@ -113,10 +122,24 @@ class _DriverHomeState extends State<DriverHome> {
         // رحلة، ولا يُفتح له شيء.
         if (!value.startsWith('-') || value.length < 15) return;
 
+        // القاعدة تعيد تسليم القيمة الحاليّة عند كلّ إعادة اتّصال — وشبكة
+        // الجوّال تنقطع وتعود كثيراً. فبلا هذا الحارس يرنّ الهاتف مرّةً بعد
+        // مرّة لعرضٍ واحد لم يتغيّر.
+        final bool isNew = value != _tripId;
+
         setState(() {
           _tripId = value;
           _tripStarted = false;
         });
+
+        // التنبيه بعد الحارسَين لا قبلهما: قبلَهما يرنّ للنصوص التي ليست
+        // رحلات، ولعروضٍ تصل وسط رحلة جارية.
+        if (isNew) {
+          DriverAlerts.offer(
+            title: 'طلب رحلة جديد',
+            body: 'اضغط للاطّلاع وقبول الطلب قبل انتهاء المهلة.',
+          );
+        }
       },
     );
   }
@@ -133,6 +156,7 @@ class _DriverHomeState extends State<DriverHome> {
     try {
       if (value) {
         await _goOnline();
+        await _askNotificationPermission();
       } else {
         await _goOffline();
       }
@@ -271,6 +295,31 @@ class _DriverHomeState extends State<DriverHome> {
 
     if (!mounted) return;
     setState(() => _online = false);
+  }
+
+  /// إذن الإشعارات — يُطلب وقت التشغيل، لا بإعلانه في البيان وحده.
+  ///
+  /// `POST_NOTIFICATIONS` معلَنة في AndroidManifest منذ إضافة خدمة المقدّمة،
+  /// ولا شيء في التطبيق كان يطلبها. وعلى أندرويد ١٣ فما فوق يعني ذلك أنّ
+  /// إشعار «أنت متّصل» **يُنشَر ولا يُعرَض**: الخدمة تعمل والسائق لا يرى
+  /// دليلاً واحداً على أنّه متّصل. وهو بعينه الالتباس الذي كُتبت الخدمة
+  /// لمنعه — سائقٌ يعمل وسائقٌ يظنّ أنه يعمل.
+  ///
+  /// ويُطلب هنا لا عند إقلاع التطبيق: لحظةُ قلبِ المفتاح هي اللحظة الوحيدة
+  /// التي يفهم فيها السائق **لماذا** يُسأل. وطلبٌ عند الإقلاع بلا سياق
+  /// يُرفَض انعكاساً، والرفض على أندرويد لا رجعة فيه إلا من الإعدادات.
+  ///
+  /// ولا يُوضَع داخل `_goOnline()`: تلك يستدعيها أيضاً استئنافُ رحلة جارية،
+  /// فيُقذَف حوارٌ في وجه سائق يقود.
+  Future<void> _askNotificationPermission() async {
+    // أندرويد وحده: على iOS يفتح هذا حوار APNs لقدرةٍ لا يملكها التطبيق بعد.
+    if (defaultTargetPlatform != TargetPlatform.android) return;
+
+    final PermissionStatus status = await Permission.notification.status;
+    if (status.isDenied) {
+      await Permission.notification.request();
+    }
+    // ولا يُعلَّق الاتصال على الجواب: من رفض الإشعار يبقى قادراً على العمل.
   }
 
   /// إعادة تشغيل البثّ لرحلة استُرجعت بعد إعادة تشغيل التطبيق.

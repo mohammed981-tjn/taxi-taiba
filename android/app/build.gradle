@@ -12,6 +12,11 @@ android {
     ndkVersion flutter.ndkVersion
 
     compileOptions {
+        // بلا هذا السطر لا يُبنى التطبيق بعد إضافة flutter_local_notifications،
+        // والخطأ رسالةُ d8 غامضة عن صنفٍ مفقود لا رسالةٌ تقول «فعّل
+        // desugaring». الحزمة تستعمل واجهات زمنٍ من Java 8 التي لا توجد على
+        // أندرويد الأقدم، وهذا ما يُنزلها إليها.
+        coreLibraryDesugaringEnabled true
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
@@ -158,6 +163,12 @@ android {
             // minifyEnabled false // (اختياري)
         }
     }
+}
+
+// الملفّ لم يكن يملك كتلة `dependencies` إطلاقاً — تُنشأ هنا لأجل مكتبة
+// الإنزال (desugaring) المطلوبة أعلاه.
+dependencies {
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.4'
 }
 
 flutter {

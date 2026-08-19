@@ -18,6 +18,12 @@ dependencies:
   # تقرير الأعطال — الإصدار مثبَّت صراحةً لأنه يقترن بملحق Gradle بإصدار
   # بعينه، وترقيةٌ صامتة لأحدهما دون الآخر تُسقط البناء.
   firebase_crashlytics: ^4.1.3
+  # إشعار العرض بصوت — الإصدار مثبَّت بلا `^`: الإصدارات الأحدث تشترط
+  # Dart أعلى ممّا يقبله هذا المشروع، وترقيةٌ صامتة تُسقط البناء.
+  flutter_local_notifications: 19.5.0
+  # شريط انقطاع الشبكة. مثبَّت أيضاً: الإصدار الخامس يعيد قيمةً مفردة
+  # والسادس يعيد قائمة، والشيفرة المنقولة تنتظر قائمة.
+  connectivity_plus: 6.1.0
   google_maps_flutter:
   permission_handler:
   geolocator:
@@ -52,3 +58,22 @@ flutter:
   assets:
     - assets/
     - assets/images/
+
+  # خطّ Cairo — منقول من zadgo2 برخصة SIL OFL (نسخة الرخصة مرافقة في
+  # assets/fonts/OFL.txt، وإرفاقها شرطٌ في الرخصة لا تزيّن).
+  #
+  # ثلاثة أوزان لا أربعة: `w800` صفر استعمالات في هذا التطبيق، فحملُه ١٦٤
+  # كيلوبايت ميّتة في كلّ حزمة.
+  #
+  # ولا يُسجَّل ملفّ متغيّر واحد تحت أوزان متعدّدة: أندرويد يفشل في رسمه
+  # **فشلاً صامتاً** — الحاويات والألوان تُرسم والنصّ غير مرئيّ. الملفّات
+  # ثابتة، ولكلّ وزنٍ ملفّه.
+  fonts:
+    - family: Cairo
+      fonts:
+        - asset: assets/fonts/Cairo-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Cairo-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Cairo-Bold.ttf
+          weight: 700

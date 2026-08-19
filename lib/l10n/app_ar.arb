@@ -93,5 +93,6 @@
   "receiptPayment": "طريقة الدفع",
   "receiptPaymentCash": "نقداً",
   "receiptNoBreakdown": "سُجّلت هذه الرحلة قبل حفظ تفصيل الأجرة، فالمتاح هو الإجمالي فقط.",
-  "viewReceipt": "عرض الإيصال"
+  "viewReceipt": "عرض الإيصال",
+  "noInternet": "لا يوجد اتصال بالإنترنت"
 }

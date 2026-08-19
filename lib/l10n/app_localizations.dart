@@ -104,6 +104,12 @@ abstract class AppLocalizations {
   /// **'Taibah'**
   String get appTitle;
 
+  /// No description provided for @noInternet.
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يوجد اتصال بالإنترنت'**
+  String get noInternet;
+
   /// No description provided for @welcomeText.
   ///
   /// In en, this message translates to:
