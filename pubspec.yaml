@@ -58,6 +58,7 @@ flutter:
   assets:
     - assets/
     - assets/images/
+    - assets/intro/
 
   # خطّ Cairo — منقول من zadgo2 برخصة SIL OFL (نسخة الرخصة مرافقة في
   # assets/fonts/OFL.txt، وإرفاقها شرطٌ في الرخصة لا تزيّن).

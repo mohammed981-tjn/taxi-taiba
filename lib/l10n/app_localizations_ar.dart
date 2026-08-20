@@ -24,6 +24,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get signUp => 'إنشاء حساب';
 
   @override
+  String get introNext => 'التالي';
+
+  @override
   String get myProfile => 'ملفي الشخصي';
 
   @override
@@ -183,46 +186,31 @@ class AppLocalizationsAr extends AppLocalizations {
   String get saveButton => 'حفظ';
 
   @override
-  String get introHeadline1 => 'رفيق سفرك المثالي!';
+  String get introHeadline1 => 'وجهتك في كلّ مكان';
 
   @override
   String get introDesc1 =>
       'احجز رحلات لاحتياجاتك اليومية أو استأجر سائقين محترفين للرحلات الطويلة وخدمات الشركات - كل ذلك في تطبيق واحد!';
 
   @override
-  String get introHeadline2 => 'احصل على رحلة في أي وقت وفي أي مكان!';
+  String get introHeadline2 => 'تعرف سائقك قبل أن يصل';
 
   @override
   String get introDesc2 =>
       'هل تحتاج إلى رحلة؟ احجز فوراً واستمتع برحلة مريحة مع سائقين موثوقين!';
 
   @override
-  String get introHeadline3 => 'هل تحتاج إلى سائق لرحلة طويلة؟';
+  String get introHeadline3 => 'السعر قبل الرحلة لا بعدها';
 
   @override
   String get introDesc3 =>
       'هل ستذهب في رحلة طويلة أو تحتاج إلى سائق لعملك؟ استأجر سائقين ذوي خبرة بكل سهولة!';
 
-  @override
-  String get introHeadline4 => 'حول سيارتك إلى مصدر دخل!';
 
-  @override
-  String get introDesc4 =>
-      'اعرض سيارتك على Taibah وأجرها للمسافرين بينما تكسب دخلاً إضافياً!';
 
-  @override
-  String get introHeadline5 => 'أكثر من مجرد رحلات!';
 
-  @override
-  String get introDesc5 =>
-      'احجز الفنادق واحصل على المساعدة في السفر أثناء التخطيط لرحلتك - كل ذلك من تطبيق واحد!';
 
-  @override
-  String get introHeadline6 => 'رحلتك تبدأ من هنا!';
 
-  @override
-  String get introDesc6 =>
-      'سجل الآن وابدأ في الاستمتاع بخدمات Taibah المذهلة اليوم!';
 
   @override
   String get rateTripTitle => 'قيّم رحلتك';

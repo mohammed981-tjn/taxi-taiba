@@ -128,6 +128,12 @@ abstract class AppLocalizations {
   /// **'Sign Up'**
   String get signUp;
 
+  /// No description provided for @introNext.
+  ///
+  /// In ar, this message translates to:
+  /// **'التالي'**
+  String get introNext;
+
   /// No description provided for @myProfile.
   ///
   /// In en, this message translates to:
@@ -476,41 +482,11 @@ abstract class AppLocalizations {
   /// **'Going on a long journey or need a driver for your business? Hire experienced drivers with ease!'**
   String get introDesc3;
 
-  /// No description provided for @introHeadline4.
-  ///
-  /// In en, this message translates to:
-  /// **'Turn Your Car into an Income Source!'**
-  String get introHeadline4;
 
-  /// No description provided for @introDesc4.
-  ///
-  /// In en, this message translates to:
-  /// **'List your car on Taibah and rent it out to travelers while earning extra income!'**
-  String get introDesc4;
 
-  /// No description provided for @introHeadline5.
-  ///
-  /// In en, this message translates to:
-  /// **'More Than Just Rides!'**
-  String get introHeadline5;
 
-  /// No description provided for @introDesc5.
-  ///
-  /// In en, this message translates to:
-  /// **'Book hotels and find travel assistance while planning your journey—all from one app!'**
-  String get introDesc5;
 
-  /// No description provided for @introHeadline6.
-  ///
-  /// In en, this message translates to:
-  /// **'Your Journey Begins Here!'**
-  String get introHeadline6;
 
-  /// No description provided for @introDesc6.
-  ///
-  /// In en, this message translates to:
-  /// **'Sign up and start enjoying Taibah’s amazing services today!'**
-  String get introDesc6;
 
   /// No description provided for @rateTripTitle.
   ///

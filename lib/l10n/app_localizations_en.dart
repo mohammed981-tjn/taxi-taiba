@@ -24,6 +24,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get signUp => 'Sign Up';
 
   @override
+  String get introNext => 'Next';
+
+  @override
   String get myProfile => 'My Profile';
 
   @override
@@ -184,46 +187,31 @@ class AppLocalizationsEn extends AppLocalizations {
   String get saveButton => 'Save';
 
   @override
-  String get introHeadline1 => 'Your Ultimate Travel Companion!';
+  String get introHeadline1 => 'Anywhere in the city';
 
   @override
   String get introDesc1 =>
       'Book rides for your daily needs or hire professional drivers for long-distance journeys and corporate services—all in one app!';
 
   @override
-  String get introHeadline2 => 'Get a Ride Anytime, Anywhere!';
+  String get introHeadline2 => 'Know your driver before he arrives';
 
   @override
   String get introDesc2 =>
       'Need a ride? Book instantly and enjoy a comfortable journey with verified drivers!';
 
   @override
-  String get introHeadline3 => 'Need a Driver for a Long Trip?';
+  String get introHeadline3 => 'The price before the ride, not after';
 
   @override
   String get introDesc3 =>
       'Going on a long journey or need a driver for your business? Hire experienced drivers with ease!';
 
-  @override
-  String get introHeadline4 => 'Turn Your Car into an Income Source!';
 
-  @override
-  String get introDesc4 =>
-      'List your car on Taibah and rent it out to travelers while earning extra income!';
 
-  @override
-  String get introHeadline5 => 'More Than Just Rides!';
 
-  @override
-  String get introDesc5 =>
-      'Book hotels and find travel assistance while planning your journey—all from one app!';
 
-  @override
-  String get introHeadline6 => 'Your Journey Begins Here!';
 
-  @override
-  String get introDesc6 =>
-      'Sign up and start enjoying Taibah’s amazing services today!';
 
   @override
   String get rateTripTitle => 'Rate your trip';
