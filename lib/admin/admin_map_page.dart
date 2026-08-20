@@ -21,7 +21,7 @@ class AdminMapPage extends StatefulWidget {
 }
 
 class _AdminMapPageState extends State<AdminMapPage> {
-  GoogleMapController? _controller;
+  TaibahMapController? _controller;
 
   // التدفّقان يُنشآن مرّةً واحدة — راجع التعليق في admin_users_page.dart.
   // وهنا الأثر أشدّ: كلّ نبضة موقع من أيّ سائق كانت تعيد بناء الشجرة، فيتبدّل
@@ -101,7 +101,7 @@ class _AdminMapPageState extends State<AdminMapPage> {
               children: <Widget>[
                 TaibahMap(
                   markers: markers,
-                  onMapCreated: (GoogleMapController c) {
+                  onReady: (TaibahMapController c) {
                     _controller = c;
                     _frame(points);
                   },
@@ -133,9 +133,7 @@ class _AdminMapPageState extends State<AdminMapPage> {
     _framed = true;
 
     if (points.length == 1) {
-      _controller!.animateCamera(
-        CameraUpdate.newLatLngZoom(points.first, 14),
-      );
+      _controller!.moveTo(points.first, 14);
       return;
     }
 
@@ -151,14 +149,12 @@ class _AdminMapPageState extends State<AdminMapPage> {
       if (p.longitude > east) east = p.longitude;
     }
 
-    _controller!.animateCamera(
-      CameraUpdate.newLatLngBounds(
-        LatLngBounds(
-          southwest: LatLng(south, west),
-          northeast: LatLng(north, east),
-        ),
-        64,
+    _controller!.fitBounds(
+      LatLngBounds(
+        southwest: LatLng(south, west),
+        northeast: LatLng(north, east),
       ),
+      64,
     );
   }
 }

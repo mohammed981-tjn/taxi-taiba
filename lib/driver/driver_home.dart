@@ -665,7 +665,7 @@ class _Idle extends StatefulWidget {
 }
 
 class _IdleState extends State<_Idle> {
-  GoogleMapController? _controller;
+  TaibahMapController? _controller;
 
   @override
   void didUpdateWidget(covariant _Idle oldWidget) {
@@ -678,12 +678,7 @@ class _IdleState extends State<_Idle> {
     // لعادت الكاميرا إلى السائق كلّما تحرّك عشرين متراً، فلا يستطيع أن ينظر
     // إلى شارعٍ مجاور.
     if (oldWidget.position == null) {
-      _controller!.animateCamera(
-        CameraUpdate.newLatLngZoom(
-          LatLng(now.latitude, now.longitude),
-          15.5,
-        ),
-      );
+      _controller!.moveTo(LatLng(now.latitude, now.longitude), 15.5);
     }
   }
 
@@ -720,7 +715,7 @@ class _IdleState extends State<_Idle> {
                 ),
           markers: markers,
           myLocation: widget.online,
-          onMapCreated: (GoogleMapController c) => _controller = c,
+          onReady: (TaibahMapController c) => _controller = c,
           padding: const EdgeInsets.only(bottom: 96),
         ),
         Positioned(

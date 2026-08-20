@@ -25,6 +25,13 @@ dependencies:
   # والسادس يعيد قائمة، والشيفرة المنقولة تنتظر قائمة.
   connectivity_plus: 6.1.0
   google_maps_flutter:
+  # خريطة احتياطيّة ببلاطات OpenStreetMap — تعمل بلا مفتاح.
+  #
+  # ليست بديلاً عن Google بل جسراً إليه: تُستعمل تلقائياً حين يكون
+  # `MAPS_API_KEY` فارغاً، وتُخلي مكانها لخرائط Google لحظة وصول المفتاح، بلا
+  # تعديل سطر. راجع lib/widgets/taibah_map.dart.
+  flutter_map: ^7.0.2
+  latlong2: ^0.9.1
   permission_handler:
   geolocator:
   http:
