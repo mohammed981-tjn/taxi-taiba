@@ -5,7 +5,7 @@ import 'package:flutter_projects/app_flavor.dart';
 import 'package:flutter_projects/driver/driver_home.dart';
 import 'package:flutter_projects/driver/driver_register_page.dart';
 import 'package:flutter_projects/driver/driver_service.dart';
-import 'package:flutter_projects/theme/taibah_logo.dart';
+import 'package:flutter_projects/theme/taibah_mark.dart';
 
 /// دخول السائق، ثم الحالة.
 ///
@@ -141,7 +141,7 @@ class _DriverGateState extends State<DriverGate> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: <Widget>[
-                const TaibahWordmark(role: AppRole.driver),
+                const TaibahMark(role: AppRole.driver, size: 52),
                 const SizedBox(height: 30),
                 TextField(
                   controller: _email,

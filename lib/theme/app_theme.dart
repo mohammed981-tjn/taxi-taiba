@@ -22,7 +22,9 @@ class TaibahBrand {
 
   /// الاسم كما يُكتب — لاتينيّاً وعربيّاً.
   static const String nameLatin = 'Taibah';
-  static const String nameArabic = 'طيبة';
+  /// بالهاء لا بالتاء المربوطة: هكذا كُتبت في كلّ التصاميم المختارة،
+  /// وهكذا تُنطق في المدينة.
+  static const String nameArabic = 'طيبه';
 
   /// ما يُعرض تحت الاسم في شاشات الدخول.
   static String taglineFor(AppRole role) {
@@ -33,6 +35,21 @@ class TaibahBrand {
         return 'اتصل، واستقبل رحلاتك';
       case AppRole.admin:
         return 'لوحة التحكّم';
+    }
+  }
+
+  /// السطر اللاتينيّ الصغير تحت الاسم.
+  ///
+  /// ليس ترجمةً بل تعريف: السائق الوافد من باكستان أو بنغلاديش لا يقرأ
+  /// العربيّة في يومه الأوّل، واسم الحزمة في المتجر لاتينيٌّ على كلّ حال.
+  static String latinLineFor(AppRole role) {
+    switch (role) {
+      case AppRole.passenger:
+        return 'TAYBAH TAXI';
+      case AppRole.driver:
+        return 'TAYBAH DRIVER';
+      case AppRole.admin:
+        return 'TAYBAH ADMIN';
     }
   }
 

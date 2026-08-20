@@ -1,7 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_projects/theme/taibah_logo.dart';
+import 'package:flutter_projects/theme/taibah_mark.dart';
 import 'package:flutter_projects/theme/app_theme.dart';
 import 'package:flutter_projects/app_flavor.dart';
 import 'package:flutter_projects/auth/signin_page.dart';
@@ -104,10 +104,10 @@ class _SignUpPageState extends State<SignUpPage>
                     bottom: Radius.circular(28),
                   ),
                 ),
-                child: const TaibahWordmark(
+                child: const TaibahMark(
                   role: AppRole.passenger,
                   onDark: true,
-                  logoSize: 68,
+                  size: 54,
                 ),
               ),
               const SizedBox(height: 26),

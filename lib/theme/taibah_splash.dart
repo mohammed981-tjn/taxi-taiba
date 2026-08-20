@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_projects/app_flavor.dart';
 import 'package:flutter_projects/theme/app_theme.dart';
-import 'package:flutter_projects/theme/taibah_logo.dart';
+import 'package:flutter_projects/theme/taibah_mark.dart';
 
 /// شاشة البداية — واحدة للنكهات الثلاث.
 ///
@@ -85,16 +85,37 @@ class _TaibahSplashState extends State<TaibahSplash>
       child: Scaffold(
         body: Container(
           decoration: BoxDecoration(
+            // تدرّجٌ قطريّ لا رأسيّ: الرأسيّ يبدو خلفيّةَ نموذجٍ افتراضيّ،
+            // والقطريّ يعطي عمقاً تلتقطه العين ولا تسمّيه.
             gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: <Color>[palette.primary, palette.primaryDeep],
+              begin: Alignment.topRight,
+              end: Alignment.bottomLeft,
+              colors: <Color>[
+                palette.primary,
+                palette.primaryDeep,
+                palette.primaryDeep,
+              ],
+              stops: const <double>[0, 0.62, 1],
             ),
           ),
           child: SafeArea(
             child: Column(
               children: <Widget>[
                 const Spacer(flex: 3),
+                // هالةٌ خافتة خلف العلامة، بلون النكهة الثانوي. تصنع مركزاً
+                // بصريّاً في مساحةٍ لولاها لكانت لوناً مسطّحاً.
+                Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    boxShadow: <BoxShadow>[
+                      BoxShadow(
+                        color: palette.accent.withValues(alpha: 0.14),
+                        blurRadius: 90,
+                        spreadRadius: 30,
+                      ),
+                    ],
+                  ),
+                ),
                 FadeTransition(
                   opacity: CurvedAnimation(
                     parent: _controller,
@@ -108,10 +129,10 @@ class _TaibahSplashState extends State<TaibahSplash>
                       parent: _controller,
                       curve: Curves.easeOutCubic,
                     )),
-                    child: TaibahWordmark(
+                    child: TaibahMark(
                       role: role,
                       onDark: true,
-                      logoSize: 96,
+                      size: 78,
                     ),
                   ),
                 ),
