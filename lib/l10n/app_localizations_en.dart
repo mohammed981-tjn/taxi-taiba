@@ -104,8 +104,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aboutTitle => 'Welcome to Taibah';
 
   @override
-  String get oagoDescription =>
-      'Taibah is a smart mobility platform that connects travelers with reliable drivers for daily rides, long-distance journeys, and corporate transportation. Beyond regular ride-hailing, Taibah also offers car rental services, allowing car owners to lend their vehicles to travelers. With seamless hotel booking and travel assistance, Taibah provides a one-stop solution for all your transportation needs. Whether you need a quick ride, a professional driver, or a rental car, Taibah makes travel effortless, safe, and convenient.';
+  String get aboutDescription =>
+      'Taibah is a ride-hailing app for Madinah. Request a car from where you stand, see what the trip costs before it starts, and follow your driver on the map until they reach you — and until you arrive.\n\nDrivers are reviewed before they are approved, and the fare is computed from distance and time: shown to you before you request, and not haggled over when you step out.';
 
   @override
   String get feedbackText =>

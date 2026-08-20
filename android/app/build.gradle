@@ -106,6 +106,20 @@ android {
         }
     }
 
+    // أيقونة المشغّل القديمة (PNG) لكلّ نكهة.
+    //
+    // المتكيّفة (`mipmap-anydpi-v26`) كانت سليمة: قوسٌ متّجه ولونٌ من
+    // `resValue`. لكنّ `mipmap-*dpi/ic_launcher.png` بقيت شعار Flutter
+    // الافتراضي — تحقّقتُ منها داخل الحزمة المنشورة نفسها. وهي ما يظهر على
+    // كلّ مسارٍ يعود إلى القديمة: أندرويد ٧ فأقلّ، وبعض المشغّلات، وصفحة
+    // المتجر.
+    //
+    // ولأنّ النكهة تصل خاصّيةً لا `productFlavor`، تُضاف مجلّداتها هكذا —
+    // ومجلّدٌ واحد يُضاف، فلا تصادم موارد.
+    sourceSets {
+        main.res.srcDirs += "src/flavor-${flavorSuffix.containsKey(flavorName) ? flavorName : 'passenger'}/res"
+    }
+
     defaultConfig {
         applicationId resolvedApplicationId
         minSdkVersion flutter.minSdkVersion

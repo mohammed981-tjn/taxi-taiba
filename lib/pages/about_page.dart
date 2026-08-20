@@ -1,7 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_projects/app_flavor.dart';
 import 'package:flutter_projects/theme/app_theme.dart';
+import 'package:flutter_projects/theme/taibah_mark.dart';
 import '../l10n/app_localizations.dart';
 
+/// «عن التطبيق».
+///
+/// **كانت هذه آخر شاشة بقي فيها القالب كاملاً.** شعار «OAGo RIDE» بالحرف
+/// اللاتينيّ، ونصٌّ يَعِد بتأجير السيّارات وإعارة أصحابها سيّاراتِهم
+/// للمسافرين، وبحجز الفنادق والمساعدة في السفر. ولا واحدة منها موجودة في هذا
+/// التطبيق ولا في خطّته القريبة — وهي بالضبط الوعود التي أُزيلت من شاشة
+/// التعريف، فبقيت هنا تناقضها على بُعد نقرتين.
+///
+/// والنصّ الجديد لا يعد بشيء لا يفعله التطبيق اليوم.
 class AboutPage extends StatefulWidget {
   const AboutPage({super.key});
 
@@ -14,7 +25,7 @@ class _AboutPageState extends State<AboutPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: TaibahPalette.passenger.primary,
+        backgroundColor: TaibahPalette.of(AppFlavor.role).primary,
         title: Text(
           AppLocalizations.of(context)!.aboutTitle,
           style: const TextStyle(
@@ -37,23 +48,19 @@ class _AboutPageState extends State<AboutPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Center(
-              child: Image.asset(
-                "assets/oago_logo.png",
-                width: 200,
-                height: 120,
-                fit: BoxFit.contain,
-                errorBuilder: (c, e, s) => Icon(Icons.directions_car, size: 100, color: TaibahPalette.passenger.primary),
-              ),
+            // العلامة نفسها التي في شاشة البداية وشاشة الدخول — لا صورة
+            // ثانية تُنسى حين تتغيّر الهويّة.
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 22),
+              child: TaibahMark(role: AppFlavor.role, size: 58),
             ),
-            const SizedBox(height: 10),
             Expanded(
               child: SingleChildScrollView(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Text(
-                      AppLocalizations.of(context)!.oagoDescription,
+                      AppLocalizations.of(context)!.aboutDescription,
                       textAlign: TextAlign.center,
                       style: const TextStyle(
                         color: Colors.black87,
