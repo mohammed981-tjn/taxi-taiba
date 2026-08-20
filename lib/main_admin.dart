@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_projects/admin/admin_gate.dart';
+import 'package:flutter_projects/widgets/connectivity_banner.dart';
+import 'package:flutter_projects/theme/taibah_splash.dart';
 import 'package:flutter_projects/app_bootstrap.dart';
 import 'package:flutter_projects/app_flavor.dart';
+import 'package:flutter_projects/theme/app_theme.dart';
 
 /// نقطة دخول لوحة الإدارة.
 ///
@@ -25,7 +28,7 @@ class AdminApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'لوحة تحكّم طيبة',
+      title: '${TaibahBrand.nameLatin} إدارة',
       debugShowCheckedModeBanner: false,
 
       // اللوحة عربية ثابتة، بلا مبدّل لغة. أداة داخلية لمستخدم واحد لا تحتاج
@@ -39,15 +42,19 @@ class AdminApp extends StatelessWidget {
         GlobalCupertinoLocalizations.delegate,
       ],
 
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF010E4C),
-          brightness: Brightness.light,
-        ),
-        useMaterial3: true,
-      ),
+      theme: TaibahTheme.of(AppRole.admin),
 
-      home: const AdminGate(),
+      // نفس شاشة البداية التي يراها الراكب، بلون هذه النكهة.
+      // والثلاث ثوانٍ ليست انتظاراً فارغاً: Firebase يستعيد الجلسة
+      // خلالها، فلولاها لظهرت شاشة الدخول ثم اختفت لمن هو داخلٌ أصلاً.
+      // الشريط فوق الـNavigator كي يظهر على أيّ شاشة. والنصّ حرفيّ هنا لأنّ
+      // هذه النكهة عربيّةٌ مثبَّتة ولا مندوب ترجمة مسجَّلاً فيها — قراءةُ
+      // الترجمة هنا تعطي `null` وتستبدل التطبيق بشاشة خطأ.
+      builder: (BuildContext context, Widget? child) => ConnectivityBanner(
+        message: 'لا يوجد اتصال بالإنترنت',
+        child: child ?? const SizedBox.shrink(),
+      ),
+      home: TaibahSplash(next: () => const AdminGate()),
     );
   }
 }

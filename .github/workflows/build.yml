@@ -10,6 +10,11 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      publish:
+        description: "انشر النتيجة كإصدار — روابط تنزيل مباشرة للجوّال"
+        type: boolean
+        default: false
 
 jobs:
   build:
@@ -31,10 +36,13 @@ jobs:
         include:
           - flavor: passenger
             target: lib/main.dart
-            artifact: oago-passenger-release
+            artifact: taibah-passenger-release
+          - flavor: driver
+            target: lib/main_driver.dart
+            artifact: taibah-driver-release
           - flavor: admin
             target: lib/main_admin.dart
-            artifact: taiba-admin-release
+            artifact: taibah-admin-release
 
     # `secrets` is not available inside an `if:` expression — only `env` is. So
     # the secret is lifted to the job environment here and the steps below test
@@ -111,18 +119,55 @@ jobs:
           printf '%s' "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/upload.jks"
           echo "KEYSTORE_PATH=$RUNNER_TEMP/upload.jks" >> "$GITHUB_ENV"
 
-      - name: Build ${{ matrix.flavor }} APKs
+      # ملفٌّ واحد يفتح في أي هاتف، لا ثلاثة يختار المستخدم بينها.
+      #
+      # كان `--split-per-abi` يقسم المخرَج بحسب معمارية المعالج، فتخرج ثلاث
+      # حزم لكل نكهة. وهو الصواب في متجر Play — يرسل المتجر إلى كل جهاز حصّته
+      # وحدها — لكنه خطأ حين تُسلَّم الحزمة يداً بيد: من ينزّلها لا يعرف معالج
+      # هاتفه، ولا يجب أن يُسأل. وتثبيت الخاطئة يفشل برسالة لا تدلّ على السبب.
+      #
+      # فالحزمة الآن جامعة: مكتبةٌ أصلية لكل معمارية داخل ملفّ واحد، ويختار
+      # النظام عند التثبيت. الثمن ميغابايتات، والمقابل أن السؤال يختفي.
+      #
+      # وx86_64 مستثناة افتراضاً: لا يستعملها هاتف بيع في السنوات الأخيرة —
+      # المحاكيات وبعض أجهزة Chromebook وحدها. إدراجها يضخّم الملفّ لأجل من
+      # لا يحمله. أضفها عند الحاجة:
+      #   Settings ← Variables ← ANDROID_ABIS = android-arm,android-arm64,android-x64
+      #
+      # والسوق متغيّر واحد يحمل البلد والعملة ومركز الخريطة معاً — راجع
+      # lib/market.dart. السودان معرَّفٌ هناك وجاهز، ويُفعَّل بـ MARKET=SD
+      # بلا تعديل شيفرة.
+      #
+      # ولمتجر Play لاحقاً: `flutter build appbundle` — يتولّى المتجر التقسيم
+      # عندها، فيصل كل جهاز أصغر مما يصله من هذه الحزمة.
+      - name: Build ${{ matrix.flavor }} APK
         env:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
           MAPS_API_KEY: ${{ secrets.MAPS_API_KEY }}
         run: |
-          flutter build apk --release --split-per-abi \
+          # بناءٌ بلا مفتاح خرائط ينجح ويُنشر، وخريطته رماديّة فارغة. صمتَ
+          # أربعين بناءً على هذا. التحذير هنا كي يُرى في السجلّ لا في الجوّال.
+          if [ -z "$MAPS_API_KEY" ]; then
+            echo "::warning::No MAPS_API_KEY secret — maps will be blank in this build. Set it in Settings → Secrets → Actions."
+          fi
+
+          flutter build apk --release \
+            --target-platform "${{ vars.ANDROID_ABIS || 'android-arm,android-arm64' }}" \
             -t "${{ matrix.target }}" \
+            -Pflavor="${{ matrix.flavor }}" \
+            -PbuildNumber="${{ github.run_number }}" \
             --dart-define=MAPS_API_KEY="$MAPS_API_KEY" \
-            --dart-define=PLACES_COUNTRIES="${{ vars.PLACES_COUNTRIES || 'SD' }}" \
+            --dart-define=MARKET="${{ vars.MARKET || 'SA' }}" \
             -Pmaps.api.key="$MAPS_API_KEY"
+
+      # الاسم يقول أيّ تطبيق هذا. `app-release.apk` ثلاث مرّات في مجلّد
+      # التنزيلات هو ثلاثة ملفّات لا يُعرف أيّها أيّ.
+      - name: Name it after its flavour
+        run: |
+          mv build/app/outputs/flutter-apk/app-release.apk \
+             "build/app/outputs/flutter-apk/${{ matrix.artifact }}.apk"
 
       - name: Report how it was signed
         run: |
@@ -135,12 +180,194 @@ jobs:
       - name: List what was produced
         run: ls -lh build/app/outputs/flutter-apk/
 
-      # Split per ABI, so arm64-v8a is the one for any phone sold in the last
-      # several years — the same variant the existing release APK was.
-      - name: Upload APKs
+      - name: Upload the APK
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact }}
-          path: build/app/outputs/flutter-apk/*.apk
+          path: build/app/outputs/flutter-apk/${{ matrix.artifact }}.apk
           if-no-files-found: error
           retention-days: 30
+
+  # لوحة الإدارة على المتصفّح — من نفس الملفّ الذي تُبنى منه حزمة الأندرويد.
+  #
+  # لا هجرة ولا إعادة كتابة: `-t lib/main_admin.dart` هو ذاته في الحالتين،
+  # وFlutter يبني الهدفين من شجرة الاستيراد نفسها. وهذا يعمل لأن نكهة الإدارة
+  # لا تستورد geolocator ولا google_maps_flutter ولا permission_handler —
+  # تحقّقتُ بالبحث. لو استوردت واحدةً منها لانكسر بناء الويب وحده، وهو أوضح
+  # دليل على أن الفصل بين النكهات حقيقي لا اسمي.
+  #
+  # ولا تُبنى نكهتا الراكب والسائق للويب: كلتاهما تقوم على الخرائط والموقع،
+  # وتطبيق رحلات في متصفّح ليس منتجاً.
+  web:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Resolve dependencies
+        run: flutter pub get
+
+      # المعرّف علني بحكم التصميم — يظهر في كل حزمة تُبنى — فهو متغيّر لا سرّ.
+      #
+      # وكان هذا الفحص يسأل «هل هو فارغ؟» وحدها، فمرّ معرّفُ **أندرويد** ونجح
+      # البناء. وهو أسوأ أنواع النجاح: `String.fromEnvironment` تقبل أي نصّ،
+      # فيُبنى الموقع كاملاً ثم يفشل `Firebase.initializeApp` في المتصفّح
+      # وتبقى صفحة بيضاء بلا رسالة تدلّ على السبب.
+      #
+      # نفس شكل العطل الذي أوقعنا فيه `country:NG`: لا البناء يفشل ولا الطلب،
+      # ويظهر عند الاستعمال وحده. فالفحص الآن على **الشكل** لا على الوجود:
+      #
+      #   1:19401527632:web:0a1b2c3d…      ✅
+      #   1:19401527632:android:da0113…    ❌ بطاقة أندرويد لا ويب
+      # المعرّف علني بحكم التصميم — يظهر في كل حزمة تُبنى — فهو متغيّر لا سرّ.
+      #
+      # وحالتان مختلفتان تُعامَلان مختلفتين:
+      #
+      #   غير مضبوط  → تخطٍّ. «الويب لم يُهيَّأ بعد» حالةٌ مشروعة، ولا يصحّ أن
+      #                توقف عملَ الأندرويد الذي لا يقرأ هذا المتغيّر أصلاً.
+      #   مضبوط وخطأ → فشل صريح. قيمةٌ خاطئة تُبنى بنجاح وتُنتج صفحة بيضاء في
+      #                المتصفّح، فالفشل هنا أرخص من اكتشافه بعد أسبوع.
+      - name: Validate the web app id
+        id: webid
+        env:
+          RAW_WEB_APP_ID: ${{ vars.FIREBASE_WEB_APP_ID }}
+        run: |
+          # تُنزع المسافات وفواصل الأسطر أولاً: لصقُ القيمة في حقل المتصفّح
+          # يحملها سطراً زائداً في الغالب، وهو ما وقع فعلاً — فخرجت رسالة الخطأ
+          # مقطوعة وأشارت إلى «مشروع مختلف» بدل السبب الحقيقي.
+          WEB_APP_ID=$(printf '%s' "$RAW_WEB_APP_ID" | tr -d '[:space:]')
+
+          if [ -z "$WEB_APP_ID" ]; then
+            echo "::notice::FIREBASE_WEB_APP_ID is not set — skipping the web build."
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # الشكل: <version>:<project number>:web:<hash>
+          if ! printf '%s' "$WEB_APP_ID" | grep -Eq '^[0-9]+:[0-9]+:web:[0-9a-zA-Z]+$'; then
+            platform=$(printf '%s' "$WEB_APP_ID" | cut -d: -f3)
+            echo "::error::FIREBASE_WEB_APP_ID is not a web app id (platform segment: '${platform:-none}')."
+            echo "A web app id looks like 1:19401527632:web:0a1b2c3d4e5f6a7b8c9d0e"
+            echo "Firebase console > Project settings > General > Your apps"
+            echo "  > the </> web card (not the Android one) > Config > appId"
+            exit 1
+          fi
+
+          # رقم المشروع جزءٌ من المعرّف، فمعرّفٌ من مشروع آخر سليمُ الشكل
+          # ويفشل عند الإقلاع بالقدر نفسه. يُقارن بما في google-services.json —
+          # المصدر الوحيد للحقيقة في المستودع.
+          expected=$(python3 -c "import json;print(json.load(open('android/app/google-services.json'))['project_info']['project_number'])")
+          actual=$(printf '%s' "$WEB_APP_ID" | cut -d: -f2)
+
+          if [ "$expected" != "$actual" ]; then
+            echo "::error::Project number mismatch — the id belongs to project $actual, this repository targets $expected."
+            exit 1
+          fi
+
+          echo "web app id: $WEB_APP_ID (project $actual)"
+          echo "configured=true" >> "$GITHUB_OUTPUT"
+          echo "id=$WEB_APP_ID" >> "$GITHUB_OUTPUT"
+
+      # القيمة المنظَّفة من الخطوة أعلاه، لا الخام: سطرٌ زائد يدخل الحزمة
+      # ويُفسد المعرّف بصمت.
+      - name: Build the admin panel for the web
+        if: steps.webid.outputs.configured == 'true'
+        run: |
+          flutter build web --release \
+            -t lib/main_admin.dart \
+            --dart-define=FIREBASE_WEB_APP_ID="${{ steps.webid.outputs.id }}" \
+            --dart-define=MARKET="${{ vars.MARKET || 'SA' }}"
+
+      - name: List what was produced
+        if: steps.webid.outputs.configured == 'true'
+        run: ls -lh build/web/
+
+      # الملفّ الذي يجعل البناء قابلاً لإعادة الإنتاج — يُلتقط من هنا لأنه
+      # يُولَّد بنسخة Flutter المثبَّتة في CI، وهي المرجع لا جهاز أحد.
+      - name: Upload the resolved dependency lock
+        uses: actions/upload-artifact@v4
+        with:
+          name: pubspec-lock
+          path: pubspec.lock
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Upload the web build
+        if: steps.webid.outputs.configured == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: taibah-admin-web
+          path: build/web/
+          if-no-files-found: error
+          retention-days: 30
+
+  # إصدارٌ فيه روابط تنزيل مباشرة — لأن أثر البناء لا يُنزَّل على جوّال.
+  #
+  # أثر Actions يشترط ثلاثة أشياء يعجز عنها متصفّح الجوّال عادةً: تسجيل دخول
+  # إلى GitHub، وتنزيل ملفّ `.zip`، وفكّ ضغطه ثم فتح ما بداخله. وهذا هو سبب
+  # تعطّل التجربة كلّها — لا التثبيت ولا التوقيع ولا هوية الحزمة.
+  #
+  # أمّا أصل الإصدار فرابطٌ مباشر إلى ملفّ `.apk` واحد: يُفتح بضغطة، بلا تسجيل
+  # دخول في مستودع عام، وبلا فكّ ضغط.
+  #
+  # ولا يُنشر مع كل بناء: يُطلب صراحةً بعلامة `publish` عند التشغيل اليدوي،
+  # كي لا يمتلئ سجلّ الإصدارات بكل دفعة.
+  release:
+    needs: build
+    if: github.event_name == 'workflow_dispatch' && inputs.publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    # الحدّ الأدنى: كتابة المحتوى وحدها، ولا شيء غيرها.
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Collect the three APKs
+        uses: actions/download-artifact@v4
+        with:
+          path: apks
+          merge-multiple: true
+
+      - name: What was collected
+        run: ls -lh apks/
+
+      # `gh` مثبَّت على المشغِّل أصلاً، فلا حاجة إلى إجراء من طرف ثالث لعمل
+      # يقع كلّه داخل هذا المستودع.
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="build-${{ github.run_number }}"
+
+          gh release create "$TAG" \
+            --title "Taibah — بناء ${{ github.run_number }}" \
+            --notes "$(cat <<'NOTES'
+          ثلاث حزم، واحدة لكل تطبيق. اضغط على الملفّ لتنزيله وتثبيته مباشرةً.
+
+          | الملفّ | التطبيق | الاسم على الشاشة |
+          |---|---|---|
+          | `taibah-passenger-release.apk` | الراكب | Taibah |
+          | `taibah-driver-release.apk` | السائق | Taibah سائق |
+          | `taibah-admin-release.apk` | الإدارة | Taibah إدارة |
+
+          كلّها جامعة — تعمل على أي هاتف — ولكلٍّ هويّة حزمة مستقلّة، فتجتمع
+          الثلاثة على جهاز واحد.
+
+          أوّل تثبيت من خارج المتجر يطلب إذن «تثبيت تطبيقات غير معروفة» للمتصفّح
+          أو لمدير الملفّات. اسمح به مرّة، ولن يُسأل ثانيةً.
+          NOTES
+          )" \
+            apks/*.apk
+
+          echo "### الإصدار" >> "$GITHUB_STEP_SUMMARY"
+          gh release view "$TAG" --json url --jq .url >> "$GITHUB_STEP_SUMMARY"

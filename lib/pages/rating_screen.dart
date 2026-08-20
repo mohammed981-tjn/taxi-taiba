@@ -1,5 +1,6 @@
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_projects/theme/app_theme.dart';
 
 import '../l10n/app_localizations.dart';
 
@@ -27,7 +28,7 @@ class RatingScreen extends StatefulWidget {
 }
 
 class _RatingScreenState extends State<RatingScreen> {
-  static const Color _navy = Color(0xFF010E4C);
+  static final Color _navy = TaibahPalette.passenger.primary;
 
   int _stars = 0;
   final Set<String> _tags = {};
@@ -96,6 +97,10 @@ class _RatingScreenState extends State<RatingScreen> {
             // Stored as well as derivable, so a list of drivers can be sorted
             // without every row doing arithmetic.
             'average': double.parse((newSum / newCount).toStringAsFixed(2)),
+            // الرحلة التي أنتجت هذا التقييم. تشترطها القاعدة: بها وحدها تتحقّق
+            // من أنّ الكاتب ركب فعلاً مع هذا السائق وأنّ الرحلة انتهت. بدونها
+            // كان أيّ حساب مسجَّل يستطيع رفع تقييم أيّ سائق أو خفضه.
+            'tripId': widget.tripId,
           });
         });
       }
@@ -142,13 +147,13 @@ class _RatingScreenState extends State<RatingScreen> {
               CircleAvatar(
                 radius: 34,
                 backgroundColor: _navy.withValues(alpha: 0.08),
-                child: const Icon(Icons.person, size: 38, color: _navy),
+                child: Icon(Icons.person, size: 38, color: _navy),
               ),
               const SizedBox(height: 12),
               Text(
                 widget.driverName.isEmpty ? l.receiptDriver : widget.driverName,
                 textAlign: TextAlign.center,
-                style: const TextStyle(
+                style: TextStyle(
                     fontSize: 19, fontWeight: FontWeight.bold, color: _navy),
               ),
               const SizedBox(height: 4),
@@ -176,7 +181,7 @@ class _RatingScreenState extends State<RatingScreen> {
                             }),
                     icon: Icon(
                       filled ? Icons.star_rounded : Icons.star_border_rounded,
-                      color: filled ? const Color(0xFFF5A623) : Colors.black26,
+                      color: filled ? Color(0xFFF5A623) : Colors.black26,
                     ),
                   );
                 }),

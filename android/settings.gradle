@@ -27,6 +27,9 @@ plugins {
     // Gradle and AGP. Same rule as those two: the number from the error.
     id "org.jetbrains.kotlin.android" version "2.2.20" apply false
     id "com.google.gms.google-services" version "4.4.2" apply false
+    // تقرير الأعطال. بلا هذا الملحق تُجمَع الأعطال في الجهاز ولا تُرفَع رموزٌ
+    // تفكّها، فيصل عطلٌ بلا سطر ولا دالّة — وهو بلا فائدة تقريباً.
+    id "com.google.firebase.crashlytics" version "3.0.2" apply false
 }
 
 include ":app"

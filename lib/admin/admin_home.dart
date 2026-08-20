@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_projects/admin/admin_drivers_page.dart';
+import 'package:flutter_projects/admin/admin_map_page.dart';
 import 'package:flutter_projects/admin/admin_trips_page.dart';
 import 'package:flutter_projects/admin/admin_users_page.dart';
 
@@ -21,12 +22,14 @@ class _AdminHomeState extends State<AdminHome> {
   int _index = 0;
 
   static const List<Widget> _pages = <Widget>[
+    AdminMapPage(),
     AdminDriversPage(),
     AdminUsersPage(),
     AdminTripsPage(),
   ];
 
   static const List<String> _titles = <String>[
+    'الخريطة',
     'السائقون',
     'المستخدمون',
     'الرحلات',
@@ -59,6 +62,11 @@ class _AdminHomeState extends State<AdminHome> {
                   labelType: NavigationRailLabelType.all,
                   destinations: const <NavigationRailDestination>[
                     NavigationRailDestination(
+                      icon: Icon(Icons.map_outlined),
+                      selectedIcon: Icon(Icons.map),
+                      label: Text('الخريطة'),
+                    ),
+                    NavigationRailDestination(
                       icon: Icon(Icons.local_taxi_outlined),
                       selectedIcon: Icon(Icons.local_taxi),
                       label: Text('السائقون'),
@@ -87,6 +95,11 @@ class _AdminHomeState extends State<AdminHome> {
               onDestinationSelected: (int value) =>
                   setState(() => _index = value),
               destinations: const <NavigationDestination>[
+                NavigationDestination(
+                  icon: Icon(Icons.map_outlined),
+                  selectedIcon: Icon(Icons.map),
+                  label: 'الخريطة',
+                ),
                 NavigationDestination(
                   icon: Icon(Icons.local_taxi_outlined),
                   selectedIcon: Icon(Icons.local_taxi),

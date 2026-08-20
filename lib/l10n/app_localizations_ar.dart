@@ -9,7 +9,10 @@ class AppLocalizationsAr extends AppLocalizations {
   AppLocalizationsAr([String locale = 'ar']) : super(locale);
 
   @override
-  String get appTitle => 'تطبيق المستخدمين';
+  String get appTitle => 'طيبة';
+
+  @override
+  String get noInternet => 'لا يوجد اتصال بالإنترنت';
 
   @override
   String get welcomeText => 'رفيق سفرك المثالي!';
@@ -19,6 +22,9 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get signUp => 'إنشاء حساب';
+
+  @override
+  String get introNext => 'التالي';
 
   @override
   String get myProfile => 'ملفي الشخصي';
@@ -94,18 +100,18 @@ class AppLocalizationsAr extends AppLocalizations {
   String get errorOccurred => 'حدث خطأ ما';
 
   @override
-  String get aboutTitle => 'مرحباً بكم في OAGO Ride';
+  String get aboutTitle => 'مرحباً بكم في Taibah';
 
   @override
-  String get oagoDescription =>
-      'OAGO Ride هي منصة تنقل ذكية تربط المسافرين بسائقين موثوقين للرحلات اليومية والرحلات الطويلة ونقل الشركات. بالإضافة إلى خدمة طلب السيارات العادية، توفر OAGO أيضاً خدمات تأجير السيارات، مما يسمح لأصحاب السيارات بإعارة سياراتهم للمسافرين. مع توفر حجز الفنادق والمساعدة في السفر، توفر OAGO حلاً شاملاً لجميع احتياجات النقل الخاصة بك. سواء كنت بحاجة إلى رحلة سريعة، أو سائق محترف، أو سيارة مستأجرة، فإن OAGO تجعل السفر سهلاً وآمناً ومريحاً.';
+  String get aboutDescription =>
+      'طيبه تطبيق نقل ركّاب في المدينة المنوّرة. تطلب سيّارة من مكانك، وتعرف سعر رحلتك قبل أن تبدأ، وتتابع سائقك على الخريطة حتى يصل إليك ثمّ حتى تصل أنت.\n\nوالسائقون يُراجَعون قبل قبولهم، والأجرة تُحسب من المسافة والزمن — تُعرَض عليك قبل الطلب ولا يُساوَم عليها عند النزول.';
 
   @override
   String get feedbackText =>
       'نحن نقدر ملاحظاتك! لا تتردد في مراسلتنا عبر البريد الإلكتروني على mohammed981@gmail.com.';
 
   @override
-  String get copyright => '© 2025 OAGO Ride. جميع الحقوق محفوظة.';
+  String get copyright => '© 2025 Taibah. جميع الحقوق محفوظة.';
 
   @override
   String get chooseRide => 'اختر رحلة';
@@ -114,13 +120,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get confirmRide => 'تأكيد الرحلة';
 
   @override
-  String get oagoGo => 'OAGO Go';
+  String get oagoGo => 'Taibah Go';
 
   @override
-  String get oagoExecutive => 'OAGO Executive';
+  String get oagoExecutive => 'Taibah Executive';
 
   @override
-  String get oagoXL => 'OAGO XL';
+  String get oagoXL => 'Taibah XL';
 
   @override
   String get email => 'البريد الإلكتروني';
@@ -180,46 +186,31 @@ class AppLocalizationsAr extends AppLocalizations {
   String get saveButton => 'حفظ';
 
   @override
-  String get introHeadline1 => 'رفيق سفرك المثالي!';
+  String get introHeadline1 => 'وجهتك في كلّ مكان';
 
   @override
   String get introDesc1 =>
       'احجز رحلات لاحتياجاتك اليومية أو استأجر سائقين محترفين للرحلات الطويلة وخدمات الشركات - كل ذلك في تطبيق واحد!';
 
   @override
-  String get introHeadline2 => 'احصل على رحلة في أي وقت وفي أي مكان!';
+  String get introHeadline2 => 'تعرف سائقك قبل أن يصل';
 
   @override
   String get introDesc2 =>
       'هل تحتاج إلى رحلة؟ احجز فوراً واستمتع برحلة مريحة مع سائقين موثوقين!';
 
   @override
-  String get introHeadline3 => 'هل تحتاج إلى سائق لرحلة طويلة؟';
+  String get introHeadline3 => 'السعر قبل الرحلة لا بعدها';
 
   @override
   String get introDesc3 =>
       'هل ستذهب في رحلة طويلة أو تحتاج إلى سائق لعملك؟ استأجر سائقين ذوي خبرة بكل سهولة!';
 
-  @override
-  String get introHeadline4 => 'حول سيارتك إلى مصدر دخل!';
 
-  @override
-  String get introDesc4 =>
-      'اعرض سيارتك على OAGO Ride وأجرها للمسافرين بينما تكسب دخلاً إضافياً!';
 
-  @override
-  String get introHeadline5 => 'أكثر من مجرد رحلات!';
 
-  @override
-  String get introDesc5 =>
-      'احجز الفنادق واحصل على المساعدة في السفر أثناء التخطيط لرحلتك - كل ذلك من تطبيق واحد!';
 
-  @override
-  String get introHeadline6 => 'رحلتك تبدأ من هنا!';
 
-  @override
-  String get introDesc6 =>
-      'سجل الآن وابدأ في الاستمتاع بخدمات OAGO Ride المذهلة اليوم!';
 
   @override
   String get rateTripTitle => 'قيّم رحلتك';
@@ -298,4 +289,22 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get viewReceipt => 'عرض الإيصال';
+
+  @override
+  String get guest => 'ضيف';
+
+  @override
+  String get signInToRide => 'سجّل الدخول لطلب رحلة';
+
+  @override
+  String get signInWhy => 'تصفّح الخريطة والأسعار بلا حساب. ولطلب رحلة نحتاج اسمك ورقمك: السائق يحتاج أن يعرف من يستقبل، وأنت تحتاج أن تصلك أخبار رحلتك.';
+
+  @override
+  String get notNow => 'ليس الآن';
+
+  @override
+  String get browseWithoutAccount => 'تصفّح بلا حساب';
+
+  @override
+  String get receiptPlatformFee => 'عمولة المنصّة';
 }

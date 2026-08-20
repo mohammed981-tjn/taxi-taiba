@@ -101,8 +101,14 @@ abstract class AppLocalizations {
   /// No description provided for @appTitle.
   ///
   /// In en, this message translates to:
-  /// **'Users App'**
+  /// **'Taibah'**
   String get appTitle;
+
+  /// No description provided for @noInternet.
+  ///
+  /// In ar, this message translates to:
+  /// **'لا يوجد اتصال بالإنترنت'**
+  String get noInternet;
 
   /// No description provided for @welcomeText.
   ///
@@ -121,6 +127,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Sign Up'**
   String get signUp;
+
+  /// No description provided for @introNext.
+  ///
+  /// In ar, this message translates to:
+  /// **'التالي'**
+  String get introNext;
 
   /// No description provided for @myProfile.
   ///
@@ -269,14 +281,14 @@ abstract class AppLocalizations {
   /// No description provided for @aboutTitle.
   ///
   /// In en, this message translates to:
-  /// **'Welcome to OAGO Ride'**
+  /// **'Welcome to Taibah'**
   String get aboutTitle;
 
-  /// No description provided for @oagoDescription.
+  /// No description provided for @aboutDescription.
   ///
   /// In en, this message translates to:
-  /// **'OAGO Ride is a smart mobility platform that connects travelers with reliable drivers for daily rides, long-distance journeys, and corporate transportation. Beyond regular ride-hailing, OAGO also offers car rental services, allowing car owners to lend their vehicles to travelers. With seamless hotel booking and travel assistance, OAGO provides a one-stop solution for all your transportation needs. Whether you need a quick ride, a professional driver, or a rental car, OAGO makes travel effortless, safe, and convenient.'**
-  String get oagoDescription;
+  /// **'Taibah is a ride-hailing app for Madinah. Request a car from where you stand, see what the trip costs before it starts, and follow your driver on the map until they reach you — and until you arrive.  Drivers are reviewed before they are approved, and the fare is computed from distance and time: shown to you before you request, and not haggled over when you step out.'**
+  String get aboutDescription;
 
   /// No description provided for @feedbackText.
   ///
@@ -287,7 +299,7 @@ abstract class AppLocalizations {
   /// No description provided for @copyright.
   ///
   /// In en, this message translates to:
-  /// **'© 2025 OAGO Ride. All rights reserved.'**
+  /// **'© 2025 Taibah. All rights reserved.'**
   String get copyright;
 
   /// No description provided for @chooseRide.
@@ -305,19 +317,19 @@ abstract class AppLocalizations {
   /// No description provided for @oagoGo.
   ///
   /// In en, this message translates to:
-  /// **'OAGO Go'**
+  /// **'Taibah Go'**
   String get oagoGo;
 
   /// No description provided for @oagoExecutive.
   ///
   /// In en, this message translates to:
-  /// **'OAGO Executive'**
+  /// **'Taibah Executive'**
   String get oagoExecutive;
 
   /// No description provided for @oagoXL.
   ///
   /// In en, this message translates to:
-  /// **'OAGO XL'**
+  /// **'Taibah XL'**
   String get oagoXL;
 
   /// No description provided for @email.
@@ -470,41 +482,11 @@ abstract class AppLocalizations {
   /// **'Going on a long journey or need a driver for your business? Hire experienced drivers with ease!'**
   String get introDesc3;
 
-  /// No description provided for @introHeadline4.
-  ///
-  /// In en, this message translates to:
-  /// **'Turn Your Car into an Income Source!'**
-  String get introHeadline4;
 
-  /// No description provided for @introDesc4.
-  ///
-  /// In en, this message translates to:
-  /// **'List your car on OAGO Ride and rent it out to travelers while earning extra income!'**
-  String get introDesc4;
 
-  /// No description provided for @introHeadline5.
-  ///
-  /// In en, this message translates to:
-  /// **'More Than Just Rides!'**
-  String get introHeadline5;
 
-  /// No description provided for @introDesc5.
-  ///
-  /// In en, this message translates to:
-  /// **'Book hotels and find travel assistance while planning your journey—all from one app!'**
-  String get introDesc5;
 
-  /// No description provided for @introHeadline6.
-  ///
-  /// In en, this message translates to:
-  /// **'Your Journey Begins Here!'**
-  String get introHeadline6;
 
-  /// No description provided for @introDesc6.
-  ///
-  /// In en, this message translates to:
-  /// **'Sign up and start enjoying OAGO Ride’s amazing services today!'**
-  String get introDesc6;
 
   /// No description provided for @rateTripTitle.
   ///
@@ -661,6 +643,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'View receipt'**
   String get viewReceipt;
+
+  /// No description provided for @guest.
+  ///
+  /// In en, this message translates to:
+  /// **'Guest'**
+  String get guest;
+
+  /// No description provided for @signInToRide.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to request a ride'**
+  String get signInToRide;
+
+  /// No description provided for @signInWhy.
+  ///
+  /// In en, this message translates to:
+  /// **'Browse the map and the prices without an account. To request a ride we need your name and number: the driver has to know who to pick up, and you have to hear about your trip.'**
+  String get signInWhy;
+
+  /// No description provided for @notNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Not now'**
+  String get notNow;
+
+  /// No description provided for @browseWithoutAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Browse without an account'**
+  String get browseWithoutAccount;
+
+  /// No description provided for @receiptPlatformFee.
+  ///
+  /// In en, this message translates to:
+  /// **'Platform fee'**
+  String get receiptPlatformFee;
 }
 
 class _AppLocalizationsDelegate

@@ -5,7 +5,9 @@ import 'package:flutter_projects/app_flavor.dart';
 import 'package:flutter_projects/appinfo/app_info.dart';
 import 'package:flutter_projects/l10n/app_localizations.dart';
 import 'package:flutter_projects/locale_provider.dart';
+import 'package:flutter_projects/widgets/connectivity_banner.dart';
 import 'package:flutter_projects/pages/splash_screen.dart';
+import 'package:flutter_projects/theme/app_theme.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 
@@ -47,20 +49,36 @@ class MyApp extends StatelessWidget {
         builder: (context, localeProvider, child) {
           return MaterialApp(
             onGenerateTitle: (context) =>
-                AppLocalizations.of(context)?.appTitle ?? 'Users App',
+                AppLocalizations.of(context)?.appTitle ?? TaibahBrand.nameLatin,
             debugShowCheckedModeBanner: false,
 
-            theme: ThemeData(
-              colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-              useMaterial3: true,
-            ),
+            // الهوية من مكان واحد — راجع lib/theme/app_theme.dart. كانت
+            // `seedColor: Colors.deepPurple`، وهي قيمة `flutter create`
+            // الافتراضية التي لم يمسّها أحد.
+            theme: TaibahTheme.of(AppRole.passenger),
 
-            // 🔹 اللغة الحالية (تتغيّر عبر LocaleProvider) — RTL تلقائي للعربية
-            locale: localeProvider.locale,
+            // اللغة — و`null` تعني «لغة الجهاز».
+            //
+            // كانت `Locale('en')` مثبَّتة في المزوّد، فيفتح التطبيق
+            // بالإنجليزيّة على هاتف عربيّ في السعوديّة. و`null` تجعل Flutter
+            // يوفّق لغة الجهاز مع المدعوم، ويقع على الأولى في
+            // `supportedLocales` حين لا يجد — وهي العربيّة.
+            locale: localeProvider.localeOrNull,
 
-            // 🔹 اللغات المدعومة + مفوّضو الترجمة (المولّدة + العامة من Flutter)
-            supportedLocales: AppLocalizations.supportedLocales,
+            // العربيّة أوّلاً: هذا الترتيب هو ما يُحسم به التوفيق حين لا
+            // تُطابِق لغةُ الجهاز شيئاً.
+            supportedLocales: const <Locale>[Locale('ar'), Locale('en')],
             localizationsDelegates: AppLocalizations.localizationsDelegates,
+
+            // الشريط فوق الـNavigator. وهنا وحده تُقرأ الترجمة، لأنّ هذه
+            // النكهة هي التي تسجّل `AppLocalizations` — و`builder` يعمل
+            // **تحت** `Localizations` فالقراءة آمنة.
+            builder: (BuildContext context, Widget? child) =>
+                ConnectivityBanner(
+              message: AppLocalizations.of(context)?.noInternet ??
+                  'لا يوجد اتصال بالإنترنت',
+              child: child ?? const SizedBox.shrink(),
+            ),
 
             // شاشة البداية
             home: const SplashScreen(),

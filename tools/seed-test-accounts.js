@@ -19,7 +19,8 @@
  *   GOOGLE_APPLICATION_CREDENTIALS  مسار مفتاح حساب الخدمة
  *   RTDB_URL                        عنوان القاعدة كاملاً
  *   TEST_PASSWORD                   كلمة مرور موحّدة لحسابات التجربة
- *   CENTER_LAT / CENTER_LNG         مركز نثر السائقين
+ *   MARKET                          SA (افتراضي) أو SD
+ *   CENTER_LAT / CENTER_LNG         يتجاوزان مركز السوق
  */
 
 'use strict';
@@ -33,29 +34,55 @@ const admin = require('firebase-admin');
 // شخص فيصله بريد لم يطلبه.
 const DOMAIN = 'taiba.test';
 
+// الأسواق — مطابقةٌ لما في lib/market.dart.
+//
+// تكرارٌ لا مفرّ منه: Node لا يقرأ Dart. والمقابل أن البذرة تتبع السوق نفسه
+// الذي بُني به التطبيق — فسائقٌ يُنثَر في الخرطوم وتطبيقٌ يبحث في السعودية
+// لا يلتقيان، والشاشة تقول «لا يوجد سائقون» وهي صادقة.
+const MARKETS = {
+  SA: {
+    name: 'السعودية',
+    lat: 24.4686,          // المدينة المنوّرة
+    lng: 39.6142,
+    riderPhones: ['0500000001', '0500000002'],
+    driverPhones: ['0530000001', '0530000002', '0530000003'],
+    plates: ['MDN 1234', 'MDN 5678', 'MDN 9012'],
+  },
+  SD: {
+    name: 'السودان',
+    lat: 15.5007,          // الخرطوم
+    lng: 32.5599,
+    riderPhones: ['0900000001', '0900000002'],
+    driverPhones: ['0910000001', '0910000002', '0910000003'],
+    plates: ['KRT 1234', 'KRT 5678', 'KRT 9012'],
+  },
+};
+
+const MARKET = MARKETS[process.env.MARKET] || MARKETS.SA;
+
 const PASSENGERS = [
-  { key: 'rider1', name: 'راكب تجريبي ١', phone: '0900000001' },
-  { key: 'rider2', name: 'راكب تجريبي ٢', phone: '0900000002' },
+  { key: 'rider1', name: 'راكب تجريبي ١', phone: MARKET.riderPhones[0] },
+  { key: 'rider2', name: 'راكب تجريبي ٢', phone: MARKET.riderPhones[1] },
 ];
 
 const DRIVERS = [
   {
     key: 'driver1',
     name: 'سائق تجريبي ١',
-    phone: '0910000001',
-    car: { model: 'Toyota Corolla', number: 'KRT 1234', color: 'أبيض', type: 'اقتصادي' },
+    phone: MARKET.driverPhones[0],
+    car: { model: 'Toyota Corolla', number: MARKET.plates[0], color: 'أبيض', type: 'اقتصادي' },
   },
   {
     key: 'driver2',
     name: 'سائق تجريبي ٢',
-    phone: '0910000002',
-    car: { model: 'Hyundai Accent', number: 'KRT 5678', color: 'فضي', type: 'اقتصادي' },
+    phone: MARKET.driverPhones[1],
+    car: { model: 'Hyundai Accent', number: MARKET.plates[1], color: 'فضي', type: 'اقتصادي' },
   },
   {
     key: 'driver3',
     name: 'سائق تجريبي ٣',
-    phone: '0910000003',
-    car: { model: 'Kia Sportage', number: 'KRT 9012', color: 'أسود', type: 'عائلي' },
+    phone: MARKET.driverPhones[2],
+    car: { model: 'Kia Sportage', number: MARKET.plates[2], color: 'أسود', type: 'عائلي' },
   },
 ];
 
@@ -120,10 +147,11 @@ const RTDB_URL =
 
 const PASSWORD = process.env.TEST_PASSWORD || 'Taiba@2026test';
 
-// الخرطوم افتراضاً. غيّرها إلى حيث تجرّب فعلاً — سائق على بُعد ألف كيلومتر
-// موجودٌ في القاعدة ولا يظهر في التطبيق، لأن المرشّح يقصّ عند ٢٢ كم.
-const CENTER_LAT = Number(process.env.CENTER_LAT || 15.5007);
-const CENTER_LNG = Number(process.env.CENTER_LNG || 32.5599);
+// مركز السوق افتراضاً، ويُتجاوَز بإحداثيّات صريحة. وسائقٌ على بُعد ألف
+// كيلومتر موجودٌ في القاعدة ولا يظهر في التطبيق لأن المرشّح يقصّ عند ٢٢ كم —
+// فتبدو المشكلةُ في التطبيق وهي في الإحداثيّات.
+const CENTER_LAT = Number(process.env.CENTER_LAT || MARKET.lat);
+const CENTER_LNG = Number(process.env.CENTER_LNG || MARKET.lng);
 
 // نثرٌ ثابت لا عشوائي: التشغيل مرتين يعطي المواقع نفسها، فما تراه على الخريطة
 // لا يتحرّك بين تشغيل وآخر إلا حين تريد أنت. ≈ ١٫١ كم لكل ٠٫٠١ درجة.
@@ -292,7 +320,8 @@ async function main() {
   if (command === 'seed') {
     const made = await seed();
     console.log(`\nالقاعدة: ${RTDB_URL}`);
-    console.log(`المركز:  ${CENTER_LAT}, ${CENTER_LNG}`);
+    console.log(`السوق:   ${MARKET.name}`);
+  console.log(`المركز:  ${CENTER_LAT}, ${CENTER_LNG}`);
     console.log(`كلمة المرور الموحّدة: ${PASSWORD}\n`);
     for (const row of made) {
       const where = row.at ? `  @ ${row.at}` : '';

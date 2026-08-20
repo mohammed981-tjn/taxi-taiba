@@ -1,6 +1,8 @@
+import 'package:flutter_projects/currency.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_projects/theme/app_theme.dart';
 
 class PaymentDialog extends StatefulWidget {
   final String fareAmount;
@@ -70,7 +72,7 @@ class _PaymentDialogState extends State<PaymentDialog> {
               height: 16,
             ),
             Text(
-              "₦${widget.fareAmount}",
+              money(widget.fareAmount),
               style: const TextStyle(
                 color: Colors.black,
                 fontSize: 36,
@@ -80,7 +82,7 @@ class _PaymentDialogState extends State<PaymentDialog> {
               height: 16,
             ),
             Text(
-              "You will pay ( ₦ ${widget.fareAmount} ) for this trip.",
+              "You will pay ( ${money(widget.fareAmount)} ) for this trip.",
               style: const TextStyle(
                 color: Colors.grey,
               ),
@@ -95,20 +97,18 @@ class _PaymentDialogState extends State<PaymentDialog> {
               onPressed: () {
                 Navigator.pop(context, "paid");
               },
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF010E4C)),
+              style: ElevatedButton.styleFrom(backgroundColor: TaibahPalette.passenger.primary),
               child: const Text(
-                "PAY CASH",
+                "الدفع نقداً",
                 style: TextStyle(color: Colors.white),
               ),
             ),
-            ElevatedButton(
-              onPressed: () {},
-              style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF010E4C)),
-              child: const Text(
-                "PAY ONLINE",
-                style: TextStyle(color: Colors.white),
-              ),
-            ),
+            // زرّ «PAY ONLINE» حُذف ولم يُعطَّل.
+            //
+            // كان `onPressed: () {}` — يضغطه الراكب فلا يحدث شيء، فيظنّ العطل
+            // في هاتفه ويعيد الضغط. وزرٌّ معطَّل يقول «قريباً» أصدق منه، وزرٌّ
+            // غير موجود أصدق من كليهما: الدفع نقداً هو ما تفعله الخدمة اليوم،
+            // ويوم يصير هناك دفع إلكتروني يعود الزرّ ومعه ما ينفّذه.
           ],
         ),
 

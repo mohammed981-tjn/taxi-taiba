@@ -17,11 +17,11 @@ on:
       center_lat:
         description: "خط عرض مركز نثر السائقين"
         required: false
-        default: "15.5007"
+        default: "24.4686"
       center_lng:
         description: "خط طول مركز نثر السائقين"
         required: false
-        default: "32.5599"
+        default: "39.6142"
 
 jobs:
   run:
@@ -55,6 +55,11 @@ jobs:
           CENTER_LAT: ${{ inputs.center_lat }}
           CENTER_LNG: ${{ inputs.center_lng }}
         run: |
+          # فشلُ الأداة كان يمرّ أخضر: حالة الخروج في `a | tee b` هي حالة
+          # `tee` لا حالة `a`. فسقطت الأداة بخطأ من Firebase وظهرت المهمّة
+          # ناجحة — وهو أسوأ من فشلٍ ظاهر، إذ يُبنى عليه.
+          set -o pipefail
+
           printf '%s' "$FIREBASE_SERVICE_ACCOUNT" > "$RUNNER_TEMP/sa.json"
           export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
 

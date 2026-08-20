@@ -1,8 +1,11 @@
+import 'package:flutter_projects/currency.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_projects/theme/app_theme.dart';
 import 'package:flutter_projects/appinfo/app_info.dart';
 import 'package:flutter_projects/l10n/app_localizations.dart';
 import 'package:flutter_projects/methods/associate_methods.dart';
 import 'package:flutter_projects/model/direction_details_model.dart';
+import 'package:flutter_projects/pricing.dart';
 import 'package:provider/provider.dart';
 
 class ChooseRidePage extends StatefulWidget {
@@ -15,7 +18,8 @@ class ChooseRidePage extends StatefulWidget {
 }
 
 class _ChooseRidePageState extends State<ChooseRidePage> {
-  String selectedCarType = "OAGO Go";
+  /// الفئة مفتاحٌ ثابت لا نصّ معروض — راجع lib/pricing.dart.
+  VehicleTier selectedTier = VehicleTier.go;
   AssociateMethods associateMethods = AssociateMethods();
 
   @override
@@ -23,7 +27,7 @@ class _ChooseRidePageState extends State<ChooseRidePage> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF010E4C),
+        backgroundColor: TaibahPalette.passenger.primary,
         title: Text(
           AppLocalizations.of(context)!.chooseRide,
           style: const TextStyle(color: Colors.white),
@@ -82,21 +86,21 @@ class _ChooseRidePageState extends State<ChooseRidePage> {
               children: [
                 buildCarItem(
                   context,
+                  VehicleTier.go,
                   AppLocalizations.of(context)!.oagoGo,
                   "assets/oagogo.png",
-                  0.4,
                 ),
                 buildCarItem(
                   context,
+                  VehicleTier.executive,
                   AppLocalizations.of(context)!.oagoExecutive,
                   "assets/oagoexec.png",
-                  0.7,
                 ),
                 buildCarItem(
                   context,
+                  VehicleTier.xl,
                   AppLocalizations.of(context)!.oagoXL,
                   "assets/oagoxl.png",
-                  1.0,
                 ),
               ],
             ),
@@ -107,10 +111,10 @@ class _ChooseRidePageState extends State<ChooseRidePage> {
             padding: const EdgeInsets.all(16.0),
             child: ElevatedButton(
               onPressed: () {
-                Navigator.pop(context, selectedCarType);
+                Navigator.pop(context, selectedTier);
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF010E4C),
+                backgroundColor: TaibahPalette.passenger.primary,
                 minimumSize: const Size(double.infinity, 50),
               ),
               child: Text(
@@ -124,18 +128,29 @@ class _ChooseRidePageState extends State<ChooseRidePage> {
     );
   }
 
-  Widget buildCarItem(BuildContext context, String title, String imagePath, double factor) {
-    bool isSelected = selectedCarType == title;
-    
-    // Custom fare calculation based on factor
-    double baseFare = 200;
-    double distFare = (widget.directionDetails!.distanceValueDigits! / 1000) * factor * 100; // Arbitrary multiplier
-    double fare = baseFare + distFare;
+  Widget buildCarItem(
+    BuildContext context,
+    VehicleTier tier,
+    String title,
+    String imagePath,
+  ) {
+    final bool isSelected = selectedTier == tier;
+
+    // نفس الحساب الذي يُحصَّل به، لا حسابٌ خاصّ بهذه الشاشة.
+    //
+    // كان هنا `200 + km × factor × 100` بتعليقٍ من مؤلّفه: «معامل اعتباطي».
+    // فكانت هذه الشاشة تعرض ٦٠٠ لرحلةٍ تُحصَّل بـ٢١٠، والبطاقة التي تليها
+    // تعرض ١٦٨. ثلاثة أرقام لرحلة واحدة، وأيّها الصحيح لا يعرفه الراكب.
+    final double fare = widget.directionDetails == null
+        ? 0
+        : associateMethods
+            .fareBreakdown(widget.directionDetails!, tier: tier)
+            .total;
 
     return GestureDetector(
       onTap: () {
         setState(() {
-          selectedCarType = title;
+          selectedTier = tier;
         });
       },
       child: Container(
@@ -171,7 +186,7 @@ class _ChooseRidePageState extends State<ChooseRidePage> {
               ),
             ),
             Text(
-              "₦ ${fare.toStringAsFixed(1)}",
+              money(fare.toStringAsFixed(1)),
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
           ],

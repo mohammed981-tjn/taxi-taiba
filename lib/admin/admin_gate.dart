@@ -1,6 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_projects/admin/admin_home.dart';
+import 'package:flutter_projects/app_flavor.dart';
+import 'package:flutter_projects/theme/taibah_mark.dart';
 
 /// بوّابة اللوحة: دخول، ثم تحقّق من الراية.
 ///
@@ -24,6 +26,7 @@ class _AdminGateState extends State<AdminGate> {
 
   bool _busy = false;
   String? _error;
+  String? _notice;
 
   @override
   void dispose() {
@@ -38,6 +41,7 @@ class _AdminGateState extends State<AdminGate> {
     setState(() {
       _busy = true;
       _error = null;
+      _notice = null;
     });
 
     try {
@@ -45,10 +49,53 @@ class _AdminGateState extends State<AdminGate> {
         email: _email.text.trim(),
         password: _password.text,
       );
-    } on FirebaseAuthException catch (error) {
+    } on FirebaseAuthException {
       // لا تُفصّل: «البريد غير موجود» مقابل «كلمة المرور خاطئة» تخبر المهاجم
       // أيّ البريدين مسجَّل. رسالة واحدة للحالتين.
       setState(() => _error = 'تعذّر الدخول — راجع البريد وكلمة المرور.');
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  /// إعادة تعيين كلمة المرور — وهي **طريق الدخول الأولى** لا الاستثناء.
+  ///
+  /// لا تسجيل ذاتيّ في لوحة الإدارة: زرّ «أنشئ حساباً» هنا يعني أنّ من يملك
+  /// الحزمة يصير مديراً، وهو ما تمنعه القاعدة لكنّه يفتح شاشاتٍ لا ينبغي أن
+  /// تُفتح. فالحساب يُنشَأ من الخادم:
+  ///
+  ///   Actions ← Admin claim ← invite ← البريد
+  ///
+  /// ثم يضبط صاحبه كلمة مروره من هنا. وبهذا لا تُكتب كلمة مرور في مستودع ولا
+  /// في سجلّ تشغيل ولا في محادثة — يعرفها صاحبها وحده، وهو الوضع الصحيح.
+  Future<void> _resetPassword() async {
+    if (_busy) return;
+
+    final String email = _email.text.trim();
+    if (email.isEmpty) {
+      setState(() => _error = 'اكتب البريد أوّلاً.');
+      return;
+    }
+
+    setState(() {
+      _busy = true;
+      _error = null;
+      _notice = null;
+    });
+
+    try {
+      await FirebaseAuth.instance.sendPasswordResetEmail(email: email);
+      if (!mounted) return;
+      setState(() => _notice =
+          'أُرسلت رسالة إلى $email.\nافتح الرابط فيها واضبط كلمة مرورك، '
+          'ثم ادخل بها.');
+    } on FirebaseAuthException {
+      // كسابقتها: لا يُكشف أيّ بريد مسجَّل. والرسالة صحيحة في الحالتين — من
+      // لا حساب له لن تصله رسالة، ولن يعرف السبب من هنا.
+      if (!mounted) return;
+      setState(() => _notice =
+          'إن كان $email مسجَّلاً فستصلك رسالة إعادة تعيين.\nراجع بريدك — '
+          'وتفقّد «الرسائل غير المرغوبة».');
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -82,14 +129,8 @@ class _AdminGateState extends State<AdminGate> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: <Widget>[
-                const Icon(Icons.admin_panel_settings_outlined, size: 64),
-                const SizedBox(height: 16),
-                const Text(
-                  'لوحة تحكّم طيبة',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 28),
+                const TaibahMark(role: AppRole.admin, size: 52),
+                const SizedBox(height: 30),
                 TextField(
                   controller: _email,
                   keyboardType: TextInputType.emailAddress,
@@ -118,6 +159,14 @@ class _AdminGateState extends State<AdminGate> {
                     textAlign: TextAlign.center,
                   ),
                 ],
+                if (_notice != null) ...<Widget>[
+                  const SizedBox(height: 14),
+                  Text(
+                    _notice!,
+                    style: const TextStyle(color: Colors.black87),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
                 const SizedBox(height: 22),
                 FilledButton(
                   onPressed: _busy ? null : _signIn,
@@ -132,6 +181,10 @@ class _AdminGateState extends State<AdminGate> {
                           )
                         : const Text('دخول'),
                   ),
+                ),
+                TextButton(
+                  onPressed: _busy ? null : _resetPassword,
+                  child: const Text('نسيت كلمة المرور؟'),
                 ),
               ],
             ),
@@ -172,8 +225,8 @@ class _AdminClaimCheck extends StatelessWidget {
           return _Denied(
             title: 'هذا الحساب ليس مديراً',
             detail: 'البريد: ${user.email ?? '—'}\n\n'
-                'تُمنح الصفة من:\n'
-                'Actions ← Admin claim ← grant',
+                'الحساب يُنشأ وتُمنح صفته من:\n'
+                'Actions ← Admin claim ← invite ← البريد',
           );
         }
 

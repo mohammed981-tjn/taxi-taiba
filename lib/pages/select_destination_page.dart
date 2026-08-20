@@ -1,7 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_projects/theme/app_theme.dart';
 import 'package:flutter_projects/appinfo/app_info.dart';
 import 'package:flutter_projects/global.dart';
 import 'package:flutter_projects/methods/google_map_methods.dart';
+import 'package:flutter_projects/methods/places_session.dart';
 import 'package:flutter_projects/model/prediction_model.dart';
 import 'package:flutter_projects/widgets/prediction_places_ui.dart';
 import 'package:provider/provider.dart';
@@ -20,8 +24,39 @@ class _SelectDestinationPageState extends State<SelectDestinationPage> {
   TextEditingController destinationTextEditingController = TextEditingController();
   List<PredictionModel> dropOffPredictionsPlacesList = [];
 
+  Timer? _debounce;
+
+  /// يزيد مع كل استعلام، فتُهمَل ردود الاستعلامات القديمة.
+  int _queryId = 0;
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    pickUpTextEditingController.dispose();
+    destinationTextEditingController.dispose();
+    super.dispose();
+  }
+
+  /// حرفٌ واحد لا يساوي طلباً واحداً.
+  ///
+  /// كان الاستعلام يُرسَل مع كل ضغطة: «المدينة المنورة» أربعة عشر طلباً إلى
+  /// Google لاختيار عنوان واحد. وهي طلبات مدفوعة، وأربعة عشرها تُهدَر — لأن
+  /// أوّل ثلاثة أحرف لا تعطي نتيجةً مفيدة أصلاً، والراكب لا ينظر إليها وهو
+  /// يكتب.
+  ///
+  /// وثلاثمئة جزء من الثانية هي الفرق بين «يكتب» و«توقّف عن الكتابة». فلا
+  /// يُرسَل شيء حتى يتوقّف.
+  void onDestinationChanged(String userInput) {
+    _debounce?.cancel();
+    _debounce = Timer(
+      const Duration(milliseconds: 300),
+      () => searchPlace(userInput),
+    );
+  }
+
   searchPlace(String userInput) async {
     if (userInput.length > 1) {
+      final int id = ++_queryId;
       // البلد من `placesComponents` لا مكتوباً هنا — راجع lib/global.dart.
       // والمدخل يُرمَّز: اسم حيّ فيه مسافة أو `&` كان يقطع العنوان ويُفسد
       // الطلب كلّه، وهو أمرٌ يقع مع أول اسم عربي مركّب.
@@ -30,7 +65,10 @@ class _SelectDestinationPageState extends State<SelectDestinationPage> {
           "?input=${Uri.encodeQueryComponent(userInput)}"
           "&key=$googleMapKey"
           "&components=$placesComponents"
-          "&language=ar";
+          // رمز الجلسة: يجمع أحرف البحث وطلبَ التفاصيل الذي يختمها في وحدة
+          // محاسبة واحدة بدل واحدةٍ لكل حرف. راجع lib/methods/places_session.dart.
+          "&sessiontoken=${PlacesSession.token}"
+          "&language=$placesLanguage";
       var responseFromPlacesAPI = await GoogleMapMethods.sendRequestToApi(placesAPIurl);
 
       if (responseFromPlacesAPI == "error") {
@@ -41,6 +79,10 @@ class _SelectDestinationPageState extends State<SelectDestinationPage> {
         var predictionResultInNormalFormat = (predictionResultInJson as List)
             .map((eachPredictedPlace) => PredictionModel.fromJson(eachPredictedPlace))
             .toList();
+
+        // ردٌّ وصل بعد أن كتب الراكب حرفاً آخر يعرض نتائج كلمةٍ سابقة. والشبكة
+        // لا تضمن ترتيب الردود على ترتيب الطلبات.
+        if (!mounted || id != _queryId) return;
 
         setState(() {
           dropOffPredictionsPlacesList = predictionResultInNormalFormat;
@@ -58,7 +100,7 @@ class _SelectDestinationPageState extends State<SelectDestinationPage> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF010E4C),
+        backgroundColor: TaibahPalette.passenger.primary,
         elevation: 0,
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
@@ -75,7 +117,7 @@ class _SelectDestinationPageState extends State<SelectDestinationPage> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: const Color(0xFF010E4C),
+              color: TaibahPalette.passenger.primary,
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.1),
@@ -129,7 +171,7 @@ class _SelectDestinationPageState extends State<SelectDestinationPage> {
                         child: TextField(
                           controller: destinationTextEditingController,
                           autofocus: true,
-                          onChanged: (userInput) => searchPlace(userInput),
+                          onChanged: onDestinationChanged,
                           style: const TextStyle(color: Colors.black, fontSize: 14),
                           decoration: InputDecoration(
                             hintText: AppLocalizations.of(context)!.enterDestinationAddress,

@@ -14,7 +14,13 @@
         "name": { ".validate": "newData.isString() && newData.val().length <= 80" },
         "email": { ".validate": "newData.isString() && newData.val().length <= 120" },
         "phone": { ".validate": "newData.isString() && newData.val().length <= 20" },
-        "blockStatus": { ".validate": "newData.isString() && (newData.val() === 'no' || newData.val() === 'yes')" }
+        "blockStatus": { ".validate": "newData.isString() && (newData.val() === 'no' || newData.val() === 'yes')" },
+
+        "ratings": {
+          ".read": "auth != null",
+          ".write": "auth != null && (auth.token.admin === true || (root.child('tripRequests').child(newData.child('tripId').val()).child('driverID').val() === auth.uid && root.child('tripRequests').child(newData.child('tripId').val()).child('userID').val() === $uid && root.child('tripRequests').child(newData.child('tripId').val()).child('status').val() === 'ended' && newData.child('tripId').val() !== data.child('tripId').val()))",
+          ".validate": "newData.hasChildren(['count','sum','average','tripId']) && newData.child('count').isNumber() && newData.child('sum').isNumber() && newData.child('average').isNumber() && newData.child('count').val() === (data.exists() ? data.child('count').val() : 0) + 1 && newData.child('sum').val() >= (data.exists() ? data.child('sum').val() : 0) + 1 && newData.child('sum').val() <= (data.exists() ? data.child('sum').val() : 0) + 5"
+        }
       }
     },
 
@@ -30,14 +36,19 @@
         "blockStatus": { ".validate": "newData.val() === 'no' || newData.val() === 'yes'" },
         "approvalStatus": { ".validate": "newData.val() === 'pending' || newData.val() === 'approved' || newData.val() === 'suspended'" },
 
+        "activeTrip": {
+          ".validate": "newData.isString() && (newData.val() === '' || root.child('tripRequests').child(newData.val()).child('driverID').val() === $uid)"
+        },
+
         "ratings": {
           ".read": "auth != null",
-          ".write": "auth != null",
-          ".validate": "newData.hasChildren(['count','sum','average']) && newData.child('count').isNumber() && newData.child('sum').isNumber() && newData.child('average').isNumber() && newData.child('count').val() === (data.exists() ? data.child('count').val() : 0) + 1 && newData.child('sum').val() >= (data.exists() ? data.child('sum').val() : 0) + 1 && newData.child('sum').val() <= (data.exists() ? data.child('sum').val() : 0) + 5"
+          ".write": "auth != null && (auth.token.admin === true || (root.child('tripRequests').child(newData.child('tripId').val()).child('userID').val() === auth.uid && root.child('tripRequests').child(newData.child('tripId').val()).child('driverID').val() === $uid && root.child('tripRequests').child(newData.child('tripId').val()).child('status').val() === 'ended' && newData.child('tripId').val() !== data.child('tripId').val()))",
+          ".validate": "newData.hasChildren(['count','sum','average','tripId']) && newData.child('count').isNumber() && newData.child('sum').isNumber() && newData.child('average').isNumber() && newData.child('count').val() === (data.exists() ? data.child('count').val() : 0) + 1 && newData.child('sum').val() >= (data.exists() ? data.child('sum').val() : 0) + 1 && newData.child('sum').val() <= (data.exists() ? data.child('sum').val() : 0) + 5"
         },
 
         "newTripStatus": {
-          ".write": "auth != null"
+          ".write": "auth != null && (auth.uid === $uid || auth.token.admin === true || root.child('tripRequests').child(newData.val()).child('userID').val() === auth.uid || (newData.val() === 'idle' && root.child('tripRequests').child(data.val()).child('userID').val() === auth.uid))",
+          ".validate": "newData.isString() && newData.val().length <= 64"
         }
       }
     },
@@ -55,28 +66,51 @@
     },
 
     "tripRequests": {
-      ".read": "auth != null && auth.token.admin === true",
+      ".read": "auth != null && (auth.token.admin === true || (query.orderByChild === 'userID' && query.equalTo === auth.uid) || (query.orderByChild === 'driverID' && query.equalTo === auth.uid))",
+
       ".indexOn": ["userID", "driverID", "status"],
 
       "$tripId": {
-        ".read": "auth != null && (data.child('userID').val() === auth.uid || data.child('driverID').val() === auth.uid || auth.token.admin === true)",
+        ".read": "auth != null && (auth.token.admin === true || data.child('userID').val() === auth.uid || data.child('driverID').val() === auth.uid || (data.child('driverID').val() === 'waiting' && root.child('drivers').child(auth.uid).child('newTripStatus').val() === $tripId))",
 
-        ".write": "auth != null && (auth.token.admin === true || (!data.exists() ? newData.child('userID').val() === auth.uid : (data.child('userID').val() === auth.uid || data.child('driverID').val() === auth.uid)))",
+        ".write": "auth != null && (auth.token.admin === true || (!data.exists() && newData.child('userID').val() === auth.uid && newData.child('driverID').val() === 'waiting' && newData.child('status').val() === 'new' && newData.child('fareAmount').val() === '' && root.child('users').child(auth.uid).child('blockStatus').val() === 'no') || (data.exists() && newData.exists() && (data.child('userID').val() === auth.uid || data.child('driverID').val() === auth.uid || (data.child('driverID').val() === 'waiting' && newData.child('driverID').val() === auth.uid && root.child('drivers').child(auth.uid).child('approvalStatus').val() === 'approved' && root.child('drivers').child(auth.uid).child('blockStatus').val() !== 'yes')) && newData.child('userID').val() === data.child('userID').val() && (data.child('driverID').val() === 'waiting' || (newData.child('fareBreakdown').child('total').val() === data.child('fareBreakdown').child('total').val() && newData.child('fareBreakdown').child('base').val() === data.child('fareBreakdown').child('base').val() && newData.child('fareBreakdown').child('distance').val() === data.child('fareBreakdown').child('distance').val() && newData.child('fareBreakdown').child('duration').val() === data.child('fareBreakdown').child('duration').val() && newData.child('fareBreakdown').child('fee').val() === data.child('fareBreakdown').child('fee').val())) && ((data.child('status').val() !== 'ended' && data.child('status').val() !== 'cancelled') || (newData.child('status').val() === data.child('status').val() && newData.child('fareAmount').val() === data.child('fareAmount').val() && newData.child('driverID').val() === data.child('driverID').val()))))",
 
         "userID": {
           ".validate": "auth.token.admin === true || (newData.val() === auth.uid && (!data.exists() || data.val() === newData.val()))"
         },
 
+        "driverID": {
+          ".validate": "auth.token.admin === true || !data.exists() || data.val() === 'waiting' || data.val() === newData.val()"
+        },
+
         "fareAmount": {
-          ".validate": "auth.token.admin === true || !data.parent().child('driverID').exists() || data.parent().child('driverID').val() === auth.uid"
+          ".validate": "newData.isString() && newData.val().matches(/^([0-9]{1,5}([.][0-9]{1,2})?)?$/) && (auth.token.admin === true || newData.val() === '' || data.parent().child('driverID').val() === auth.uid)"
+        },
+
+        "acceptedAt":  { ".validate": "newData.val() === now && !data.exists()" },
+        "arrivedAt":   { ".validate": "newData.val() === now && !data.exists()" },
+        "startedAt":   { ".validate": "newData.val() === now && !data.exists()" },
+        "endedAt":     { ".validate": "newData.val() === now && !data.exists()" },
+        "cancelledAt": { ".validate": "newData.val() === now && !data.exists()" },
+
+        "vehicleTier": {
+          ".validate": "newData.isString() && (newData.val() === 'go' || newData.val() === 'executive' || newData.val() === 'xl')"
+        },
+
+        "cancelledBy": {
+          ".validate": "newData.isString() && (newData.val() === 'passenger' || newData.val() === 'driver' || newData.val() === 'admin' || newData.val() === 'timeout' || newData.val() === 'noDriver')"
         },
 
         "rating": {
-          ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 5 && data.parent().child('userID').val() === auth.uid"
+          ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 5 && data.parent().child('userID').val() === auth.uid && !data.exists()"
+        },
+
+        "driverRating": {
+          ".validate": "newData.isNumber() && newData.val() >= 1 && newData.val() <= 5 && data.parent().child('driverID').val() === auth.uid && !data.exists()"
         },
 
         "status": {
-          ".validate": "newData.isString() && newData.val().length <= 20"
+          ".validate": "newData.isString() && (newData.val() === 'new' || newData.val() === 'accepted' || newData.val() === 'arrived' || newData.val() === 'ontrip' || newData.val() === 'ended' || newData.val() === 'cancelled')"
         }
       }
     }

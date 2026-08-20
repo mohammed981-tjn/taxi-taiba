@@ -1,5 +1,6 @@
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
+import 'package:flutter_projects/market.dart';
 import 'package:flutter_projects/methods/associate_methods.dart';
 
 /// Shared state for the passenger app.
@@ -21,24 +22,18 @@ import 'package:flutter_projects/methods/associate_methods.dart';
 /// Read at compile time — empty when the define is absent.
 const String googleMapKey = String.fromEnvironment('MAPS_API_KEY');
 
-/// البلدان التي يبحث فيها الإكمال التلقائي — رموز ISO مفصولة بـ`|`.
+/// البلدان التي يبحث فيها الإكمال التلقائي.
 ///
 /// كانت `NG` مكتوبةً في عنوان الطلب مباشرةً: نيجيريا، بلد القالب الأصلي. وأثر
 /// ذلك أنّ الراكب يكتب اسم حيّه فلا تظهر نتيجة واحدة — لا رسالة خطأ ولا سبب،
 /// فيبدو عطلاً في الشبكة وهو قيدٌ في سطر. وهو أخطر شكل يتّخذه افتراض قالب:
 /// لا يفشل البناء، ولا يفشل الطلب — يعود فارغاً وينجح.
 ///
-/// والافتراض هنا السودان، مأخوذاً من سياق المشروع لا من تصريح. غيّره عند
-/// البناء إن كان غير ذلك — وتقبل Places حتى خمسة بلدان:
-///
-///   --dart-define=PLACES_COUNTRIES=SD
-///   --dart-define=PLACES_COUNTRIES=SD|SA
-const String placesCountries = String.fromEnvironment(
-  'PLACES_COUNTRIES',
-  defaultValue: 'SD',
-);
+/// وصارت تأتي من `lib/market.dart` مع بقيّة ما يتغيّر بتغيّر البلد، فلا تُنسى
+/// واحدةٌ حين يتغيّر السوق.
+String get placesCountries => market.placesCountries;
 
-/// `SD|SA` ← ما يُكتب، `country:sd|country:sa` ← ما تفهمه Places.
+/// `SA` ← ما يُكتب، `country:sa` ← ما تفهمه Places. وتقبل عدّةً مفصولة بـ`|`.
 String get placesComponents => placesCountries
     .split('|')
     .map((String code) => code.trim().toLowerCase())
@@ -46,16 +41,24 @@ String get placesComponents => placesCountries
     .map((String code) => 'country:$code')
     .join('|');
 
-/// Where the map sits for the instant before the user's location arrives.
-/// Every path that shows the map immediately animates away from it.
+/// موضع الخريطة في اللحظة التي تسبق وصول موقع المستخدم.
 ///
 /// كانت إحداثيات مقرّ Google في كاليفورنيا — قيمة `flutter create` الافتراضية
-/// التي لم يمسّها أحد. لا تُرى طويلاً، لكنها تُرى: ومضة خريطة لمدينة أمريكية
-/// قبل أن يصل الموقع.
-const CameraPosition kGooglePlex = CameraPosition(
-  target: LatLng(15.5007, 32.5599),
-  zoom: 14.4746,
-);
+/// التي لم يمسّها أحد. لا تُرى طويلاً، لكنها تُرى.
+///
+/// والاسم بقي `kGooglePlex` رغم أنه لم يعد يشير إلى مقرّ Google: يُستعمل في
+/// مكان واحد، وتغييره تغييرٌ لا يضيف. يُعاد النظر فيه حين يُلمس ذلك السطر.
+CameraPosition get kGooglePlex => market.camera;
+
+/// لغة نتائج Places — تتبع لغة الواجهة.
+///
+/// كانت `&language=ar` ثابتةً في موضعين. فمبدّل اللغة يقلب الواجهة إلى
+/// الإنجليزيّة ويترك أسماء الأحياء عربيّة — وسائقٌ باكستانيّ يقرأ اللاتينيّة
+/// وحدها يجد وجهته مكتوبةً بحروف لا يعرفها.
+///
+/// وتُضبط من `LocaleProvider` عند كلّ تغيير لغة، فلا تحتاج نداءات الشبكة إلى
+/// `BuildContext` لتعرف اللغة.
+String placesLanguage = 'ar';
 
 final AssociateMethods associateMethods = AssociateMethods();
 

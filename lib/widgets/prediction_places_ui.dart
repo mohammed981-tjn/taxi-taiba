@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_projects/appinfo/app_info.dart';
 import 'package:flutter_projects/global.dart';
 import 'package:flutter_projects/methods/google_map_methods.dart';
+import 'package:flutter_projects/methods/places_session.dart';
 import 'package:flutter_projects/model/address_model.dart';
 import 'package:flutter_projects/model/prediction_model.dart';
 import 'package:flutter_projects/widgets/loading_dialog.dart';
@@ -28,10 +29,29 @@ class _PredictionPlacesUiState extends State<PredictionPlacesUi> {
       ),
     );
 
+    // `fields` ليست تقليصاً للرد بل للفاتورة.
+    //
+    // بلا هذه المعاملة تعيد Google كلّ ما تعرفه عن المكان — ساعات العمل
+    // والهاتف والتقييمات والصور — وتُحاسِب على أغلى فئة. والشاشة تستعمل
+    // حقلين: الاسم والإحداثيّتين. فطُلبا وحدهما، وهما في الفئة الأساسيّة
+    // الأرخص.
+    //
+    // ورمز الجلسة نفسه المرسَل مع أحرف البحث: به يصير البحث كلّه واختياره
+    // وحدةً واحدة عند المحاسبة.
     String urlPlaceDetailsAPI =
-        "https://maps.googleapis.com/maps/api/place/details/json?place_id=$placeID&key=$googleMapKey";
+        "https://maps.googleapis.com/maps/api/place/details/json"
+        "?place_id=$placeID"
+        "&key=$googleMapKey"
+        "&fields=name,geometry/location"
+        "&sessiontoken=${PlacesSession.token}"
+        "&language=$placesLanguage";
 
     var responseFromPlaceDetailsAPI = await GoogleMapMethods.sendRequestToApi(urlPlaceDetailsAPI);
+
+    // انتهت الجلسة باختيار، فيُجدَّد الرمز. ورمزٌ لا يُجدَّد يجعل بحث اليوم
+    // كلّه جلسةً واحدة — ترفضه Google وتعود إلى المحاسبة بالطلب، فيضيع
+    // المكسب كلّه بسطر لم يُكتب.
+    PlacesSession.renew();
 
     if (!mounted) return;
     Navigator.pop(context);

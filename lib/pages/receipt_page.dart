@@ -1,4 +1,6 @@
+import 'package:flutter_projects/currency.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_projects/theme/app_theme.dart';
 
 import '../l10n/app_localizations.dart';
 
@@ -17,8 +19,12 @@ class ReceiptPage extends StatelessWidget {
 
   final Map trip;
 
-  static const Color _navy = Color(0xFF010E4C);
-  static const String _currency = '₦';
+  // `final` لا `const`: حقلُ كائنٍ ثابت ليس تعبيراً ثابتاً في Dart وإن
+  // كان الكائن نفسه ثابتاً. وليست متغيّرة ساكنة قابلة للتبديل.
+  static final Color _navy = TaibahPalette.passenger.primary;
+  // `get` لا `const`: العملة تتبع السوق الفعّال، وهو يُحسم عند الإقلاع
+  // لا عند التصريف.
+  String get _currency => currencySymbol;
 
   String _s(String key) => trip[key]?.toString() ?? '';
 
@@ -42,6 +48,10 @@ class ReceiptPage extends StatelessWidget {
     if (b != null && b['total'] != null) return b['total'].toString();
     return '0';
   }
+
+  /// هل يحمل هذا الحقل مبلغاً يستحقّ سطراً؟
+  static bool _isPositive(Object? raw) =>
+      (double.tryParse('${raw ?? ''}') ?? 0) > 0;
 
   String _date(BuildContext context) {
     final raw = _s('publishDateTime');
@@ -72,7 +82,7 @@ class ReceiptPage extends StatelessWidget {
               children: [
                 Text(
                   '$_currency $_total',
-                  style: const TextStyle(
+                  style: TextStyle(
                       fontSize: 34, fontWeight: FontWeight.bold, color: _navy),
                 ),
                 const SizedBox(height: 4),
@@ -116,10 +126,27 @@ class ReceiptPage extends StatelessWidget {
                       label: '${l.receiptDistance}  ·  ${b['distanceKm']} km',
                       value: '$_currency ${b['distance']}',
                     ),
-                    _Line(
-                      label: '${l.receiptDuration}  ·  ${b['durationMin']} min',
-                      value: '$_currency ${b['duration']}',
-                    ),
+
+                    // سطر الزمن يظهر حين يكون له قيمة وحدها.
+                    //
+                    // التعرفة الحاليّة بلا شقّ زمنيّ، وسطرٌ يقول «الزمن ·
+                    // ١٨ دقيقة ← ٠٫٠» يبدو خطأ حسابٍ لا قراراً. أمّا إيصالات
+                    // الرحلات القديمة فتحمل قيمةً حقيقيّة، ولها يبقى السطر.
+                    if (_isPositive(b['duration']))
+                      _Line(
+                        label:
+                            '${l.receiptDuration}  ·  ${b['durationMin']} min',
+                        value: '$_currency ${b['duration']}',
+                      ),
+
+                    // والعمولة تُقال ولا تُخبَّأ في الإجمالي: الراكب يرى ما
+                    // يدفعه للسائق وما يدفعه للمنصّة، منفصلين.
+                    if (b['fee'] != null)
+                      _Line(
+                        label: l.receiptPlatformFee,
+                        value: '$_currency ${b['fee']}',
+                      ),
+
                     const Divider(height: 22),
                     _Line(
                         label: l.receiptTotal,
@@ -162,7 +189,7 @@ class _Section extends StatelessWidget {
           width: double.infinity,
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            color: const Color(0xFFF6F7FB),
+            color: Color(0xFFF6F7FB),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Column(
@@ -184,7 +211,7 @@ class _Line extends StatelessWidget {
     final style = TextStyle(
       fontSize: bold ? 16 : 14.5,
       fontWeight: bold ? FontWeight.bold : FontWeight.normal,
-      color: bold ? const Color(0xFF010E4C) : Colors.black87,
+      color: bold ? TaibahPalette.passenger.primary : Colors.black87,
     );
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 3),

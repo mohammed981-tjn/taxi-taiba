@@ -11,12 +11,23 @@
  * تزويره. والقاعدة تقرأه بـ`auth.token.admin === true` — فتصير الصلاحية على
  * الخادم، حيث لا تُتجاوَز بتعديل واجهة.
  *
+ *   node tools/set-admin-claim.js invite mohammed981@gmail.com
  *   node tools/set-admin-claim.js grant  mohammed981@gmail.com
  *   node tools/set-admin-claim.js revoke mohammed981@gmail.com
  *   node tools/set-admin-claim.js list
  *
- * ولا تمرّ كلمة مرور من هنا: الأداة تعمل على حساب **قائم**، ينشئه صاحبه
- * بنفسه. من يمنح الصفة لا يحتاج أن يعرف كلمة مرور من يمنحها له.
+ * ولا تمرّ كلمة مرور من هنا. وهذا هو سبب وجود `invite`: لوحة الإدارة بلا
+ * تسجيل ذاتيّ — عمداً، إذ لو كان فيها زرّ «أنشئ حساباً» لصار كلّ من نزّل
+ * الحزمة مرشّحاً للوحة. فبقي المدير الأوّل بلا طريق: لا حساب ينشئه، ولا صفة
+ * تُمنح لحساب غير موجود.
+ *
+ * و`invite` يفتح الطريق دون أن يخلق سرّاً: يُنشئ الحساب بكلمة مرور عشوائيّة
+ * **لا تُطبع ولا تُحفظ** — لا أحد يعرفها، بمن فيهم من شغّل الأداة — ثم يمنح
+ * الصفة. وصاحب البريد يضبط كلمته من «نسيت كلمة المرور؟» في التطبيق، فتصله
+ * رسالة من Firebase إلى بريده وحده.
+ *
+ * والنتيجة أنّ كلمة المرور لا تمرّ في مستودع، ولا في سجلّ تشغيل عامّ، ولا في
+ * محادثة. وهذا مقصود: سجلّات Actions في مستودع عامّ يقرأها الناس.
  */
 
 'use strict';
@@ -71,6 +82,37 @@ async function setAdmin(email, value) {
   console.log('يلزم تسجيل خروج ودخول في التطبيق كي يحمل الرمز الراية.');
 }
 
+/// إنشاء الحساب إن لم يكن، ثم منح الصفة.
+async function invite(email) {
+  let user;
+
+  try {
+    user = await auth.getUserByEmail(email);
+    console.log(`الحساب موجود مسبقاً: ${email}`);
+  } catch (error) {
+    if (error.code !== 'auth/user-not-found') throw error;
+
+    // كلمة مرور عشوائيّة تُولَّد وتُنسى في السطر نفسه. الغرض منها أن يوجد
+    // مزوّد «بريد وكلمة مرور» على الحساب، إذ بدونه لا يعمل رابط إعادة
+    // التعيين. ولا تُطبع: ما يُطبع في Actions يُقرأ.
+    await auth.createUser({
+      email,
+      emailVerified: false,
+      password: require('crypto').randomBytes(32).toString('base64url'),
+    });
+
+    user = await auth.getUserByEmail(email);
+    console.log(`أُنشئ الحساب: ${email}`);
+  }
+
+  await setAdmin(email, true);
+
+  console.log('');
+  console.log('الخطوة التالية — في تطبيق الإدارة:');
+  console.log('  اكتب البريد ← «نسيت كلمة المرور؟» ← افتح الرابط في بريدك');
+  console.log('  ← اضبط كلمة مرورك ← ادخل بها.');
+}
+
 async function list() {
   let found = 0;
   let pageToken;
@@ -97,6 +139,12 @@ async function main() {
 
   if (command === 'list') {
     await list();
+  } else if (command === 'invite') {
+    if (!email) {
+      console.error('البريد مطلوب.');
+      process.exit(1);
+    }
+    await invite(email);
   } else if (command === 'grant' || command === 'revoke') {
     if (!email) {
       console.error('البريد مطلوب.');
@@ -104,7 +152,9 @@ async function main() {
     }
     await setAdmin(email, command === 'grant');
   } else {
-    console.error('المتاح: grant <email> | revoke <email> | list');
+    console.error(
+      'المتاح: invite <email> | grant <email> | revoke <email> | list'
+    );
     process.exit(1);
   }
 

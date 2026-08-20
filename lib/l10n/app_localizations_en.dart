@@ -9,7 +9,10 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
-  String get appTitle => 'Users App';
+  String get appTitle => 'Taibah';
+
+  @override
+  String get noInternet => 'No internet connection';
 
   @override
   String get welcomeText => 'Your Ultimate Travel Companion!';
@@ -19,6 +22,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get signUp => 'Sign Up';
+
+  @override
+  String get introNext => 'Next';
 
   @override
   String get myProfile => 'My Profile';
@@ -95,18 +101,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get errorOccurred => 'Error Occurred';
 
   @override
-  String get aboutTitle => 'Welcome to OAGO Ride';
+  String get aboutTitle => 'Welcome to Taibah';
 
   @override
-  String get oagoDescription =>
-      'OAGO Ride is a smart mobility platform that connects travelers with reliable drivers for daily rides, long-distance journeys, and corporate transportation. Beyond regular ride-hailing, OAGO also offers car rental services, allowing car owners to lend their vehicles to travelers. With seamless hotel booking and travel assistance, OAGO provides a one-stop solution for all your transportation needs. Whether you need a quick ride, a professional driver, or a rental car, OAGO makes travel effortless, safe, and convenient.';
+  String get aboutDescription =>
+      'Taibah is a ride-hailing app for Madinah. Request a car from where you stand, see what the trip costs before it starts, and follow your driver on the map until they reach you — and until you arrive.\n\nDrivers are reviewed before they are approved, and the fare is computed from distance and time: shown to you before you request, and not haggled over when you step out.';
 
   @override
   String get feedbackText =>
       'We appreciate your feedback! Feel free to email us at mohammed981@gmail.com.';
 
   @override
-  String get copyright => '© 2025 OAGO Ride. All rights reserved.';
+  String get copyright => '© 2025 Taibah. All rights reserved.';
 
   @override
   String get chooseRide => 'Choose a Ride';
@@ -115,13 +121,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get confirmRide => 'Confirm Ride';
 
   @override
-  String get oagoGo => 'OAGO Go';
+  String get oagoGo => 'Taibah Go';
 
   @override
-  String get oagoExecutive => 'OAGO Executive';
+  String get oagoExecutive => 'Taibah Executive';
 
   @override
-  String get oagoXL => 'OAGO XL';
+  String get oagoXL => 'Taibah XL';
 
   @override
   String get email => 'Email';
@@ -181,46 +187,31 @@ class AppLocalizationsEn extends AppLocalizations {
   String get saveButton => 'Save';
 
   @override
-  String get introHeadline1 => 'Your Ultimate Travel Companion!';
+  String get introHeadline1 => 'Anywhere in the city';
 
   @override
   String get introDesc1 =>
       'Book rides for your daily needs or hire professional drivers for long-distance journeys and corporate services—all in one app!';
 
   @override
-  String get introHeadline2 => 'Get a Ride Anytime, Anywhere!';
+  String get introHeadline2 => 'Know your driver before he arrives';
 
   @override
   String get introDesc2 =>
       'Need a ride? Book instantly and enjoy a comfortable journey with verified drivers!';
 
   @override
-  String get introHeadline3 => 'Need a Driver for a Long Trip?';
+  String get introHeadline3 => 'The price before the ride, not after';
 
   @override
   String get introDesc3 =>
       'Going on a long journey or need a driver for your business? Hire experienced drivers with ease!';
 
-  @override
-  String get introHeadline4 => 'Turn Your Car into an Income Source!';
 
-  @override
-  String get introDesc4 =>
-      'List your car on OAGO Ride and rent it out to travelers while earning extra income!';
 
-  @override
-  String get introHeadline5 => 'More Than Just Rides!';
 
-  @override
-  String get introDesc5 =>
-      'Book hotels and find travel assistance while planning your journey—all from one app!';
 
-  @override
-  String get introHeadline6 => 'Your Journey Begins Here!';
 
-  @override
-  String get introDesc6 =>
-      'Sign up and start enjoying OAGO Ride’s amazing services today!';
 
   @override
   String get rateTripTitle => 'Rate your trip';
@@ -299,4 +290,22 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get viewReceipt => 'View receipt';
+
+  @override
+  String get guest => 'Guest';
+
+  @override
+  String get signInToRide => 'Sign in to request a ride';
+
+  @override
+  String get signInWhy => 'Browse the map and the prices without an account. To request a ride we need your name and number: the driver has to know who to pick up, and you have to hear about your trip.';
+
+  @override
+  String get notNow => 'Not now';
+
+  @override
+  String get browseWithoutAccount => 'Browse without an account';
+
+  @override
+  String get receiptPlatformFee => 'Platform fee';
 }

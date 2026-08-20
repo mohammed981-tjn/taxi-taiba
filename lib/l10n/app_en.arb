@@ -1,6 +1,6 @@
 {
   "@@locale": "en",
-  "appTitle": "Users App",
+  "appTitle": "Taibah",
   "welcomeText": "Your Ultimate Travel Companion!",
   "signIn": "Sign In",
   "signUp": "Sign Up",
@@ -28,15 +28,15 @@
   "historyTitle": "My Trips History",
   "noRecordFound": "No record found.",
   "errorOccurred": "Error Occurred",
-  "aboutTitle": "Welcome to OAGO Ride",
-  "oagoDescription": "OAGO Ride is a smart mobility platform that connects travelers with reliable drivers for daily rides, long-distance journeys, and corporate transportation. Beyond regular ride-hailing, OAGO also offers car rental services, allowing car owners to lend their vehicles to travelers. With seamless hotel booking and travel assistance, OAGO provides a one-stop solution for all your transportation needs. Whether you need a quick ride, a professional driver, or a rental car, OAGO makes travel effortless, safe, and convenient.",
+  "aboutTitle": "Welcome to Taibah",
+  "aboutDescription": "Taibah is a ride-hailing app for Madinah. Request a car from where you stand, see what the trip costs before it starts, and follow your driver on the map until they reach you — and until you arrive.\n\nDrivers are reviewed before they are approved, and the fare is computed from distance and time: shown to you before you request, and not haggled over when you step out.",
   "feedbackText": "We appreciate your feedback! Feel free to email us at mohammed981@gmail.com.",
-  "copyright": "© 2025 OAGO Ride. All rights reserved.",
+  "copyright": "© 2025 Taibah. All rights reserved.",
   "chooseRide": "Choose a Ride",
   "confirmRide": "Confirm Ride",
-  "oagoGo": "OAGO Go",
-  "oagoExecutive": "OAGO Executive",
-  "oagoXL": "OAGO XL",
+  "oagoGo": "Taibah Go",
+  "oagoExecutive": "Taibah Executive",
+  "oagoXL": "Taibah XL",
   "email": "Email",
   "password": "Password",
   "login": "Login",
@@ -56,18 +56,12 @@
   "profileTitle": "User Profile",
   "editProfile": "Edit Profile",
   "saveButton": "Save",
-  "introHeadline1": "Your Ultimate Travel Companion!",
-  "introDesc1": "Book rides for your daily needs or hire professional drivers for long-distance journeys and corporate services—all in one app!",
-  "introHeadline2": "Get a Ride Anytime, Anywhere!",
-  "introDesc2": "Need a ride? Book instantly and enjoy a comfortable journey with verified drivers!",
-  "introHeadline3": "Need a Driver for a Long Trip?",
-  "introDesc3": "Going on a long journey or need a driver for your business? Hire experienced drivers with ease!",
-  "introHeadline4": "Turn Your Car into an Income Source!",
-  "introDesc4": "List your car on OAGO Ride and rent it out to travelers while earning extra income!",
-  "introHeadline5": "More Than Just Rides!",
-  "introDesc5": "Book hotels and find travel assistance while planning your journey—all from one app!",
-  "introHeadline6": "Your Journey Begins Here!",
-  "introDesc6": "Sign up and start enjoying OAGO Ride’s amazing services today!",
+  "introHeadline1": "Anywhere in the city",
+  "introDesc1": "Enter your destination and we find the nearest driver — then follow the car on the map until it arrives.",
+  "introHeadline2": "Know your driver before he arrives",
+  "introDesc2": "Name, car, plate and phone the moment he accepts. Every driver is approved by an operator before taking a single trip.",
+  "introHeadline3": "The price before the ride, not after",
+  "introDesc3": "The full fare is on screen before you tap Request, and it does not change afterwards. No surprises at the door.",
   "rateTripTitle": "Rate your trip",
   "rateTripSubtitle": "How was your ride?",
   "rateSkip": "Skip",
@@ -93,5 +87,37 @@
   "receiptPayment": "Payment",
   "receiptPaymentCash": "Cash",
   "receiptNoBreakdown": "This trip was recorded before fare details were saved, so only the total is available.",
-  "viewReceipt": "View receipt"
+  "viewReceipt": "View receipt",
+  "noInternet": "No internet connection",
+  "@noInternet": {
+    "description": "Shown in a banner across the top when the device has no network interface."
+  },
+  "introNext": "Next",
+  "@introNext": {
+    "description": "Advances to the next onboarding slide."
+  },
+  "guest": "Guest",
+  "@guest": {
+    "description": "Shown in place of a name for someone using the app without an account."
+  },
+  "signInToRide": "Sign in to request a ride",
+  "@signInToRide": {
+    "description": "Title of the sheet that asks a guest to sign in, shown at the moment they request a ride."
+  },
+  "signInWhy": "Browse the map and the prices without an account. To request a ride we need your name and number: the driver has to know who to pick up, and you have to hear about your trip.",
+  "@signInWhy": {
+    "description": "Explains why an account is needed to request a ride."
+  },
+  "notNow": "Not now",
+  "@notNow": {
+    "description": "Dismisses the sign-in sheet and keeps browsing."
+  },
+  "browseWithoutAccount": "Browse without an account",
+  "@browseWithoutAccount": {
+    "description": "Onboarding action that opens the app as a guest."
+  },
+  "receiptPlatformFee": "Platform fee",
+  "@receiptPlatformFee": {
+    "description": "Receipt line for the fixed platform commission."
+  }
 }

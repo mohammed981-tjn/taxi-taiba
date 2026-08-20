@@ -1,13 +1,18 @@
 import 'dart:async';
+
+import 'package:flutter_projects/currency.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter_phoenix/flutter_phoenix.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_projects/theme/app_theme.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
-import 'package:flutter_projects/auth/signin_page.dart';
+import 'package:flutter_projects/auth/guest_session.dart';
 import 'package:flutter_projects/global.dart';
 import 'package:flutter_projects/locale_provider.dart';
+import 'package:flutter_projects/market.dart';
+import 'package:flutter_projects/methods/associate_methods.dart';
 import 'package:flutter_projects/methods/geo_query.dart';
 import 'package:flutter_projects/methods/google_map_methods.dart';
 import 'package:flutter_projects/methods/manage_drivers_methods.dart';
@@ -18,10 +23,12 @@ import 'package:flutter_projects/pages/choose_ride_page.dart';
 import 'package:flutter_projects/pages/profile_page.dart';
 import 'package:flutter_projects/pages/rating_screen.dart';
 import 'package:flutter_projects/pages/select_destination_page.dart';
+import 'package:flutter_projects/pricing.dart';
 import 'package:flutter_projects/pages/trip_history_page.dart';
 import 'package:flutter_projects/pushNotificationSystem/push_notification_system.dart';
 import 'package:flutter_projects/widgets/information_dialog.dart';
 import 'package:flutter_projects/widgets/loading_dialog.dart';
+import 'package:flutter_projects/widgets/payment_dialog.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:provider/provider.dart';
@@ -63,7 +70,44 @@ class _HomePageState extends State<HomePage> {
   StreamSubscription<DatabaseEvent>? tripStreamSubscription;
   bool requestingDirectionDetailsInfo = false;
 
-  String selectedCarType = "OAGO Go";
+  /* ── الإرسال إلى السائقين ──────────────────────────────────────────── */
+
+  /// مهلة السائق الحالي. حُفظت في حقل كي تُلغى — كانت تُنشأ داخل `.then()`
+  /// لقراءةٍ ترفضها القاعدة، فلا تُنشأ أصلاً ولا تُلغى أبداً.
+  Timer? _dispatchTimer;
+
+  /// السائق المعروض عليه الآن — يُمسح عرضه عند المهلة أو الإلغاء.
+  DatabaseReference? _offeredDriverRef;
+
+  /// يُرفع مرّةً عند أوّل حالة تدلّ على إسناد سائق، فلا تتكرّر آثارها.
+  bool _driverAssigned = false;
+
+  /// يمنع فتح حوار الدفع مرّتين: `onValue` يُطلق مع كل تعديل، والتقييم
+  /// يُكتب على الرحلة **بعد** `ended` فيعيد إطلاق الحوار على رحلة سُوّيت.
+  bool _settled = false;
+
+  /// الفئة مفتاحٌ ثابت لا نصّ مترجَم — راجع lib/pricing.dart.
+  VehicleTier selectedTier = VehicleTier.go;
+
+  /* ── الضيف ─────────────────────────────────────────────────────────── */
+
+  /// هل صاحب الجهاز بلا حساب؟
+  ///
+  /// يُقرأ من `GuestSession` ويُحفظ في حقل لا يُقرأ في `build` مباشرةً: هيئة
+  /// الشاشة تتغيّر عند تسجيل الدخول، و`build` لا يعيد نفسه لأنّ Firebase غيّر
+  /// شيئاً — `setState` هي التي تُعلمه.
+  bool _guest = GuestSession.isGuest;
+
+  /// البوّابة: يُستدعى قبل كلّ فعلٍ يحتاج حساباً — طلب رحلة، أو سجلّ رحلات،
+  /// أو ملفّ شخصيّ. ويعيد `false` إن اختار المتابعة ضيفاً، فيُترك في مكانه بلا
+  /// رسالة خطأ: الرفض هنا اختيارٌ لا عطل.
+  Future<bool> _requireAccount() async {
+    final bool ok = await GuestSession.requireAccount(context);
+    if (!mounted) return ok;
+    setState(() => _guest = GuestSession.isGuest);
+    if (ok) await getUserInfoAndCheckBlockStatus();
+    return ok;
+  }
 
   getCurrentLocation() async {
     LocationPermission permission = await Geolocator.checkPermission();
@@ -98,31 +142,45 @@ class _HomePageState extends State<HomePage> {
   }
 
   getUserInfoAndCheckBlockStatus() async {
+    // الضيف لا سجلّ له، والبحث عنه كان يعني خروجاً قسريّاً إلى شاشة الدخول —
+    // وهو بالضبط ما أُزيل. فيُترك في مكانه باسم «ضيف» حتى يطلب رحلة.
+    final User? user = FirebaseAuth.instance.currentUser;
+    if (user == null || user.isAnonymous) {
+      if (!mounted) return;
+      setState(() {
+        _guest = true;
+        userName = '';
+        userPhone = '';
+      });
+      return;
+    }
+
     DatabaseReference reference = FirebaseDatabase.instance
         .ref()
         .child("users")
-        .child(FirebaseAuth.instance.currentUser!.uid);
+        .child(user.uid);
 
     await reference.once().then((dataSnap) {
       if (!mounted) return;
       if (dataSnap.snapshot.value != null) {
         if ((dataSnap.snapshot.value as Map)["blockStatus"] == "no") {
           setState(() {
-            userName = (dataSnap.snapshot.value as Map)["name"];
-            userPhone = (dataSnap.snapshot.value as Map)["phone"];
+            _guest = false;
+            userName = (dataSnap.snapshot.value as Map)["name"] ?? '';
+            userPhone = (dataSnap.snapshot.value as Map)["phone"] ?? '';
           });
         } else {
-          FirebaseAuth.instance.signOut();
-          Navigator.push(
-              context, MaterialPageRoute(builder: (c) => const SigninPage()));
+          // محظور: يُنزَل إلى ضيف ويبقى في مكانه. الدفع إلى شاشة دخولٍ لا
+          // يفيده — الحساب الذي يملكه هو المحظور.
+          GuestSession.dropToGuest();
+          setState(() => _guest = true);
           associateMethods.showSnackBarMsg(
               AppLocalizations.of(context)!.blockedMsg,
               context);
         }
       } else {
-        FirebaseAuth.instance.signOut();
-        Navigator.push(
-            context, MaterialPageRoute(builder: (c) => const SigninPage()));
+        GuestSession.dropToGuest();
+        setState(() => _guest = true);
       }
     });
   }
@@ -141,10 +199,10 @@ class _HomePageState extends State<HomePage> {
       ),
     );
 
-    if (responseFromChooseRidePage != null) {
+    if (responseFromChooseRidePage is VehicleTier) {
       if (!mounted) return;
       setState(() {
-        selectedCarType = responseFromChooseRidePage;
+        selectedTier = responseFromChooseRidePage;
         searchContainerHeight = 0;
         bottomMapPadding = 250;
         rideDetailsContainerHeight = 255;
@@ -324,8 +382,15 @@ class _HomePageState extends State<HomePage> {
 
     if (!mounted) return;
 
+    // علامات السائقين وحدها.
+    //
+    // كان `markerSet.clear()` يمسح كلّ شيء — ومنه دبّوسا الانطلاق والوجهة
+    // اللذان يُضافان مرّةً واحدة عند اختيار الوجهة. فأوّل تحرّك لأيّ سائق كان
+    // يمحو من الخريطة النقطتين اللتين تعنيان الرحلة نفسها، ولا يعيدهما شيء.
     setState(() {
-      markerSet.clear();
+      markerSet.removeWhere(
+        (Marker m) => m.markerId.value.contains("driver"),
+      );
     });
 
     debugPrint(
@@ -428,8 +493,13 @@ class _HomePageState extends State<HomePage> {
 
   final _driversRef = FirebaseDatabase.instance.ref().child('onlineDrivers');
 
-  /// نصف قطر البحث — نفس الـ٢٢ كم التي كان يقصّ عندها المرشّح القديم.
-  static const double _searchRadiusMeters = 22000;
+  /// نصف قطر ما يُعرَض على الخريطة — من `lib/market.dart`.
+  ///
+  /// كان ٢٢ كم، وهو نطاق **الإرسال** لا نطاق العرض. الفرق أنّ ٢٢ كم تغطّي
+  /// أكثر من ألفي كيلومتر مربّع: المدينة كلّها تتدفّق إلى كلّ هاتف، ويُعاد
+  /// رسم الخريطة مع كلّ سائق يتحرّك في أيّ حيّ. والراكب لا ينتفع بدبّوسٍ على
+  /// حافّة الشاشة.
+  double get _searchRadiusMeters => market.displayRadiusMeters;
 
   /// كل الاشتراكات المفتوحة على القاعدة، محفوظة لتُلغى.
   ///
@@ -572,84 +642,123 @@ class _HomePageState extends State<HomePage> {
     return null;
   }
 
+  /// عرض الرحلة على السائق التالي.
+  ///
+  /// وكان يعمل على القائمة العامّة نفسها بالمرجع لا على نسخة، و`removeAt(0)`
+  /// تحذف السائق من خريطة الراكب حذفاً دائماً: كل محاولة إرسال كانت تُنقص
+  /// سيّارةً من الشاشة ولا تعيدها.
   searchDriver() {
-    if (availableNearbyOnlineDriversList!.isEmpty) {
-      cancelRideRequest();
+    final List<OnlineNearbyDrivers> queue = availableNearbyOnlineDriversList!;
+
+    if (queue.isEmpty) {
+      cancelRideRequest(reason: "noDriver");
       resetAppNow();
       noDriverAvailable();
       return;
     }
 
-    var currentDriver = availableNearbyOnlineDriversList![0];
-
+    final OnlineNearbyDrivers currentDriver = queue.removeAt(0);
     sendNotificationToDriver(currentDriver);
-
-    availableNearbyOnlineDriversList!.removeAt(0);
   }
 
   sendNotificationToDriver(OnlineNearbyDrivers currentDriver) {
-    DatabaseReference currentDriverRef = FirebaseDatabase.instance
+    _cancelDispatch();
+
+    final DatabaseReference driverRef = FirebaseDatabase.instance
         .ref()
         .child("drivers")
         .child(currentDriver.uidDriver.toString())
         .child("newTripStatus");
 
-    currentDriverRef.set(tripRequestRef!.key);
+    _offeredDriverRef = driverRef;
+    driverRef.set(tripRequestRef!.key);
 
-    DatabaseReference tokenOfCurrentDriverRef = FirebaseDatabase.instance
-        .ref()
-        .child(currentDriver.uidDriver.toString())
-        .child("deviceToken");
+    // المهلة تُسلَّح هنا، مباشرةً.
+    //
+    // كانت داخل `.then()` لقراءة `ref().child(uid).child("deviceToken")` —
+    // مسارٌ في جذر القاعدة ترفضه القواعد، ولا أحد يكتبه أصلاً. فالوعد يُرفض،
+    // ولا `catchError`، فلا يُنشأ المؤقّت أبداً: سائقٌ واحد يتجاهل الطلب
+    // فيبقى الراكب على دوّارة الانتظار إلى الأبد.
+    //
+    // والقبول يُكتشف من عقدة الرحلة التي يقرؤها الراكب فعلاً — لا من عقدة
+    // السائق التي تمنعه القاعدة من قراءتها.
+    requestTimeoutDriver = 20;
 
-    debugPrint("driver data :$tokenOfCurrentDriverRef");
-
-    tokenOfCurrentDriverRef.once().then((dataSnapshot) {
-      if (!mounted) return;
-      if (dataSnapshot.snapshot.value != null) {
-        String deviceToken = dataSnapshot.snapshot.value.toString();
-        debugPrint('tripRequestRef :: $deviceToken');
-        PushNotificationSystem.sendNotificationToSelectedDriver(
-          deviceToken,
-          context,
-          tripRequestRef!.key.toString(),
-        );
-      } else {
+    _dispatchTimer = Timer.periodic(const Duration(seconds: 1), (Timer timer) {
+      if (!mounted || _driverAssigned || stateOfApp != "requesting") {
+        _cancelDispatch();
         return;
       }
 
-      const oneTickPerSec = Duration(seconds: 1);
-      Timer.periodic(oneTickPerSec, (timer) {
-        requestTimeoutDriver = requestTimeoutDriver - 1;
+      requestTimeoutDriver -= 1;
 
-        if (stateOfApp != "requesting") {
-          timer.cancel();
-          currentDriverRef.set("cancelled");
-          currentDriverRef.onDisconnect();
-          requestTimeoutDriver = 20;
-        }
-
-        currentDriverRef.onValue.listen((dataSnapshot) {
-          if (dataSnapshot.snapshot.value.toString() == "accepted") {
-            timer.cancel();
-            currentDriverRef.onDisconnect();
-            requestTimeoutDriver = 20;
-          }
-        });
-
-        if (requestTimeoutDriver == 0) {
-          currentDriverRef.set("timeout");
-          timer.cancel();
-          currentDriverRef.onDisconnect();
-          requestTimeoutDriver = 20;
-
-          searchDriver();
-        }
-      });
+      if (requestTimeoutDriver <= 0) {
+        // يُعاد العرض إلى `idle` كي لا يبقى معلَّقاً على شاشة سائق صرفه
+        // الراكب إلى غيره.
+        driverRef.set("idle");
+        _cancelDispatch();
+        searchDriver();
+      }
     });
   }
 
-  cancelRideRequest() {
-    tripRequestRef!.remove();
+  /// الاتصال بالسائق.
+  ///
+  /// كان `Uri.parse("tel://$phoneNumberDriver")` بمتغيّر لا يُملأ أبداً —
+  /// `driverPhone` مكتوب في الرحلة ولا يُقرأ منها — فكان الزرّ يطلب `tel://`
+  /// فارغاً: لا يفتح شيئاً، ولا يقول شيئاً. وهو الزرّ الوحيد الذي يملكه راكب
+  /// يقف في الشارع ولا يجد سيّارته.
+  ///
+  /// و`tel://` نفسها خطأ: المخطّط لا يأخذ `//` — الصحيح `tel:` يليه الرقم،
+  /// وبعض المشغّلات ترفض الأولى صامتةً.
+  Future<void> _callDriver() async {
+    final String number = phoneNumberDriver.trim();
+
+    if (number.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('رقم السائق غير متاح بعد.')),
+      );
+      return;
+    }
+
+    try {
+      await launchUrl(Uri(scheme: 'tel', path: number));
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('تعذّر فتح الاتصال — الرقم: $number')),
+      );
+    }
+  }
+
+  /// إيقاف المهلة وسحب العرض المعلَّق.
+  void _cancelDispatch() {
+    _dispatchTimer?.cancel();
+    _dispatchTimer = null;
+    requestTimeoutDriver = 20;
+  }
+
+  /// سحب العرض من السائق الذي لم يجب بعد.
+  void _withdrawOffer() {
+    _offeredDriverRef?.set("idle");
+    _offeredDriverRef = null;
+  }
+
+  /// إلغاء الطلب — يُسجَّل ولا يُمحى.
+  ///
+  /// كان `tripRequestRef!.remove()`. وحذف العقدة يعني أنّ الرحلة لم تكن: لا
+  /// تظهر في سجلّ الراكب، ولا في لوحة الإدارة، ولا في أيّ إحصاء. ومعدّل
+  /// الإلغاء أهمّ مؤشّر تشغيليّ في خدمة نقل — من يلغي، ومتى، ولماذا.
+  cancelRideRequest({String reason = "passenger"}) {
+    _cancelDispatch();
+    _withdrawOffer();
+
+    tripRequestRef?.update(<String, Object?>{
+      "status": "cancelled",
+      "cancelledBy": reason == "passenger" ? "passenger" : reason,
+      "cancelledAt": ServerValue.timestamp,
+    });
 
     setState(() {
       stateOfApp = "normal";
@@ -657,6 +766,9 @@ class _HomePageState extends State<HomePage> {
   }
 
   resetAppNow() {
+    _driverAssigned = false;
+    _settled = false;
+
     setState(() {
       polylineCoOrdinates.clear();
       polylineSet.clear();
@@ -718,11 +830,6 @@ class _HomePageState extends State<HomePage> {
       "longitude": dropOffDestinationLocation.longitudePosition.toString(),
     };
 
-    Map driverOrdinates = {
-      "latitude": "0.0",
-      "longitude": "0.0",
-    };
-
     Map dataMap = {
       "tripId": tripRequestRef!.key,
       "publishDateTime": DateTime.now().toString(),
@@ -735,7 +842,16 @@ class _HomePageState extends State<HomePage> {
       "dropOffAddress": dropOffDestinationLocation.placeName,
       "driverID": "waiting",
       "carDetails": "",
-      "driverLocation": driverOrdinates,
+      // `driverLocation` لا تُكتب هنا.
+      //
+      // كانت تُكتب `{"latitude": "0.0", "longitude": "0.0"}` حارساً، وكل
+      // انتقالات الرحلة عند الراكب كانت داخل `if (driverLocation != '0.0')`.
+      // ولا أحد يكتب هذا الحقل بعد الإنشاء — لا السائق ولا الخادم. فالشرط لا
+      // يصدق أبداً: لا بطاقة سائق، ولا «وصل»، ولا حوار الدفع، ولا التقييم.
+      // التطبيق كان يقبل الرحلة ثم يصمت إلى الأبد.
+      //
+      // الحقل الآن يكتبه السائق وحده — عند القبول ثم مع حركته — وغيابه يعني
+      // «لا نعرف بعد» لا «تجاهل كل شيء».
       "driverName": "",
       "driverPhone": "",
       // "driverPhoto": "",
@@ -745,122 +861,187 @@ class _HomePageState extends State<HomePage> {
       // because a receipt is read long after those directions are gone. The
       // driver app still settles `fareAmount` at the end; these are the parts
       // that explain it, not a second source for the total.
+      // الفئة تُكتب في الرحلة.
+      //
+      // كانت تُعرَض وتُضرَب ثم تُرمى: لا السائق يعرف أيّ فئة طُلبت، ولا
+      // الإيصال، ولا لوحة الإدارة. فراكبٌ يطلب XL ويصله سيّارة صغيرة لا يجد
+      // في النظام ما يثبت ما طلب.
+      "vehicleTier": selectedTier.id,
       if (tripDirectionDetailsInfo != null)
-        "fareBreakdown":
-            associateMethods.fareBreakdown(tripDirectionDetailsInfo!).toMap(),
+        "fareBreakdown": associateMethods
+            .fareBreakdown(tripDirectionDetailsInfo!, tier: selectedTier)
+            .toMap(),
     };
 
     tripRequestRef!.set(dataMap);
 
     tripStreamSubscription =
         tripRequestRef!.onValue.listen((eventSnapshot) async {
-      if (eventSnapshot.snapshot.value == null) {
-        return;
-      }
+      final Object? raw = eventSnapshot.snapshot.value;
+      if (raw is! Map) return;
 
-      if ((eventSnapshot.snapshot.value as Map)["driverName"] != null) {
-        nameDriver = (eventSnapshot.snapshot.value as Map)["driverName"];
-      }
-      if ((eventSnapshot.snapshot.value as Map)["carDetails"] != null) {
-        carDetailsDriver = (eventSnapshot.snapshot.value as Map)["carDetails"];
-      }
-      if ((eventSnapshot.snapshot.value as Map)["status"] != null) {
-        status = (eventSnapshot.snapshot.value as Map)["status"];
-      }
-      if ((eventSnapshot.snapshot.value as Map)["driverLocation"] != null &&
-          (eventSnapshot.snapshot.value as Map)["driverLocation"]["latitude"] !=
-              '0.0' &&
-          (eventSnapshot.snapshot.value as Map)["driverLocation"]
-                  ["longitude"] !=
-              '0.0') {
-        double driverLatitude = double.parse(
-            (eventSnapshot.snapshot.value as Map)["driverLocation"]["latitude"]
-                .toString());
-        double driverLongitude = double.parse(
-            (eventSnapshot.snapshot.value as Map)["driverLocation"]["longitude"]
-                .toString());
-        LatLng driverCurrentLocationLatLng =
-            LatLng(driverLatitude, driverLongitude);
+      final Map trip = raw;
 
-        if (status == "accepted") {
-          updateFromDriverCurrentLocationToPickUp(driverCurrentLocationLatLng);
-        } else if (status == "arrived") {
+      nameDriver = '${trip["driverName"] ?? ""}';
+      carDetailsDriver = '${trip["carDetails"] ?? ""}';
+      phoneNumberDriver = '${trip["driverPhone"] ?? ""}';
+      status = '${trip["status"] ?? ""}';
+
+      // الحالة تُوزَّع أوّلاً وبلا شرط.
+      //
+      // كانت كل الانتقالات محبوسة داخل شرطٍ على `driverLocation` لا يصدق
+      // أبداً. والموقع الآن يُستعمل حيث يفيد — رسم المسار وحساب الوصول — ولا
+      // يمنع شيئاً حين يغيب: سائقٌ قبل الرحلة ولم يتحرّك بعد ما زال سائقاً
+      // قَبِل الرحلة.
+      final LatLng? driverAt = _driverLocationFrom(trip["driverLocation"]);
+
+      switch (status) {
+        case "accepted":
+          _onDriverAssigned();
+          if (driverAt != null) {
+            updateFromDriverCurrentLocationToPickUp(driverAt);
+          }
+          break;
+
+        case "arrived":
+          _onDriverAssigned();
           setState(() {
             tripStatusDisplay = AppLocalizations.of(context)!.driverHasArrived;
           });
-        } else if (status == "ontrip") {
-          updateFromDriverCurrentLocationToDropOffDestination(
-              driverCurrentLocationLatLng);
-        }
+          break;
 
-        if (status == "accepted") {
-          displayTripDetailsContainer();
-
-          // A driver is assigned, so the other cars are no longer of any use to
-          // this screen — and these are the streams that are actually running.
-          _cancelDriverSubscriptions();
-
-          setState(() {
-            markerSet.removeWhere(
-              (element) => element.markerId.value.contains("driver"),
-            );
-          });
-        }
-        if (status == "ended") {
-          if ((eventSnapshot.snapshot.value as Map)['fareAmount'] != null) {
-            double fareAmount = double.parse(
-                (eventSnapshot.snapshot.value as Map)['fareAmount'].toString());
-
-            if (!mounted) return;
-            var responseFromPaymentDialog = await showDialog(
-              context: context,
-              builder: (context) => PaymentDialog(fareAmount: '$fareAmount'),
-            );
-
-            if (responseFromPaymentDialog == "paid") {
-              // Read before the reference is dropped: the rating needs to know
-              // which trip and which driver it belongs to, and two lines below
-              // there is nothing left to ask.
-              final tripMap = eventSnapshot.snapshot.value as Map;
-              final String ratedTripId =
-                  tripMap['tripId']?.toString() ?? tripRequestRef!.key ?? '';
-              final String ratedDriverId = tripMap['driverID']?.toString() ?? '';
-              final String ratedDriverName =
-                  tripMap['driverName']?.toString() ?? '';
-
-              tripRequestRef!.onDisconnect();
-              tripRequestRef = null;
-
-              tripStreamSubscription!.cancel();
-              tripStreamSubscription = null;
-
-              resetAppNow();
-
-              if (!mounted) return;
-              // Asked here rather than on the next launch, because a rating
-              // given now is about a trip the passenger still remembers. It is
-              // awaited so the restart below does not tear the screen away
-              // mid-answer; skipping returns immediately.
-              if (ratedTripId.isNotEmpty) {
-                await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => RatingScreen(
-                      tripId: ratedTripId,
-                      driverId: ratedDriverId,
-                      driverName: ratedDriverName,
-                    ),
-                  ),
-                );
-              }
-
-              if (!mounted) return;
-              Phoenix.rebirth(context);
-            }
+        case "ontrip":
+          _onDriverAssigned();
+          if (driverAt != null) {
+            updateFromDriverCurrentLocationToDropOffDestination(driverAt);
           }
-        }
+          break;
+
+        case "cancelled":
+          // الإلغاء من الطرف الآخر. كان لا يصل الراكب إطلاقاً، فيبقى ينتظر
+          // سيّارةً لن تأتي.
+          await _onTripCancelled(trip);
+          break;
+
+        case "ended":
+          await _onTripEnded(trip);
+          break;
       }
     });
+  }
+
+  /// موضع السائق كما يكتبه تطبيقه — أو `null` حين لا يكون معروفاً بعد.
+  LatLng? _driverLocationFrom(Object? raw) {
+    if (raw is! Map) return null;
+
+    final double? lat = double.tryParse('${raw["latitude"]}');
+    final double? lng = double.tryParse('${raw["longitude"]}');
+
+    if (lat == null || lng == null) return null;
+    if (lat == 0 && lng == 0) return null;
+
+    return LatLng(lat, lng);
+  }
+
+  /// يُنفَّذ مرّةً حين يصير للرحلة سائق.
+  void _onDriverAssigned() {
+    if (_driverAssigned) return;
+    _driverAssigned = true;
+
+    _cancelDispatch();
+    displayTripDetailsContainer();
+
+    // سائقٌ أُسنِد، فبقيّة السيّارات لم تعد تعني هذه الشاشة — وهذه هي
+    // التدفّقات التي تعمل فعلاً.
+    _cancelDriverSubscriptions();
+
+    setState(() {
+      markerSet.removeWhere(
+        (element) => element.markerId.value.contains("driver"),
+      );
+    });
+  }
+
+  Future<void> _onTripCancelled(Map trip) async {
+    _cancelDispatch();
+
+    final String by = '${trip["cancelledBy"] ?? ""}';
+    if (by == "passenger") return; // نحن من ألغى — الشاشة أُعيدت أصلاً.
+
+    tripStreamSubscription?.cancel();
+    tripStreamSubscription = null;
+    tripRequestRef = null;
+
+    resetAppNow();
+
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      builder: (BuildContext context) => AlertDialog(
+        title: const Text("أُلغيت الرحلة"),
+        content: Text(
+          by == "driver"
+              ? "ألغى السائق الرحلة. يمكنك الطلب من جديد."
+              : "تعذّر إتمام الرحلة. يمكنك الطلب من جديد.",
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("حسناً"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _onTripEnded(Map trip) async {
+    if (_settled) return;
+    _settled = true;
+
+    _cancelDispatch();
+
+    final double fareAmount =
+        double.tryParse('${trip["fareAmount"] ?? ""}') ??
+            AssociateMethods.fallbackFare;
+
+    if (!mounted) return;
+    await showDialog(
+      context: context,
+      // الحوار لا يُتجاوَز باللمس خارجه: تجاوزُه كان يترك الراكب على رحلة
+      // منتهية بلا طريق إلى الأمام ولا إلى الخلف.
+      barrierDismissible: false,
+      builder: (context) => PaymentDialog(fareAmount: '$fareAmount'),
+    );
+
+    // التفكيك غير مشروط بما يعيده الحوار. كان مشروطاً بـ"paid"، فأيّ إغلاق
+    // آخر يترك التطبيق معلّقاً إلى الأبد.
+    final String ratedTripId =
+        trip['tripId']?.toString() ?? tripRequestRef?.key ?? '';
+    final String ratedDriverId = trip['driverID']?.toString() ?? '';
+    final String ratedDriverName = trip['driverName']?.toString() ?? '';
+
+    tripStreamSubscription?.cancel();
+    tripStreamSubscription = null;
+    tripRequestRef = null;
+
+    resetAppNow();
+
+    if (!mounted) return;
+    if (ratedTripId.isNotEmpty && ratedDriverId.isNotEmpty) {
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => RatingScreen(
+            tripId: ratedTripId,
+            driverId: ratedDriverId,
+            driverName: ratedDriverName,
+          ),
+        ),
+      );
+    }
+
+    if (!mounted) return;
+    Phoenix.rebirth(context);
   }
 
   displayTripDetailsContainer() {
@@ -928,6 +1109,7 @@ class _HomePageState extends State<HomePage> {
     // long as the app stayed open.
     _cancelDriverSubscriptions();
     tripStreamSubscription?.cancel();
+    _dispatchTimer?.cancel();
     super.dispose();
   }
 
@@ -963,7 +1145,9 @@ class _HomePageState extends State<HomePage> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Text(
-                                userName,
+                                _guest
+                                    ? AppLocalizations.of(context)!.guest
+                                    : userName,
                                 style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
@@ -975,16 +1159,23 @@ class _HomePageState extends State<HomePage> {
                               ),
                               GestureDetector(
                                 onTap: () async {
+                                  // للضيف: البوّابة. ولا معنى لملفٍّ شخصيّ
+                                  // لحسابٍ لا وجود له.
+                                  if (!await _requireAccount()) return;
+                                  if (!mounted) return;
                                   await Navigator.push(
                                     context,
                                     MaterialPageRoute(
                                       builder: (context) => const ProfilePage(),
                                     ),
                                   );
+                                  if (!mounted) return;
                                   setState(() {});
                                 },
                                 child: Text(
-                                  AppLocalizations.of(context)!.myProfile,
+                                  _guest
+                                      ? AppLocalizations.of(context)!.signIn
+                                      : AppLocalizations.of(context)!.myProfile,
                                   style: const TextStyle(
                                     color: Colors.white,
                                   ),
@@ -998,7 +1189,11 @@ class _HomePageState extends State<HomePage> {
 
                 //body
                 GestureDetector(
-                  onTap: () {
+                  onTap: () async {
+                    // سجلّ رحلاتٍ لضيفٍ لم يركب قطّ شاشةٌ فارغة بلا معنى —
+                    // والقاعدة ترفض القراءة أصلاً.
+                    if (!await _requireAccount()) return;
+                    if (!mounted) return;
                     Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -1064,19 +1259,34 @@ class _HomePageState extends State<HomePage> {
                 ),
 
                 GestureDetector(
-                  onTap: () {
-                    FirebaseAuth.instance.signOut();
+                  onTap: () async {
+                    // بندٌ واحد بوجهين: الضيف يُدعى للدخول، والمسجَّل يخرج.
+                    if (_guest) {
+                      Navigator.pop(context);
+                      await _requireAccount();
+                      return;
+                    }
 
-                    Navigator.push(context,
-                        MaterialPageRoute(builder: (c) => const SigninPage()));
+                    // خروجٌ إلى ضيف لا إلى شاشة دخول: التطبيق يبقى مفتوحاً
+                    // والخريطة تبقى حيّة، وهذا هو بيت القصيد كلّه.
+                    await GuestSession.dropToGuest();
+                    if (!mounted) return;
+                    setState(() {
+                      _guest = true;
+                      userName = '';
+                      userPhone = '';
+                    });
+                    Navigator.pop(context);
                   },
                   child: ListTile(
-                    leading: const Icon(
-                      Icons.logout,
+                    leading: Icon(
+                      _guest ? Icons.login : Icons.logout,
                       color: Colors.black,
                     ),
                     title: Text(
-                      AppLocalizations.of(context)!.logout,
+                      _guest
+                          ? AppLocalizations.of(context)!.signIn
+                          : AppLocalizations.of(context)!.logout,
                       style: const TextStyle(color: Colors.black),
                     ),
                   ),
@@ -1109,6 +1319,27 @@ class _HomePageState extends State<HomePage> {
               getCurrentLocation();
             },
           ),
+
+          // خريطةٌ بلا مفتاح تُرسم رماديّةً صامتة، فيبدو العطل في الشبكة أو
+          // في الجهاز ويُبحث عنه في غير مكانه. هذا الشريط يقول أين هو.
+          if (googleMapKey.isEmpty)
+            Positioned(
+              top: 90,
+              left: 20,
+              right: 20,
+              child: Card(
+                color: Colors.amber.shade100,
+                child: const Padding(
+                  padding: EdgeInsets.all(12),
+                  child: Text(
+                    'الخريطة معطّلة في هذا البناء — لا مفتاح خرائط.\n'
+                    'يُضبط MAPS_API_KEY في أسرار المستودع ثم يُعاد البناء.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(fontSize: 12),
+                  ),
+                ),
+              ),
+            ),
 
           ///drawer button
           Positioned(
@@ -1144,6 +1375,52 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
           ),
+
+          /// زرّ الدخول في الركن — للضيف وحده
+          ///
+          /// طلبٌ صريح، وله سببٌ يتجاوز الطلب: البوّابة لا تظهر إلّا لحظة طلب
+          /// الرحلة، فمن أراد أن يسجّل قبلها — ليجد رحلاته القديمة مثلاً —
+          /// لا يجد باباً. وهذا هو الباب، ولا يزاحم شيئاً: الركن المقابل
+          /// للقائمة فارغ.
+          if (_guest)
+            Positioned(
+              top: 37,
+              right: 20,
+              child: Material(
+                color: Colors.white,
+                elevation: 4,
+                borderRadius: BorderRadius.circular(20),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(20),
+                  onTap: () {
+                    _requireAccount();
+                  },
+                  child: Padding(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        Icon(
+                          Icons.person_outline,
+                          size: 18,
+                          color: TaibahPalette.passenger.primary,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          AppLocalizations.of(context)!.signIn,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: TaibahPalette.passenger.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
 
           ///search location container
           Positioned(
@@ -1305,18 +1582,26 @@ class _HomePageState extends State<HomePage> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Image.asset(
-                      selectedCarType == "OAGO Go" 
-                          ? "assets/oagogo.png" 
-                          : selectedCarType == "OAGO Executive" 
-                              ? "assets/oagoexec.png" 
-                              : "assets/oagoxl.png",
+                      switch (selectedTier) {
+                        VehicleTier.go => "assets/oagogo.png",
+                        VehicleTier.executive => "assets/oagoexec.png",
+                        VehicleTier.xl => "assets/oagoxl.png",
+                      },
                       height: 80,
                       width: 140,
                       errorBuilder: (c, e, s) => const Icon(Icons.directions_car, size: 80),
                     ),
                     Text(
+                      // نفس الدالّة التي تُحصَّل بها الأجرة، ونفس الفئة.
+                      // كان هنا ثلاثيٌّ متداخل يضرب المجموع بمعاملات تخصّه،
+                      // ويقارن الفئة بنصّ **مترجَم** — فأوّل ترجمة عربيّة
+                      // كانت ستُسقط كلّ رحلة على الفرع الأخير: ×1.5 على كل
+                      // راكب، بلا خطأ ظاهر.
                       (tripDirectionDetailsInfo != null)
-                          ? "₦ ${selectedCarType == "OAGO Go" ? (double.parse(associateMethods.calculateFareAmount(tripDirectionDetailsInfo!)) * 0.8).toStringAsFixed(1) : selectedCarType == "OAGO Executive" ? associateMethods.calculateFareAmount(tripDirectionDetailsInfo!) : (double.parse(associateMethods.calculateFareAmount(tripDirectionDetailsInfo!)) * 1.5).toStringAsFixed(1)}"
+                          ? money(associateMethods.calculateFareAmount(
+                              tripDirectionDetailsInfo!,
+                              tier: selectedTier,
+                            ))
                           : "",
                       style: const TextStyle(
                         fontSize: 18,
@@ -1359,19 +1644,65 @@ class _HomePageState extends State<HomePage> {
                     ),
                     ElevatedButton(
                       onPressed: () async {
+                        // **هنا وحده يُطلب الدخول.**
+                        //
+                        // قبل هذا السطر يستطيع أيّ أحد أن يفتح التطبيق، ويرى
+                        // السيّارات حوله، ويكتب وجهته، ويعرف كم تكلّف — بلا
+                        // حساب. وعند هذا الزرّ يبدأ ما يحتاج اسماً ورقماً:
+                        // سائقٌ سيأتي إلى مكانه، ورحلةٌ ستُكتب باسمه.
+                        //
+                        // وإن اختار «ليس الآن» يبقى في مكانه بوجهته وسعره كما
+                        // هما — لا يُطرد إلى شاشةٍ أخرى ولا يفقد ما كتب.
+                        if (!await _requireAccount()) return;
+                        if (!mounted) return;
+
                         setState(() {
                           stateOfApp = 'requesting';
                         });
 
                         displayRequestContainer();
-                        availableNearbyOnlineDriversList =
-                            ManageDriversMethods.nearbyOnlineDriversList;
+
+                        // نسخة، لا مرجع.
+                        //
+                        // كان الإسناد بالمرجع، و`removeAt(0)` في `searchDriver`
+                        // تحذف السائق من القائمة التي تُرسم منها الخريطة —
+                        // فكل محاولة إرسال كانت تُنقص سيّارةً من الشاشة ولا
+                        // تعيدها أبداً.
+                        //
+                        // والترتيب بالمسافة: العرض كان يبدأ من أوّل السائقين
+                        // وصولاً إلى القائمة، أي بترتيب أحداث Firebase — فقد
+                        // يُعرض على سائق يبعد عشرين كيلومتراً قبل واحد يقف في
+                        // الشارع المقابل.
+                        final List<OnlineNearbyDrivers> queue =
+                            List<OnlineNearbyDrivers>.of(
+                          ManageDriversMethods.nearbyOnlineDriversList,
+                        );
+
+                        final Position? me = currentPositionOfUser;
+                        if (me != null) {
+                          queue.sort((OnlineNearbyDrivers a,
+                              OnlineNearbyDrivers b) {
+                            final double da = Geolocator.distanceBetween(
+                                me.latitude,
+                                me.longitude,
+                                a.latDriver ?? 0,
+                                a.lngDriver ?? 0);
+                            final double db = Geolocator.distanceBetween(
+                                me.latitude,
+                                me.longitude,
+                                b.latDriver ?? 0,
+                                b.lngDriver ?? 0);
+                            return da.compareTo(db);
+                          });
+                        }
+
+                        availableNearbyOnlineDriversList = queue;
 
                         //find driver
                         searchDriver();
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF010E4C),
+                        backgroundColor: TaibahPalette.passenger.primary,
                       ),
                       child: Text(
                         AppLocalizations.of(context)!.getDriver,
@@ -1484,7 +1815,7 @@ class _HomePageState extends State<HomePage> {
                     Container(
                       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 20), // Spacing inside the rectangle
                       decoration: BoxDecoration(
-                        color: const Color(0xFF010E4C), // Background color
+                        color: TaibahPalette.passenger.primary, // Background color
                         borderRadius: BorderRadius.circular(8), // Slightly rounded corners
                       ),
                       child: Text(
@@ -1552,9 +1883,7 @@ class _HomePageState extends State<HomePage> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         GestureDetector(
-                          onTap: () {
-                            launchUrl(Uri.parse("tel://$phoneNumberDriver"));
-                          },
+                          onTap: _callDriver,
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [

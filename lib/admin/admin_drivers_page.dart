@@ -10,13 +10,22 @@ import 'package:flutter_projects/admin/admin_data.dart';
 ///
 /// بلا هذه الشاشة، من ينزّل تطبيق السائق يوم يجهز يصير سائقاً في الخدمة
 /// فوراً. فهي أول ما تحتاجه خدمة نقل حقيقية، لا آخره.
-class AdminDriversPage extends StatelessWidget {
+class AdminDriversPage extends StatefulWidget {
   const AdminDriversPage({super.key});
+
+  @override
+  State<AdminDriversPage> createState() => _AdminDriversPageState();
+}
+
+class _AdminDriversPageState extends State<AdminDriversPage> {
+  // للسبب نفسه المشروح في admin_users_page: `AdminData.drivers` دالّة حصول
+  // تولّد استعلاماً جديداً بكلّ نداء، فيتبدّل التدفّق مع كلّ إعادة رسم.
+  late final Stream<DatabaseEvent> _stream = AdminData.drivers.onValue;
 
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<DatabaseEvent>(
-      stream: AdminData.drivers.onValue,
+      stream: _stream,
       builder: (BuildContext context, AsyncSnapshot<DatabaseEvent> snapshot) {
         if (snapshot.hasError) {
           return _Message(
