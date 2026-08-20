@@ -49,6 +49,10 @@ class ReceiptPage extends StatelessWidget {
     return '0';
   }
 
+  /// هل يحمل هذا الحقل مبلغاً يستحقّ سطراً؟
+  static bool _isPositive(Object? raw) =>
+      (double.tryParse('${raw ?? ''}') ?? 0) > 0;
+
   String _date(BuildContext context) {
     final raw = _s('publishDateTime');
     final parsed = DateTime.tryParse(raw);
@@ -122,10 +126,27 @@ class ReceiptPage extends StatelessWidget {
                       label: '${l.receiptDistance}  ·  ${b['distanceKm']} km',
                       value: '$_currency ${b['distance']}',
                     ),
-                    _Line(
-                      label: '${l.receiptDuration}  ·  ${b['durationMin']} min',
-                      value: '$_currency ${b['duration']}',
-                    ),
+
+                    // سطر الزمن يظهر حين يكون له قيمة وحدها.
+                    //
+                    // التعرفة الحاليّة بلا شقّ زمنيّ، وسطرٌ يقول «الزمن ·
+                    // ١٨ دقيقة ← ٠٫٠» يبدو خطأ حسابٍ لا قراراً. أمّا إيصالات
+                    // الرحلات القديمة فتحمل قيمةً حقيقيّة، ولها يبقى السطر.
+                    if (_isPositive(b['duration']))
+                      _Line(
+                        label:
+                            '${l.receiptDuration}  ·  ${b['durationMin']} min',
+                        value: '$_currency ${b['duration']}',
+                      ),
+
+                    // والعمولة تُقال ولا تُخبَّأ في الإجمالي: الراكب يرى ما
+                    // يدفعه للسائق وما يدفعه للمنصّة، منفصلين.
+                    if (b['fee'] != null)
+                      _Line(
+                        label: l.receiptPlatformFee,
+                        value: '$_currency ${b['fee']}',
+                      ),
+
                     const Divider(height: 22),
                     _Line(
                         label: l.receiptTotal,

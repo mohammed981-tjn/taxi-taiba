@@ -1,5 +1,6 @@
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_projects/currency.dart';
 import 'package:flutter_projects/driver/driver_service.dart';
 import 'package:flutter_projects/methods/associate_methods.dart';
 import 'package:geolocator/geolocator.dart';
@@ -372,8 +373,17 @@ class _TripCard extends StatelessWidget {
                 '${breakdown['durationMin']} دقيقة',
                 style: const TextStyle(fontSize: 12, color: Colors.black54),
               ),
+              // رقمان لا رقم واحد.
+              //
+              // السائق يقبض الأجرة كاملةً نقداً من الراكب، وفيها عمولة
+              // المنصّة. فعرضُ الإجمالي وحده تحت كلمة «الأجرة» يجعله يقرأ
+              // نصيبه أكبر ممّا هو — ويكتشف الفرق يوم المحاسبة.
               Text(
-                'الأجرة: ${breakdown['total']}',
+                'يُحصَّل من الراكب: ${money(breakdown['total'])}',
+                style: const TextStyle(fontSize: 12, color: Colors.black54),
+              ),
+              Text(
+                'لك: ${money(_driverShare(breakdown))}',
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
             ],
@@ -381,6 +391,16 @@ class _TripCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  /// نصيب السائق من هذه الرحلة — الإجمالي ناقص عمولة المنصّة.
+  ///
+  /// والعمولة تُقرأ من الرحلة لا من ثابتٍ في الشيفرة، فرحلةٌ سُعِّرت قبل فرض
+  /// العمولة لا تُخصم منها.
+  static String _driverShare(Map breakdown) {
+    final double total = double.tryParse('${breakdown['total']}') ?? 0;
+    final double fee = double.tryParse('${breakdown['fee']}') ?? 0;
+    return (total - fee).toStringAsFixed(1);
   }
 
   /// بُعد نقطة الانطلاق عن السائق.

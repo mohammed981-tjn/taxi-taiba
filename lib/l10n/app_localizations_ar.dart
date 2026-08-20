@@ -304,4 +304,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get browseWithoutAccount => 'تصفّح بلا حساب';
+
+  @override
+  String get receiptPlatformFee => 'عمولة المنصّة';
 }

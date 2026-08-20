@@ -673,6 +673,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Browse without an account'**
   String get browseWithoutAccount;
+
+  /// No description provided for @receiptPlatformFee.
+  ///
+  /// In en, this message translates to:
+  /// **'Platform fee'**
+  String get receiptPlatformFee;
 }
 
 class _AppLocalizationsDelegate

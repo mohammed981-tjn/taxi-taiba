@@ -1,5 +1,6 @@
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_projects/currency.dart';
 import 'package:flutter_projects/widgets/app_skeletons.dart';
 import 'package:flutter_projects/driver/driver_service.dart';
 
@@ -58,10 +59,13 @@ class DriverEarningsPage extends StatelessWidget {
                     MapEntry<String, Map<String, Object?>> b) =>
                 b.key.compareTo(a.key));
 
-          double total = 0;
+          double collected = 0;
+          double commission = 0;
           for (final MapEntry<String, Map<String, Object?>> e in ended) {
-            total += _fareOf(e.value);
+            collected += _fareOf(e.value);
+            commission += _feeOf(e.value);
           }
+          final double net = collected - commission;
 
           if (ended.isEmpty) return _centered('لا رحلات منتهية بعد.');
 
@@ -87,8 +91,15 @@ class DriverEarningsPage extends StatelessWidget {
                       const Text('أرباح آخر الرحلات',
                           style: TextStyle(color: Colors.black54)),
                       const SizedBox(height: 6),
+
+                      // **الصافي هو الرقم الكبير، لا المحصَّل.**
+                      //
+                      // الراكب يدفع الأجرة وعمولة المنصّة معاً، والعمولة ليست
+                      // للسائق. فعرضُ المحصَّل رقماً كبيراً يجعل السائق يبني
+                      // دخله على مبلغٍ يزيد خمسة ريالات عن كلّ رحلة أتمّها —
+                      // ويكتشف الفرق يوم المحاسبة لا يوم العمل.
                       Text(
-                        total.toStringAsFixed(1),
+                        money(net.toStringAsFixed(1)),
                         style: const TextStyle(
                           fontSize: 34,
                           fontWeight: FontWeight.bold,
@@ -102,6 +113,13 @@ class DriverEarningsPage extends StatelessWidget {
                           color: Colors.black54,
                         ),
                       ),
+
+                      if (commission > 0) ...<Widget>[
+                        const Divider(height: 26),
+                        _Row(label: 'المحصَّل من الركّاب', value: collected),
+                        const SizedBox(height: 4),
+                        _Row(label: 'عمولة المنصّة (مخصومة)', value: commission),
+                      ],
                     ],
                   ),
                 ),
@@ -119,7 +137,8 @@ class DriverEarningsPage extends StatelessWidget {
                   title: Text('${e.value['dropOffAddress'] ?? '—'}'),
                   subtitle: Text('${e.value['userName'] ?? '—'}'),
                   trailing: Text(
-                    _fareOf(e.value).toStringAsFixed(1),
+                    money((_fareOf(e.value) - _feeOf(e.value))
+                        .toStringAsFixed(1)),
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                 ),
@@ -133,6 +152,17 @@ class DriverEarningsPage extends StatelessWidget {
 
   /// `fareAmount` نصّ في القاعدة لا رقم — كتبه القالب هكذا، وتغييره الآن يعني
   /// صفوفاً قديمة لا تُقرأ. فيُقبل الشكلان.
+  /// عمولة المنصّة على هذه الرحلة.
+  ///
+  /// تُقرأ من تفصيل الرحلة لا من ثابتٍ في الشيفرة: رحلةٌ أُتمّت قبل أن تُفرض
+  /// العمولة لا عمولة عليها، وتطبيق ثابت اليوم عليها يخصم من سائقٍ خمسةً لم
+  /// يدفعها راكبه قطّ. وأيّ تغييرٍ للعمولة لاحقاً لا يعيد كتابة الماضي.
+  double _feeOf(Map<String, Object?> trip) {
+    final Object? breakdown = trip['fareBreakdown'];
+    if (breakdown is! Map) return 0;
+    return double.tryParse('${breakdown['fee']}') ?? 0;
+  }
+
   double _fareOf(Map<String, Object?> trip) {
     final Object? value = trip['fareAmount'];
     if (value is num) return value.toDouble();
@@ -149,4 +179,27 @@ class DriverEarningsPage extends StatelessWidget {
           ),
         ),
       );
+}
+
+/// سطر «عنوان ← مبلغ» في بطاقة الإجمالي.
+class _Row extends StatelessWidget {
+  const _Row({required this.label, required this.value});
+
+  final String label;
+  final double value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: <Widget>[
+        Text(label,
+            style: const TextStyle(fontSize: 12.5, color: Colors.black54)),
+        Text(
+          money(value.toStringAsFixed(1)),
+          style: const TextStyle(fontSize: 12.5, color: Colors.black54),
+        ),
+      ],
+    );
+  }
 }

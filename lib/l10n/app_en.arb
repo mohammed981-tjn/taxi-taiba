@@ -115,5 +115,9 @@
   "browseWithoutAccount": "Browse without an account",
   "@browseWithoutAccount": {
     "description": "Onboarding action that opens the app as a guest."
+  },
+  "receiptPlatformFee": "Platform fee",
+  "@receiptPlatformFee": {
+    "description": "Receipt line for the fixed platform commission."
   }
 }

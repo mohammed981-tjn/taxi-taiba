@@ -305,4 +305,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get browseWithoutAccount => 'Browse without an account';
+
+  @override
+  String get receiptPlatformFee => 'Platform fee';
 }
