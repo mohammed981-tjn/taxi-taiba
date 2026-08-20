@@ -289,4 +289,19 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get viewReceipt => 'عرض الإيصال';
+
+  @override
+  String get guest => 'ضيف';
+
+  @override
+  String get signInToRide => 'سجّل الدخول لطلب رحلة';
+
+  @override
+  String get signInWhy => 'تصفّح الخريطة والأسعار بلا حساب. ولطلب رحلة نحتاج اسمك ورقمك: السائق يحتاج أن يعرف من يستقبل، وأنت تحتاج أن تصلك أخبار رحلتك.';
+
+  @override
+  String get notNow => 'ليس الآن';
+
+  @override
+  String get browseWithoutAccount => 'تصفّح بلا حساب';
 }

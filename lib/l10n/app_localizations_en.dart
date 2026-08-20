@@ -290,4 +290,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get viewReceipt => 'View receipt';
+
+  @override
+  String get guest => 'Guest';
+
+  @override
+  String get signInToRide => 'Sign in to request a ride';
+
+  @override
+  String get signInWhy => 'Browse the map and the prices without an account. To request a ride we need your name and number: the driver has to know who to pick up, and you have to hear about your trip.';
+
+  @override
+  String get notNow => 'Not now';
+
+  @override
+  String get browseWithoutAccount => 'Browse without an account';
 }

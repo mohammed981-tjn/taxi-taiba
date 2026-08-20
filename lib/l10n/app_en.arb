@@ -95,5 +95,25 @@
   "introNext": "Next",
   "@introNext": {
     "description": "Advances to the next onboarding slide."
+  },
+  "guest": "Guest",
+  "@guest": {
+    "description": "Shown in place of a name for someone using the app without an account."
+  },
+  "signInToRide": "Sign in to request a ride",
+  "@signInToRide": {
+    "description": "Title of the sheet that asks a guest to sign in, shown at the moment they request a ride."
+  },
+  "signInWhy": "Browse the map and the prices without an account. To request a ride we need your name and number: the driver has to know who to pick up, and you have to hear about your trip.",
+  "@signInWhy": {
+    "description": "Explains why an account is needed to request a ride."
+  },
+  "notNow": "Not now",
+  "@notNow": {
+    "description": "Dismisses the sign-in sheet and keeps browsing."
+  },
+  "browseWithoutAccount": "Browse without an account",
+  "@browseWithoutAccount": {
+    "description": "Onboarding action that opens the app as a guest."
   }
 }

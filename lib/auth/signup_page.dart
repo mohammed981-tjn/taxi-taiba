@@ -11,7 +11,10 @@ import 'package:flutter_projects/pages/home_page.dart';
 import 'package:flutter_projects/widgets/loading_dialog.dart';
 
 class SignUpPage extends StatefulWidget {
-  const SignUpPage({super.key});
+  const SignUpPage({super.key, this.popOnSuccess = false});
+
+  /// راجع `SigninPage.popOnSuccess`.
+  final bool popOnSuccess;
 
   @override
   State<SignUpPage> createState() => _SignUpPageState();
@@ -42,39 +45,91 @@ class _SignUpPageState extends State<SignUpPage>
     }
   }
 
+  /// ينشئ الحساب — ويربطه بجلسة الضيف حين توجد.
+  ///
+  /// **لماذا الربط لا الإنشاء المجرّد.** من فتح التطبيق ضيفاً يحمل جلسةً
+  /// مجهولة بمعرّفٍ قائم. و`createUserWithEmailAndPassword` تُنشئ معرّفاً
+  /// **ثانياً** وتترك الأوّل يتيماً في قائمة المستخدمين. و`linkWithCredential`
+  /// تُلبس الجلسة نفسها بريداً وكلمة سرّ: المعرّف واحد، ولا يُخلَّف شيء.
+  ///
+  /// وإن لم تكن هناك جلسة ضيف — لأنّ مزوّد Anonymous غير مفعّل مثلاً —
+  /// فالمسار القديم كما هو.
+  Future<User?> _createAccount(String email, String password) async {
+    final User? guest = FirebaseAuth.instance.currentUser;
+
+    if (guest != null && guest.isAnonymous) {
+      final UserCredential linked = await guest.linkWithCredential(
+        EmailAuthProvider.credential(email: email, password: password),
+      );
+      return linked.user;
+    }
+
+    final UserCredential created =
+        await FirebaseAuth.instance.createUserWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
+    return created.user;
+  }
+
   signUpUserNow() async
   {
+    bool waitOpen = true;
+    void closeWait() {
+      if (!waitOpen || !mounted) return;
+      waitOpen = false;
+      Navigator.pop(context);
+    }
+
     showDialog(
         context: context,
+        barrierDismissible: false,
         builder: (BuildContext context) => LoadingDialog(messageTxt: AppLocalizations.of(context)!.pleaseWait)
     );
 
     try {
-      final User? firebaseUser = (
-          await FirebaseAuth.instance.createUserWithEmailAndPassword(
-            email: emailTextEditingController.text.trim(),
-            password: passwordTextEditingController.text.trim()
-          )
-      ).user;
+      final User? firebaseUser = await _createAccount(
+        emailTextEditingController.text.trim(),
+        passwordTextEditingController.text.trim(),
+      );
+
+      if (firebaseUser == null) {
+        if (!mounted) return;
+        closeWait();
+        return;
+      }
+
+      userName = userNameTextEditingController.text.trim();
+      userPhone = userPhoneTextEditingController.text.trim();
 
       Map userDataMap = {
-        "name": userNameTextEditingController.text.trim(),
+        "name": userName,
         "email": emailTextEditingController.text.trim(),
-        "phone": userPhoneTextEditingController.text.trim(),
-        "id": firebaseUser!.uid,
+        "phone": userPhone,
+        "id": firebaseUser.uid,
         "blockStatus": "no",
       };
-      FirebaseDatabase.instance.ref().child("users").child(firebaseUser.uid).set(userDataMap);
+      // يُنتظر: الشاشة التالية تقرأ هذا السجلّ فوراً، وبلا انتظارٍ قد تصل
+      // القراءة قبل الكتابة فيبدو الحساب الجديد غير موجود.
+      await FirebaseDatabase.instance.ref().child("users").child(firebaseUser.uid).set(userDataMap);
 
       if (!mounted) return;
-      Navigator.pop(context);
+      closeWait();
       associateMethods.showSnackBarMsg(AppLocalizations.of(context)!.accountCreatedSuccess, context);
-      Navigator.push(context, MaterialPageRoute(builder: (c)=> const HomePage()));
+
+      if (widget.popOnSuccess) {
+        Navigator.pop(context, true);
+      } else {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute<void>(builder: (_) => const HomePage()),
+          (Route<dynamic> route) => false,
+        );
+      }
     }
     on FirebaseAuthException catch(e) {
-      FirebaseAuth.instance.signOut();
       if (!mounted) return;
-      Navigator.pop(context);
+      closeWait();
       associateMethods.showSnackBarMsg(e.toString(), context);
     }
   }

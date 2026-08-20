@@ -21,10 +21,20 @@ class TaibahSplash extends StatefulWidget {
     required this.next,
     this.role,
     this.duration = const Duration(seconds: 3),
+    this.waitFor,
   });
 
   /// يُستدعى بعد انتهاء المدّة — وهو ما يقرّر الوجهة، لا هذه الشاشة.
   final Widget Function() next;
+
+  /// عملٌ يجب أن يُنجَز قبل الانتقال، لا مجرّد وقتٍ يمرّ.
+  ///
+  /// المدّة وحدها لا تكفي حين يتوقّف **قرار الوجهة** على نتيجةٍ غير متزامنة —
+  /// مثل جلسة الضيف وعلم شاشة التعريف. وبلا هذا الانتظار قد ينتهي المؤقّت
+  /// أوّلاً على شبكةٍ بطيئة، فتُقرأ قيمٌ ابتدائيّة ويُنتقَل إلى الوجهة الخطأ.
+  ///
+  /// وفشلُه لا يوقف الانتقال: `next()` مسؤولة عن التصرّف بما لديها.
+  final Future<void>? waitFor;
 
   final AppRole? role;
   final Duration duration;
@@ -50,18 +60,30 @@ class _TaibahSplashState extends State<TaibahSplash>
     // المؤقّت هنا لا في `build`: الشيفرة السابقة كانت تستدعي `Future.delayed`
     // داخل `build`، فكل إعادة بناء تجدول انتقالاً جديداً — ثلاثة مؤقّتات تنقل
     // ثلاث مرّات.
-    _timer = Timer(widget.duration, () {
-      if (!mounted) return;
-      Navigator.pushReplacement(
-        context,
-        PageRouteBuilder<void>(
-          transitionDuration: const Duration(milliseconds: 420),
-          pageBuilder: (_, __, ___) => widget.next(),
-          transitionsBuilder: (_, Animation<double> animation, __, Widget c) =>
-              FadeTransition(opacity: animation, child: c),
-        ),
-      );
-    });
+    _timer = Timer(widget.duration, _go);
+  }
+
+  Future<void> _go() async {
+    final Future<void>? gate = widget.waitFor;
+    if (gate != null) {
+      try {
+        await gate;
+      } catch (_) {
+        // لا يُوقف الانتقال: أن يبقى المستخدم في شاشة بدايةٍ إلى الأبد أسوأ
+        // من أن يدخل بحالةٍ ناقصة يعالجها ما بعدها.
+      }
+    }
+
+    if (!mounted) return;
+    Navigator.pushReplacement(
+      context,
+      PageRouteBuilder<void>(
+        transitionDuration: const Duration(milliseconds: 420),
+        pageBuilder: (_, __, ___) => widget.next(),
+        transitionsBuilder: (_, Animation<double> animation, __, Widget c) =>
+            FadeTransition(opacity: animation, child: c),
+      ),
+    );
   }
 
   @override

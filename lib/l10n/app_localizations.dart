@@ -643,6 +643,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'View receipt'**
   String get viewReceipt;
+
+  /// No description provided for @guest.
+  ///
+  /// In en, this message translates to:
+  /// **'Guest'**
+  String get guest;
+
+  /// No description provided for @signInToRide.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to request a ride'**
+  String get signInToRide;
+
+  /// No description provided for @signInWhy.
+  ///
+  /// In en, this message translates to:
+  /// **'Browse the map and the prices without an account. To request a ride we need your name and number: the driver has to know who to pick up, and you have to hear about your trip.'**
+  String get signInWhy;
+
+  /// No description provided for @notNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Not now'**
+  String get notNow;
+
+  /// No description provided for @browseWithoutAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Browse without an account'**
+  String get browseWithoutAccount;
 }
 
 class _AppLocalizationsDelegate

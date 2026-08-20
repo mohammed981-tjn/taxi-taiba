@@ -8,7 +8,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_projects/theme/app_theme.dart';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
-import 'package:flutter_projects/auth/signin_page.dart';
+import 'package:flutter_projects/auth/guest_session.dart';
 import 'package:flutter_projects/global.dart';
 import 'package:flutter_projects/locale_provider.dart';
 import 'package:flutter_projects/market.dart';
@@ -89,6 +89,26 @@ class _HomePageState extends State<HomePage> {
   /// الفئة مفتاحٌ ثابت لا نصّ مترجَم — راجع lib/pricing.dart.
   VehicleTier selectedTier = VehicleTier.go;
 
+  /* ── الضيف ─────────────────────────────────────────────────────────── */
+
+  /// هل صاحب الجهاز بلا حساب؟
+  ///
+  /// يُقرأ من `GuestSession` ويُحفظ في حقل لا يُقرأ في `build` مباشرةً: هيئة
+  /// الشاشة تتغيّر عند تسجيل الدخول، و`build` لا يعيد نفسه لأنّ Firebase غيّر
+  /// شيئاً — `setState` هي التي تُعلمه.
+  bool _guest = GuestSession.isGuest;
+
+  /// البوّابة: يُستدعى قبل كلّ فعلٍ يحتاج حساباً — طلب رحلة، أو سجلّ رحلات،
+  /// أو ملفّ شخصيّ. ويعيد `false` إن اختار المتابعة ضيفاً، فيُترك في مكانه بلا
+  /// رسالة خطأ: الرفض هنا اختيارٌ لا عطل.
+  Future<bool> _requireAccount() async {
+    final bool ok = await GuestSession.requireAccount(context);
+    if (!mounted) return ok;
+    setState(() => _guest = GuestSession.isGuest);
+    if (ok) await getUserInfoAndCheckBlockStatus();
+    return ok;
+  }
+
   getCurrentLocation() async {
     LocationPermission permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
@@ -122,31 +142,45 @@ class _HomePageState extends State<HomePage> {
   }
 
   getUserInfoAndCheckBlockStatus() async {
+    // الضيف لا سجلّ له، والبحث عنه كان يعني خروجاً قسريّاً إلى شاشة الدخول —
+    // وهو بالضبط ما أُزيل. فيُترك في مكانه باسم «ضيف» حتى يطلب رحلة.
+    final User? user = FirebaseAuth.instance.currentUser;
+    if (user == null || user.isAnonymous) {
+      if (!mounted) return;
+      setState(() {
+        _guest = true;
+        userName = '';
+        userPhone = '';
+      });
+      return;
+    }
+
     DatabaseReference reference = FirebaseDatabase.instance
         .ref()
         .child("users")
-        .child(FirebaseAuth.instance.currentUser!.uid);
+        .child(user.uid);
 
     await reference.once().then((dataSnap) {
       if (!mounted) return;
       if (dataSnap.snapshot.value != null) {
         if ((dataSnap.snapshot.value as Map)["blockStatus"] == "no") {
           setState(() {
-            userName = (dataSnap.snapshot.value as Map)["name"];
-            userPhone = (dataSnap.snapshot.value as Map)["phone"];
+            _guest = false;
+            userName = (dataSnap.snapshot.value as Map)["name"] ?? '';
+            userPhone = (dataSnap.snapshot.value as Map)["phone"] ?? '';
           });
         } else {
-          FirebaseAuth.instance.signOut();
-          Navigator.push(
-              context, MaterialPageRoute(builder: (c) => const SigninPage()));
+          // محظور: يُنزَل إلى ضيف ويبقى في مكانه. الدفع إلى شاشة دخولٍ لا
+          // يفيده — الحساب الذي يملكه هو المحظور.
+          GuestSession.dropToGuest();
+          setState(() => _guest = true);
           associateMethods.showSnackBarMsg(
               AppLocalizations.of(context)!.blockedMsg,
               context);
         }
       } else {
-        FirebaseAuth.instance.signOut();
-        Navigator.push(
-            context, MaterialPageRoute(builder: (c) => const SigninPage()));
+        GuestSession.dropToGuest();
+        setState(() => _guest = true);
       }
     });
   }
@@ -1111,7 +1145,9 @@ class _HomePageState extends State<HomePage> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Text(
-                                userName,
+                                _guest
+                                    ? AppLocalizations.of(context)!.guest
+                                    : userName,
                                 style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
@@ -1123,16 +1159,23 @@ class _HomePageState extends State<HomePage> {
                               ),
                               GestureDetector(
                                 onTap: () async {
+                                  // للضيف: البوّابة. ولا معنى لملفٍّ شخصيّ
+                                  // لحسابٍ لا وجود له.
+                                  if (!await _requireAccount()) return;
+                                  if (!mounted) return;
                                   await Navigator.push(
                                     context,
                                     MaterialPageRoute(
                                       builder: (context) => const ProfilePage(),
                                     ),
                                   );
+                                  if (!mounted) return;
                                   setState(() {});
                                 },
                                 child: Text(
-                                  AppLocalizations.of(context)!.myProfile,
+                                  _guest
+                                      ? AppLocalizations.of(context)!.signIn
+                                      : AppLocalizations.of(context)!.myProfile,
                                   style: const TextStyle(
                                     color: Colors.white,
                                   ),
@@ -1146,7 +1189,11 @@ class _HomePageState extends State<HomePage> {
 
                 //body
                 GestureDetector(
-                  onTap: () {
+                  onTap: () async {
+                    // سجلّ رحلاتٍ لضيفٍ لم يركب قطّ شاشةٌ فارغة بلا معنى —
+                    // والقاعدة ترفض القراءة أصلاً.
+                    if (!await _requireAccount()) return;
+                    if (!mounted) return;
                     Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -1212,19 +1259,34 @@ class _HomePageState extends State<HomePage> {
                 ),
 
                 GestureDetector(
-                  onTap: () {
-                    FirebaseAuth.instance.signOut();
+                  onTap: () async {
+                    // بندٌ واحد بوجهين: الضيف يُدعى للدخول، والمسجَّل يخرج.
+                    if (_guest) {
+                      Navigator.pop(context);
+                      await _requireAccount();
+                      return;
+                    }
 
-                    Navigator.push(context,
-                        MaterialPageRoute(builder: (c) => const SigninPage()));
+                    // خروجٌ إلى ضيف لا إلى شاشة دخول: التطبيق يبقى مفتوحاً
+                    // والخريطة تبقى حيّة، وهذا هو بيت القصيد كلّه.
+                    await GuestSession.dropToGuest();
+                    if (!mounted) return;
+                    setState(() {
+                      _guest = true;
+                      userName = '';
+                      userPhone = '';
+                    });
+                    Navigator.pop(context);
                   },
                   child: ListTile(
-                    leading: const Icon(
-                      Icons.logout,
+                    leading: Icon(
+                      _guest ? Icons.login : Icons.logout,
                       color: Colors.black,
                     ),
                     title: Text(
-                      AppLocalizations.of(context)!.logout,
+                      _guest
+                          ? AppLocalizations.of(context)!.signIn
+                          : AppLocalizations.of(context)!.logout,
                       style: const TextStyle(color: Colors.black),
                     ),
                   ),
@@ -1313,6 +1375,52 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
           ),
+
+          /// زرّ الدخول في الركن — للضيف وحده
+          ///
+          /// طلبٌ صريح، وله سببٌ يتجاوز الطلب: البوّابة لا تظهر إلّا لحظة طلب
+          /// الرحلة، فمن أراد أن يسجّل قبلها — ليجد رحلاته القديمة مثلاً —
+          /// لا يجد باباً. وهذا هو الباب، ولا يزاحم شيئاً: الركن المقابل
+          /// للقائمة فارغ.
+          if (_guest)
+            Positioned(
+              top: 37,
+              right: 20,
+              child: Material(
+                color: Colors.white,
+                elevation: 4,
+                borderRadius: BorderRadius.circular(20),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(20),
+                  onTap: () {
+                    _requireAccount();
+                  },
+                  child: Padding(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        Icon(
+                          Icons.person_outline,
+                          size: 18,
+                          color: TaibahPalette.passenger.primary,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          AppLocalizations.of(context)!.signIn,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: TaibahPalette.passenger.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
 
           ///search location container
           Positioned(
@@ -1536,6 +1644,18 @@ class _HomePageState extends State<HomePage> {
                     ),
                     ElevatedButton(
                       onPressed: () async {
+                        // **هنا وحده يُطلب الدخول.**
+                        //
+                        // قبل هذا السطر يستطيع أيّ أحد أن يفتح التطبيق، ويرى
+                        // السيّارات حوله، ويكتب وجهته، ويعرف كم تكلّف — بلا
+                        // حساب. وعند هذا الزرّ يبدأ ما يحتاج اسماً ورقماً:
+                        // سائقٌ سيأتي إلى مكانه، ورحلةٌ ستُكتب باسمه.
+                        //
+                        // وإن اختار «ليس الآن» يبقى في مكانه بوجهته وسعره كما
+                        // هما — لا يُطرد إلى شاشةٍ أخرى ولا يفقد ما كتب.
+                        if (!await _requireAccount()) return;
+                        if (!mounted) return;
+
                         setState(() {
                           stateOfApp = 'requesting';
                         });

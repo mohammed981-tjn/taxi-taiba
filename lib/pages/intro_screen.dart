@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'package:flutter_projects/app_flavor.dart';
+import 'package:flutter_projects/auth/guest_session.dart';
 import 'package:flutter_projects/auth/signin_page.dart';
-import 'package:flutter_projects/auth/signup_page.dart';
+import 'package:flutter_projects/pages/home_page.dart';
 import 'package:flutter_projects/l10n/app_localizations.dart';
 import 'package:flutter_projects/locale_provider.dart';
 import 'package:flutter_projects/theme/app_theme.dart';
@@ -39,6 +40,19 @@ class _IntroPageState extends State<IntroPage> {
   void dispose() {
     _controller.dispose();
     super.dispose();
+  }
+
+  /// يغادر شاشة التعريف ويعلّمها مقروءة.
+  ///
+  /// العلم يُكتب هنا لا في الشاشة التالية: أيّاً كان الباب الذي خرج منه —
+  /// «تصفّح بلا حساب» أو «لديّ حساب» — فقد رأى الشاشات الثلاث، ولا يُعاد
+  /// عرضها عليه.
+  void _leave(Widget next) {
+    GuestSession.markIntroSeen();
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute<void>(builder: (_) => next),
+    );
   }
 
   @override
@@ -202,12 +216,7 @@ class _IntroPageState extends State<IntroPage> {
                         ),
                         onPressed: () {
                           if (last) {
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute<void>(
-                                builder: (_) => const SignUpPage(),
-                              ),
-                            );
+                            _leave(const HomePage());
                           } else {
                             _controller.nextPage(
                               duration: const Duration(milliseconds: 320),
@@ -216,7 +225,7 @@ class _IntroPageState extends State<IntroPage> {
                           }
                         },
                         child: Text(
-                          last ? l10n.signUp : l10n.introNext,
+                          last ? l10n.browseWithoutAccount : l10n.introNext,
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w700,
@@ -225,12 +234,7 @@ class _IntroPageState extends State<IntroPage> {
                       ),
 
                       TextButton(
-                        onPressed: () => Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute<void>(
-                            builder: (_) => const SigninPage(),
-                          ),
-                        ),
+                        onPressed: () => _leave(const SigninPage()),
                         child: Text(
                           l10n.alreadyHaveAccount,
                           style: TextStyle(

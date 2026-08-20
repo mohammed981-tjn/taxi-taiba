@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_projects/theme/taibah_mark.dart';
 import 'package:flutter_projects/theme/app_theme.dart';
 import 'package:flutter_projects/app_flavor.dart';
+import 'package:flutter_projects/auth/guest_session.dart';
 import 'package:flutter_projects/auth/signup_page.dart';
 import 'package:flutter_projects/global.dart';
 import 'package:flutter_projects/l10n/app_localizations.dart';
@@ -12,7 +13,12 @@ import '../pages/home_page.dart';
 import '../widgets/loading_dialog.dart';
 
 class SigninPage extends StatefulWidget {
-  const SigninPage({super.key});
+  const SigninPage({super.key, this.popOnSuccess = false});
+
+  /// `true` حين تُفتح هذه الشاشة من داخل التطبيق — من بوّابة الضيف أو من زرّ
+  /// الركن — فتعود بعد النجاح إلى ما كان يفعله المستخدم بدل أن تبني شاشةً
+  /// رئيسيّةً ثانية فوق الأولى.
+  final bool popOnSuccess;
 
   @override
   State<SigninPage> createState() => _SigninPageState();
@@ -30,16 +36,46 @@ class _SigninPageState extends State<SigninPage> {
     }
   }
 
+  /// يُغلق حوار الانتظار مرّةً واحدة.
+  ///
+  /// كان مسار النجاح لا يغلقه أصلاً: يدفع الشاشة الرئيسيّة **فوقه**، فيبقى
+  /// الحوار في المكدّس، ورجعةٌ واحدة تُظهر «الرجاء الانتظار» على شاشةٍ لا
+  /// تنتظر شيئاً.
+  bool _waitOpen = false;
+
+  void _closeWait() {
+    if (!_waitOpen || !mounted) return;
+    _waitOpen = false;
+    Navigator.pop(context);
+  }
+
+  /// بعد الدخول: إمّا العودة إلى ما كان يفعله المستخدم، وإمّا بناء الشاشة
+  /// الرئيسيّة **بديلاً** لا فوق الشاشات السابقة — فزرّ الرجوع لا يعيده إلى
+  /// شاشة دخولٍ سجّل منها للتوّ.
+  void _leaveAfterSuccess() {
+    if (widget.popOnSuccess) {
+      Navigator.pop(context, true);
+    } else {
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute<void>(builder: (_) => const HomePage()),
+        (Route<dynamic> route) => false,
+      );
+    }
+  }
+
   signInUserNow() async {
+    _waitOpen = true;
     showDialog(
         context: context,
+        barrierDismissible: false,
         builder: (BuildContext context) =>
             LoadingDialog(messageTxt: AppLocalizations.of(context)!.pleaseWait));
 
     try {
       final User? firebaseUser = (await FirebaseAuth.instance
               .signInWithEmailAndPassword(
-                  email: emailTextEditingController.text,
+                  email: emailTextEditingController.text.trim(),
                   password: passwordTextEditingController.text))
           .user;
 
@@ -50,34 +86,33 @@ class _SigninPageState extends State<SigninPage> {
             .child(firebaseUser.uid);
         await ref.once().then((dataSnapshot) {
           if (!mounted) return;
+          _closeWait();
           if (dataSnapshot.snapshot.value != null) {
             if ((dataSnapshot.snapshot.value as Map)["blockStatus"] == "no") {
-              userName = (dataSnapshot.snapshot.value as Map)["name"];
-              userPhone = (dataSnapshot.snapshot.value as Map)["phone"];
+              userName = (dataSnapshot.snapshot.value as Map)["name"] ?? '';
+              userPhone = (dataSnapshot.snapshot.value as Map)["phone"] ?? '';
 
-              Navigator.push(
-                  context, MaterialPageRoute(builder: (c) => const HomePage()));
               associateMethods.showSnackBarMsg(
                   AppLocalizations.of(context)!.loggedInSuccess, context);
+              _leaveAfterSuccess();
             } else {
-              Navigator.pop(context);
-              FirebaseAuth.instance.signOut();
+              GuestSession.dropToGuest();
               associateMethods.showSnackBarMsg(
                   AppLocalizations.of(context)!.blockedMsg,
                   context);
             }
           } else {
-            Navigator.pop(context);
-            FirebaseAuth.instance.signOut();
+            GuestSession.dropToGuest();
             associateMethods.showSnackBarMsg(
                 AppLocalizations.of(context)!.userNotFound, context);
           }
         });
+      } else {
+        _closeWait();
       }
     } on FirebaseAuthException catch (e) {
-      FirebaseAuth.instance.signOut();
       if (!mounted) return;
-      Navigator.pop(context);
+      _closeWait();
       associateMethods.showSnackBarMsg(e.toString(), context);
     }
   }
